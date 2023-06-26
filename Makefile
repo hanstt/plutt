@@ -76,13 +76,13 @@ ifeq (release,$(BUILD_MODE))
 CXXFLAGS+=-O3
 endif
 
-SDL2_CFLAGS:=$(shell pkg-config sdl2 SDL2_ttf --cflags)
-LIBS+=$(shell pkg-config sdl2 SDL2_ttf --libs)
+BASE_CFLAGS:=$(shell pkg-config freetype2 sdl2 --cflags)
+LIBS+=$(shell pkg-config freetype2 sdl2 --libs)
 
 include build_dir.mk
 CPPFLAGS:=$(CPPFLAGS) -MMD \
 	-I$(BUILD_DIR) -I. \
-	$(SDL2_CFLAGS)
+	$(BASE_CFLAGS)
 CXXFLAGS_UNSAFE:=$(CXXFLAGS) -fPIC -std=c++11
 CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Weffc++ -Werror -Wshadow
 LDFLAGS:=$(LDFLAGS) -fPIC

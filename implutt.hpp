@@ -209,8 +209,6 @@ namespace ImPlutt {
 
   void StyleSet(Style);
 
-  int FontGetHeight(int);
-
   // Loads colormap from *.lut-file, or nullptr for a default.
   size_t ColormapGet(char const *);
   void ColormapPop();
@@ -242,14 +240,18 @@ namespace ImPlutt {
     bool operator()(TextKey const &, TextKey const &) const;
   };
   struct TextTexture {
-    int w;
-    int h;
+    Rect r;
     SDL_Texture *tex;
     uint64_t t_last;
   };
 
   class Window {
     public:
+      enum TextStyle {
+        TEXT_NORMAL,
+        TEXT_BOLD
+      };
+
       Window(char const *, int, int);
       ~Window();
 
@@ -304,9 +306,8 @@ namespace ImPlutt {
       void RenderRect(Rect const &, bool);
       void RenderTexture(SDL_Texture *, Rect const &);
       void RenderCross(Pos const &, int);
-      Pos RenderTextMeasure(char const *, int);
-      void RenderText(char const *, int, int, Pos const &);
-      Pos RenderTextSize(char const *, int, int, Pos const &, bool = true);
+      void RenderText(char const *, TextStyle, int, Pos const &);
+      Pos RenderTextMeasure(char const *, TextStyle);
       void RenderTransparent(bool);
 
       SDL_Window *m_window;

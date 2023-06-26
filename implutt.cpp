@@ -29,8 +29,7 @@
 #include <map>
 #include <set>
 #include <sstream>
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <ttf.hpp>
 #include <util.hpp>
 
 //
@@ -135,7 +134,7 @@ namespace ImPlutt {
     };
 #include <roma.hpp>
 
-    TTF_Font *g_font;
+    Font *g_font;
 
     bool g_pointer_up;
 
@@ -249,7 +248,7 @@ namespace ImPlutt {
     }
 
     // Check-mark.
-    auto h = FontGetHeight(TTF_STYLE_NORMAL);
+    auto h = FontGetHeight(g_font);
     // TODO: ctor + dtor is slooow, cache this.
     std::vector<uint8_t> pixels((size_t)(h * h * 4));
     int d = h / 10;
@@ -547,28 +546,8 @@ namespace ImPlutt {
         Pos(a_pos.x       , a_pos.y+a_size));
   }
 
-  Pos Window::RenderTextMeasure(char const *a_str, int a_style)
-  {
-#if HAS_TTF_MEASUREUTF8
-    int ext = 0;
-    int count = 0;
-    TTF_SetFontStyle(g_font, a_style);
-    SDL_CALL_VOID(TTF_MeasureUTF8, (g_font, a_str, 10000, &ext, &count));
-    return Pos(ext, FontGetHeight(a_style));
-#else
-    auto size = RenderTextSize(a_str, a_style, STYLE_TEXT, Pos(0, 0), false);
-    return Pos(size.x, FontGetHeight(a_style));
-#endif
-  }
-
-  void Window::RenderText(char const *a_str, int a_font_style, int a_style_i,
-      Pos const &a_ofs)
-  {
-    RenderTextSize(a_str, a_font_style, a_style_i, a_ofs);
-  }
-
-  Pos Window::RenderTextSize(char const *a_str, int a_font_style,
-      int a_style_i, Pos const &a_ofs, bool a_do_render)
+  void Window::RenderText(char const *a_str, TextStyle a_font_style, int
+      a_style_i, Pos const &a_ofs)
   {
     // Check cache.
     TextKey key;
@@ -578,30 +557,39 @@ namespace ImPlutt {
     key.style_sub_i = a_style_i;
     auto it = m_text_tex_map.find(key);
     if (m_text_tex_map.end() == it) {
-      // Blended is fine, sub-pixel bleeding is bugly.
-      TTF_SetFontStyle(g_font, a_font_style);
+      auto rgb = g_style[g_style_i][a_style_i];
+      FontSetBold(g_font, TEXT_BOLD == a_font_style);
+      auto printed = FontPrintf(g_font, a_str, rgb.r, rgb.g, rgb.b);
       SDL_Surface *surf;
-      SDL_CALL(surf, TTF_RenderUTF8_Blended,
-          (g_font, a_str, g_style[g_style_i][a_style_i]));
+      SDL_CALL(surf, SDL_CreateRGBSurfaceWithFormatFrom,
+          (printed.bmap.data(), (int)printed.size.w, (int)printed.size.h,
+           32, (int)printed.size.w * 4, SDL_PIXELFORMAT_RGBA8888));
       TextTexture value;
       SDL_CALL(value.tex, SDL_CreateTextureFromSurface, (m_renderer, surf));
-      value.w = surf->w;
-      value.h = surf->h;
+      value.r.x = printed.size.x;
+      value.r.y = printed.size.y;
+      value.r.w = surf->w;
+      value.r.h = surf->h;
       SDL_FreeSurface(surf);
       auto pair = m_text_tex_map.insert(std::make_pair(key, value));
       it = pair.first;
     }
     auto &value = it->second;
     Rect r;
-    r.x = a_ofs.x;
-    r.y = a_ofs.y;
-    r.w = value.w;
-    r.h = value.h;
-    if (a_do_render) {
-      RenderTexture(value.tex, r);
-    }
+    r.x = value.r.x + a_ofs.x;
+    r.y = value.r.y + a_ofs.y;
+    r.w = value.r.w;
+    r.h = value.r.h;
+    RenderTexture(value.tex, r);
     value.t_last = Time_get_ms();
-    return Pos(value.w, value.h);
+  }
+
+  Pos Window::RenderTextMeasure(char const *a_str, TextStyle a_style)
+  {
+    // TODO: Cache?
+    FontSetBold(g_font, TEXT_BOLD == a_style);
+    auto size = FontMeasure(g_font, a_str);
+    return Pos((int)size.w, (int)size.h);
   }
 
   void Window::RenderTransparent(bool a_yes)
@@ -626,39 +614,40 @@ namespace ImPlutt {
     g_cursor_xhair = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR);
 
     // Fonts.
-    SDL_CALL_VOID(TTF_Init, ());
     {
-      struct Font {
+      TtfSetup();
+      struct FontPair {
         char const *path;
         int size;
       };
-      Font font_array[] = {
+      FontPair font_array[] = {
         {"/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
           12},
-        {"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12},
-        {"/System/Library/Fonts/HelveticaNeue.ttc", 20},
-        {"/System/Library/Fonts/LucidaGrande.ttc", 20}
+        {"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+          12},
+        // Traditional OSX font, nicer than Helvetica Neue in cramped GUI:s.
+        {"/System/Library/Fonts/LucidaGrande.ttc",
+          20}
       };
-      for (size_t i = 0; i < LENGTH(font_array) && !g_font; ++i) {
+      for (size_t i = 0; i < LENGTH(font_array); ++i) {
         auto const &f = font_array[i];
-        g_font = TTF_OpenFont(f.path, f.size);
+        g_font = FontLoad(f.path);
+        if (g_font) {
+          FontSetSize(g_font, f.size);
+          break;
+        }
       }
       if (!g_font) {
         std::cerr << "No fonts found!\n";
         throw std::runtime_error(__func__);
       }
     }
-#ifndef HAS_TTF_HINTING_LIGHT_SUBPIXEL
-    TTF_SetFontHinting(g_font, TTF_HINTING_LIGHT);
-#else
-    TTF_SetFontHinting(g_font, TTF_HINTING_LIGHT_SUBPIXEL);
-#endif
   }
 
   void Destroy()
   {
-    TTF_CloseFont(g_font);
-    TTF_Quit();
+    FontUnload(&g_font);
+    TtfShutdown();
     SDL_FreeCursor(g_cursor_xhair);
     SDL_FreeCursor(g_cursor_arrow);
     SDL_Quit();
@@ -677,16 +666,6 @@ namespace ImPlutt {
   void End()
   {
     g_pointer_up = false;
-  }
-
-  //
-  // Fonts.
-  //
-
-  int FontGetHeight(int a_style)
-  {
-    TTF_SetFontStyle(g_font, a_style);
-    return TTF_FontHeight(g_font);
   }
 
   //
@@ -987,7 +966,7 @@ namespace ImPlutt {
 
   bool Window::Button(char const *a_label)
   {
-    auto size = RenderTextMeasure(a_label, TTF_STYLE_NORMAL);
+    auto size = RenderTextMeasure(a_label, TEXT_NORMAL);
 
     Rect r;
     r.x = PAD_EXT;
@@ -1007,7 +986,7 @@ namespace ImPlutt {
     }
     RenderColor(g_style[g_style_i][bg_i]);
     RenderRect(r, true);
-    RenderText(a_label, TTF_STYLE_NORMAL, STYLE_TEXT, Pos(PAD, PAD));
+    RenderText(a_label, TEXT_NORMAL, STYLE_TEXT, Pos(PAD, PAD));
 
     LevelAdvance(Pos(r.w + 2 * PAD_EXT, r.h + 2 * PAD_EXT));
 
@@ -1016,7 +995,7 @@ namespace ImPlutt {
 
   void Window::Checkbox(char const *a_label, CheckboxState *a_state)
   {
-    auto h = FontGetHeight(TTF_STYLE_NORMAL);
+    auto h = FontGetHeight(g_font);
     Rect r_box;
     r_box.x = PAD;
     r_box.y = PAD;
@@ -1041,8 +1020,8 @@ namespace ImPlutt {
 
     LevelAdvance(Pos(PAD + h + PAD_INT, h));
 
-    auto label_size = RenderTextMeasure(a_label, TTF_STYLE_NORMAL);
-    RenderText(a_label, TTF_STYLE_NORMAL, STYLE_TEXT, Pos(PAD_INT, PAD));
+    auto label_size = RenderTextMeasure(a_label, TEXT_NORMAL);
+    RenderText(a_label, TEXT_NORMAL, STYLE_TEXT, Pos(PAD_INT, PAD));
 
     LevelAdvance(Pos(PAD_INT + label_size.x + PAD, label_size.y + 2 * PAD));
   }
@@ -1076,8 +1055,8 @@ namespace ImPlutt {
     va_start(args, a_fmt);
     vsnprintf(buf, sizeof buf, a_fmt, args);
     va_end(args);
-    auto size = RenderTextMeasure(buf, TTF_STYLE_NORMAL);
-    RenderText(buf, TTF_STYLE_NORMAL, STYLE_TEXT, Pos(PAD, PAD));
+    auto size = RenderTextMeasure(buf, TEXT_NORMAL);
+    RenderText(buf, TEXT_NORMAL, STYLE_TEXT, Pos(PAD, PAD));
     LevelAdvance(Pos(size.x + 2 * PAD, size.y + 2 * PAD));
   }
 
@@ -1176,7 +1155,7 @@ namespace ImPlutt {
           break;
       }
     }
-    auto h = FontGetHeight(TTF_STYLE_NORMAL);
+    auto h = FontGetHeight(g_font);
     RenderColor(g_style[g_style_i][STYLE_FG]);
     Rect r;
     r.x = PAD_EXT;
@@ -1191,11 +1170,11 @@ namespace ImPlutt {
         a_state->comp_str +
         a_state->str.substr(a_state->pos, a_state->str.size() - a_state->pos);
     if (!text.empty()) {
-      RenderText(text.data(), TTF_STYLE_NORMAL, STYLE_TEXT, Pos(PAD, PAD));
+      RenderText(text.data(), TEXT_NORMAL, STYLE_TEXT, Pos(PAD, PAD));
       if (a_state->pos > 0) {
         // Measure distance to cursor/composition start.
         auto tmp = text.substr(0, a_state->pos);
-        comp = RenderTextMeasure(tmp.c_str(), TTF_STYLE_NORMAL);
+        comp = RenderTextMeasure(tmp.c_str(), TEXT_NORMAL);
       }
       if (0 == a_state->comp_ofs) {
         // No composition.
@@ -1203,7 +1182,7 @@ namespace ImPlutt {
       } else {
         // Measure distance to cursor offset by composition.
         auto tmp = text.substr(0, a_state->pos + a_state->comp_ofs);
-        cursor = RenderTextMeasure(tmp.c_str(), TTF_STYLE_NORMAL);
+        cursor = RenderTextMeasure(tmp.c_str(), TEXT_NORMAL);
       }
     }
     RenderColor(g_style[g_style_i][STYLE_TEXT]);
@@ -1376,7 +1355,7 @@ namespace ImPlutt {
   // TODO: X-labels can be larger than Y-labels, take the max!
   void Plot::PlotXaxis(Rect const &a_rect, double a_min, double a_max)
   {
-    auto const h = FontGetHeight(TTF_STYLE_NORMAL);
+    auto const h = FontGetHeight(g_font);
     char buf[100];
 
     auto ticks = PlotGetTicks(a_rect.w, h, a_min, a_max);
@@ -1397,11 +1376,11 @@ namespace ImPlutt {
       PlotPrintLabel(buf, sizeof buf, false, val);
       auto x = a_rect.x + ticks.min_pos + dp * (int)i / (int)ticks.num;
       m_window->RenderLine(Pos(x, a_rect.y), Pos(x, a_rect.y + TICK_SIZE));
-      auto size = m_window->RenderTextMeasure(buf, TTF_STYLE_NORMAL);
+      auto size = m_window->RenderTextMeasure(buf, Window::TEXT_NORMAL);
       // Avoid overlapping labels.
       int x_curr = x - size.x / 2;
       if (x_curr > x_prev) {
-        m_window->RenderText(buf, TTF_STYLE_NORMAL, STYLE_PLOT_AXIS,
+        m_window->RenderText(buf, Window::TEXT_NORMAL, STYLE_PLOT_AXIS,
             Pos(x_curr, a_rect.y + TICK_SIZE + PAD_INT));
         x_prev = x_curr + size.x;
       }
@@ -1411,7 +1390,7 @@ namespace ImPlutt {
   Rect Plot::PlotYaxis(Rect const &a_rect, double a_min, double a_max, bool
       a_is_log)
   {
-    auto const h = FontGetHeight(TTF_STYLE_NORMAL);
+    auto const h = FontGetHeight(g_font);
     char buf[100];
 
     auto height = a_rect.h - (PAD_EXT + h + PAD_INT + TICK_SIZE);
@@ -1424,7 +1403,7 @@ namespace ImPlutt {
     for (int i = 0; i < ticks.num; ++i) {
       auto val = ticks.min_val + dv * (double)i;
       PlotPrintLabel(buf, sizeof buf, a_is_log, val);
-      auto size = m_window->RenderTextMeasure(buf, TTF_STYLE_NORMAL);
+      auto size = m_window->RenderTextMeasure(buf, Window::TEXT_NORMAL);
       label_x = std::max(label_x, size.x);
       width_vec.at((size_t)i) = size.x;
     }
@@ -1444,7 +1423,7 @@ namespace ImPlutt {
       auto pos = ticks.min_pos + dp * (int)i / (int)ticks.num;
       auto y = base.y - 1 - pos;
       m_window->RenderLine(Pos(label_x + 5, y), Pos(label_x + 10, y));
-      m_window->RenderText(buf, TTF_STYLE_NORMAL, STYLE_PLOT_AXIS,
+      m_window->RenderText(buf, Window::TEXT_NORMAL, STYLE_PLOT_AXIS,
           Pos(PAD_EXT + label_x - width_vec.at((size_t)i), y - h/2));
     }
 
@@ -1476,9 +1455,10 @@ namespace ImPlutt {
     m_is_log.z = a_is_log_z;
 
     // Render title.
-    auto title_size = m_window->RenderTextMeasure(a_title, TTF_STYLE_BOLD);
+    FontSetBold(g_font, true);
+    auto title_size = m_window->RenderTextMeasure(a_title, Window::TEXT_BOLD);
     auto dx = (a_size.x - title_size.x) / 2;
-    m_window->RenderText(a_title, TTF_STYLE_BOLD, STYLE_TEXT,
+    m_window->RenderText(a_title, Window::TEXT_BOLD, STYLE_TEXT,
         Pos(dx, PAD_EXT));
     m_rect_tot.x = 0;
     m_rect_tot.y = PAD_EXT + title_size.y + PAD_INT;
@@ -2375,7 +2355,7 @@ namespace ImPlutt {
   void Window::PlotText(Plot const *a_plot, char const *a_str, Point const
       &a_pos, TextAlign a_align, bool a_do_fit, bool a_do_box)
   {
-    auto size = RenderTextMeasure(a_str, TTF_STYLE_NORMAL);
+    auto size = RenderTextMeasure(a_str, TEXT_NORMAL);
     Pos pos(
         a_plot->PosFromPointX(a_pos.x),
         a_plot->PosFromPointY(a_pos.y));
@@ -2407,7 +2387,7 @@ namespace ImPlutt {
       r.h = size.y + 2;
       RenderBox(r, STYLE_PLOT_AXIS, STYLE_PLOT_OVERLAY);
     }
-    RenderText(a_str, TTF_STYLE_NORMAL, STYLE_PLOT_AXIS, pos);
+    RenderText(a_str, TEXT_NORMAL, STYLE_PLOT_AXIS, pos);
   }
 
 }

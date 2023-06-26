@@ -1,7 +1,9 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Bastian Loeher <b.loeher@gsi.de>
+ * Copyright (C) 2023
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Bastian Loeher <b.loeher@gsi.de>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +21,32 @@
  * MA  02110-1301  USA
  */
 
-#pragma once
+#ifndef TTF_HPP
+#define TTF_HPP
 
-#if (SDL_MAJOR_VERSION >= 2) && \
-    (SDL_MINOR_VERSION >= 0) && \
-    (SDL_PATCHLEVEL >= 18)
-# define HAS_GETTICKS64
-#endif
+#include <vector>
 
-#ifndef HAS_GETTICKS64
-# define SDL_GETTICKS SDL_GetTicks
-#else
-# define SDL_GETTICKS SDL_GetTicks64
+struct Font;
+struct FontSize {
+  int x;
+  int y;
+  unsigned w;
+  unsigned h;
+};
+struct FontPrinted {
+  FontSize size;
+  std::vector<uint8_t> bmap;
+};
+
+int FontGetHeight(Font *);
+Font *FontLoad(char const *);
+FontSize FontMeasure(Font *, char const *);
+FontPrinted FontPrintf(Font *, char const *, uint8_t, uint8_t, uint8_t);
+void FontSetBold(Font *, bool);
+void FontSetSize(Font *, int);
+void FontUnload(Font **);
+
+void TtfSetup();
+void TtfShutdown();
+
 #endif
