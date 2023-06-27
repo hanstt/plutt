@@ -22,6 +22,7 @@
  */
 
 #include <ttf.hpp>
+#include <cassert>
 #include <iostream>
 #include <map>
 #include <ft2build.h>
@@ -69,6 +70,16 @@ struct GlyphKey {
   }
 };
 struct GlyphValue {
+  GlyphValue():
+    bmap(),
+    x(),
+    y(),
+    w(),
+    h(),
+    advance_x(),
+    t_last()
+  {
+  }
   std::vector<uint8_t> bmap;
   int x;
   int y;
@@ -78,6 +89,12 @@ struct GlyphValue {
   time_t t_last;
 };
 std::map<GlyphKey, GlyphValue, GlyphKey> g_glyph_map;
+
+FontPrinted::FontPrinted():
+  size(),
+  bmap()
+{
+}
 
 Font *FontLoad(char const *a_path)
 {
@@ -156,7 +173,7 @@ FontSize FontMeasure(Font *a_f, char const *a_str)
       FT_Vector delta;
       FT_Get_Kerning(a_f->face, index_prev, index_curr, FT_KERNING_DEFAULT,
           &delta);
-      x += delta.x >> 6;
+      x += (int)delta.x >> 6;
     }
     auto glyph = GetRenderedGlyph(a_f, a_f->size, index_curr);
     x1 = std::min(x1, x + glyph->x);
@@ -194,7 +211,7 @@ FontPrinted FontPrintf(Font *a_f, char const *a_str, uint8_t a_r, uint8_t a_g,
       FT_Vector delta;
       FT_Get_Kerning(a_f->face, index_prev, index_curr, FT_KERNING_DEFAULT,
           &delta);
-      x += delta.x >> 6;
+      x += (int)delta.x >> 6;
     }
     auto glyph = GetRenderedGlyph(a_f, a_f->size, index_curr);
     auto w = glyph->w + boldness;

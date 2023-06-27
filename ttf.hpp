@@ -24,6 +24,7 @@
 #ifndef TTF_HPP
 #define TTF_HPP
 
+#include <cstdint>
 #include <vector>
 
 struct Font;
@@ -34,6 +35,7 @@ struct FontSize {
   unsigned h;
 };
 struct FontPrinted {
+  FontPrinted();
   FontSize size;
   std::vector<uint8_t> bmap;
 };
