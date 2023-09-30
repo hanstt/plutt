@@ -26,6 +26,7 @@
 #include <condition_variable>
 #include <csignal>
 #include <iostream>
+#include <fstream>
 #include <thread>
 #if PLUTT_SDL2
 # include <implutt.hpp>
@@ -76,6 +77,7 @@ namespace {
   Input *g_input;
   bool g_data_running;
   bool g_event_running = true;
+  std::ifstream g_dyn_file_list;
 
   void help(char const *a_msg)
   {
@@ -94,6 +96,7 @@ namespace {
     std::cout << "\n";
     std::cout << "Input options:\n";
 #if PLUTT_ROOT
+    std::cout << " -l file list file (can be appended during runtime)\n";
     std::cout << " -r tree-name root-files...\n";
 #endif
 #if PLUTT_UCESB
@@ -111,11 +114,44 @@ namespace {
   {
     std::cout << "Starting input loop.\n";
     for (;;) {
-      // Fetch event and wait until buffered event is done.
-      if (!g_input->Fetch()) {
-        g_data_running = false;
-      }
       std::unique_lock<std::mutex> lock(g_input_event_mutex);
+      // Fetch event and wait until buffered event is done.
+    fetch:
+      __attribute__((unused));  // Label not used if no ROOT.
+      if (!g_input->Fetch()) {
+	lock.unlock();
+	// Try to find a new file.
+	if (g_dyn_file_list.is_open()) {
+	  for (int zzz = 0; ; ++zzz)
+	    {
+	      std::string line;
+	      g_dyn_file_list.clear(); // Clear possible eof condition.
+	      // TODO: should also check if file list shrunk.
+	      // Then restart from beginning.
+	      getline(g_dyn_file_list, line);
+	      if(g_dyn_file_list.good()) {
+		printf("Got line: %s\n", line.c_str());
+		// Open the new file (must have same tree name).
+#if PLUTT_ROOT
+		if (((Root *) g_input)->NewFileTree(line.c_str())) {
+		  lock.lock();
+		  goto fetch;
+		}
+#endif
+	      }
+	      printf ("Input sleeping (%d s)\r", zzz);
+	      fflush(stdout);
+	      sleep(1);
+	      if (!g_data_running) {
+		break;
+	      }
+	      continue;
+	    }
+	}
+	lock.lock();
+	// No dynamic file list - done!
+	g_data_running = false;
+      }
       g_input_cv.wait(lock, []{
           return g_input_i == g_event_i || !g_data_running;
       });
@@ -190,7 +226,7 @@ int main(int argc, char **argv)
   enum InputType input_type = INPUT_NONE;
   unsigned gui_type = GUI_NONE;
   int c;
-  while ((c = getopt(argc, argv, "hf:g:j:" ROOT_ARGOPT UCESB_ARGOPT)) != -1) {
+  while ((c = getopt(argc, argv, "hf:g:j:l:" ROOT_ARGOPT UCESB_ARGOPT)) != -1) {
     switch (c) {
       case 'h':
         help(nullptr);
@@ -221,6 +257,13 @@ int main(int argc, char **argv)
           }
         }
         break;
+      case 'l':
+	g_dyn_file_list.open(optarg);
+	if (!g_dyn_file_list.is_open()) {
+	  fprintf(stderr, "Failed to open dynamic file list file.\n");
+	  exit(1);
+	}
+	break;
 #if PLUTT_ROOT
       case 'r':
         if (argc - optind < 2) {

@@ -39,6 +39,7 @@ class RootImpl {
     void Buffer();
     bool Fetch();
     std::pair<Input::Scalar const *, size_t> GetData(size_t);
+    bool NewFileTree(const char *dir);
 
   private:
     void BindBranch(Config &, std::string const &, char const *, char const *,
@@ -178,6 +179,32 @@ RootImpl::RootImpl(Config &a_config, int a_argc, char **a_argv):
     BindBranch(a_config, *it,  "E",  "v", true);
   }
 }
+
+bool RootImpl::NewFileTree(const char *dir)
+{
+  // If file does not exist, just report, do not die in dynamic file list mode.
+  struct stat st;
+  if (0 != stat(dir, &st)) {
+    std::cerr << dir << ": Could not stat.\n";
+    return false;
+  }
+
+  TChain *new_chain;
+
+  new_chain = new TChain(m_chain.GetName());
+
+  printf ("Adding %s\n", dir);
+
+  new_chain->Add(dir);
+
+  m_reader.SetTree(new_chain);
+  m_reader.Restart();
+
+  printf ("Assigned a new tree!\n");
+
+  return true;
+}
+
 
 RootImpl::~RootImpl()
 {
@@ -380,5 +407,11 @@ std::pair<Input::Scalar const *, size_t> Root::GetData(size_t a_id)
 {
   return m_impl->GetData(a_id);
 }
+
+bool Root::NewFileTree(const char *dir)
+{
+  return m_impl->NewFileTree(dir);
+}
+
 
 #endif

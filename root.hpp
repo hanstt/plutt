@@ -42,6 +42,8 @@ class Root: public Input {
     bool Fetch();
     std::pair<Input::Scalar const *, size_t> GetData(size_t);
 
+    bool NewFileTree(const char *);
+
   private:
     Root(Root const &);
     Root &operator=(Root const &);
