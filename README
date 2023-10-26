@@ -51,6 +51,19 @@ there's a couple of things to go through!
 Running
 -------
 
+Suggested packages (Debian):
+
+ccache
+libnlopt-dev
+libsdl2-dev
+
+User-installed:
+
+root
+ucesb
+
+To compile:
+
 make -jN
 ./plutt
 
