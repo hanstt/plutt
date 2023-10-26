@@ -32,7 +32,7 @@ QUIET=@
 
 # ccache?
 
-ifeq ($(shell (ccache --version 2>/dev/null && echo Yes) | grep Yes),Yes)
+ifeq ($(shell (ccache --version 2>/dev/null && echo YesBox) | grep YesBox),YesBox)
 CXX:=ccache g++
 $(info ccache: yes)
 else
@@ -41,7 +41,8 @@ endif
 
 # nlopt?
 
-ifeq ($(shell (pkg-config nlopt 2>/dev/null && echo Yes) | grep Yes),Yes)
+ALLOW_NLOPT=Box
+ifeq ($(shell (pkg-config nlopt 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_NLOPT))
 CPPFLAGS+=-DPLUTT_NLOPT=1
 CXXFLAGS:=$(CXXFLAGS) $(shell pkg-config nlopt --cflags)
 NLOPT_LIBS:=$(shell pkg-config nlopt --libs)
@@ -53,7 +54,8 @@ endif
 
 # ROOT?
 
-ifeq ($(shell ($(ROOT_CONFIG) --version 2>/dev/null && echo Yes) | grep Yes),Yes)
+ALLOW_ROOT=Box
+ifeq ($(shell ($(ROOT_CONFIG) --version 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_ROOT))
 CPPFLAGS+=-DPLUTT_ROOT=1
 ROOT_CFLAGS:=$(shell $(ROOT_CONFIG) --cflags | sed 's/-I/-isystem/')
 LIBS+=$(shell $(ROOT_CONFIG) --libs) -lRHTTP
@@ -66,7 +68,8 @@ endif
 
 # SDL2?
 
-ifeq ($(shell (pkg-config freetype2 sdl2 2>/dev/null && echo Yes) | grep Yes),Yes)
+ALLOW_SDL2=Box
+ifeq ($(shell (pkg-config freetype2 sdl2 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_SDL2))
 CPPFLAGS+=-DPLUTT_SDL2=1
 CXXFLAGS:=$(CXXFLAGS) $(shell pkg-config freetype2 sdl2 --cflags)
 LIBS+=$(shell pkg-config freetype2 sdl2 --libs)
@@ -77,7 +80,8 @@ endif
 
 # UCESB?
 
-ifeq ($(shell ($(UCESB_DIR)/hbook/struct_writer 2>/dev/null && echo Yes) | grep Yes),Yes)
+ALLOW_UCESB=Box
+ifeq ($(shell ($(UCESB_DIR)/hbook/struct_writer 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_UCESB))
 CPPFLAGS+=-DPLUTT_UCESB=1 -isystem $(UCESB_DIR)/hbook
 LIBS+=$(UCESB_DIR)/hbook/ext_data_clnt.o \
 	$(UCESB_DIR)/hbook/ext_data_client.o
