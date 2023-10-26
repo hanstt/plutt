@@ -135,8 +135,8 @@ class VisualHist2: public Visual {
     //size_t m_colormap;
     uint32_t m_xb;
     uint32_t m_yb;
-    LinearTransform m_transformx;
-    LinearTransform m_transformy;
+    LinearTransform m_transform_x;
+    LinearTransform m_transform_y;
     Range m_range_x;
     Range m_range_y;
     Gui::Axis m_axis_x;

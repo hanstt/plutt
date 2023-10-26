@@ -193,8 +193,8 @@ bool SdlGui::Draw(double a_event_rate)
   return true;
 }
 
-void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, bool a_is_log_y,
-    std::vector<uint32_t> const &a_v)
+void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
+    const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v)
 {
   auto page = m_page_vec.at(a_id >> 16);
   auto plot_wrap = page->plot_wrap_vec.at(a_id & 0xffff);
@@ -203,13 +203,8 @@ void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, bool a_is_log_y,
   auto size_tot = m_window->GetSize();
   ImPlutt::Pos size(size_tot.x, size_tot.y - dy);
 
-#if 0
-  /* TODO. */
-  auto minx = m_transform.ApplyAbs(m_axis_copy.min);
-  auto maxx = m_transform.ApplyAbs(m_axis_copy.max);
-#endif
-  auto minx = a_axis.min;
-  auto maxx = a_axis.max;
+  auto minx = a_transform.ApplyAbs(a_axis.min);
+  auto maxx = a_transform.ApplyAbs(a_axis.max);
 
   uint32_t max_y = 1;
   for (auto it = a_v.begin(); a_v.end() != it; ++it) {
@@ -232,7 +227,8 @@ void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, bool a_is_log_y,
 }
 
 void SdlGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const
-    &a_axis_y, bool a_is_log_z, std::vector<uint32_t> const &a_v)
+    &a_axis_y, LinearTransform const &a_transform_x, LinearTransform const
+    &a_transform_y, bool a_is_log_z, std::vector<uint32_t> const &a_v)
 {
   auto page = m_page_vec.at(a_id >> 16);
   auto plot_wrap = page->plot_wrap_vec.at(a_id & 0xffff);
@@ -241,17 +237,10 @@ void SdlGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const
   auto size_tot = m_window->GetSize();
   ImPlutt::Pos size(size_tot.x, size_tot.y - dy);
 
-#if 0
-  /* TODO. */
-  auto minx = m_transformx.ApplyAbs(m_axis_x_copy.min);
-  auto miny = m_transformy.ApplyAbs(m_axis_y_copy.min);
-  auto maxx = m_transformx.ApplyAbs(m_axis_x_copy.max);
-  auto maxy = m_transformy.ApplyAbs(m_axis_y_copy.max);
-#endif
-  auto minx = a_axis_x.min;
-  auto miny = a_axis_y.min;
-  auto maxx = a_axis_x.max;
-  auto maxy = a_axis_y.max;
+  auto minx = a_transform_x.ApplyAbs(a_axis_x.min);
+  auto miny = a_transform_y.ApplyAbs(a_axis_y.min);
+  auto maxx = a_transform_x.ApplyAbs(a_axis_x.max);
+  auto maxy = a_transform_y.ApplyAbs(a_axis_y.max);
 
   if (!plot_wrap->is_log_set) {
     plot_wrap->is_log_set = true;

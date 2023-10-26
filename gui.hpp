@@ -22,6 +22,8 @@
 #ifndef GUI_HPP
 #define GUI_HPP
 
+class LinearTransform;
+
 /*
  * GUI interface for plots and such.
  */
@@ -51,10 +53,11 @@ class Gui {
 
     virtual bool Draw(double) = 0;
 
-    virtual void DrawHist1(uint32_t, Axis const &, bool,
-        std::vector<uint32_t> const &) = 0;
-    virtual void DrawHist2(uint32_t, Axis const &, Axis const &, bool,
-        std::vector<uint32_t> const &) = 0;
+    virtual void DrawHist1(uint32_t, Axis const &, LinearTransform const &,
+        bool, std::vector<uint32_t> const &) = 0;
+    virtual void DrawHist2(uint32_t, Axis const &, Axis const &,
+        LinearTransform const &, LinearTransform const &,
+        bool, std::vector<uint32_t> const &) = 0;
 
     friend class GuiCollection;
 };
@@ -71,8 +74,9 @@ class GuiCollection {
     bool Draw(double);
 
     void DrawHist1(Gui *, uint32_t, Gui::Axis const &,
-        bool, std::vector<uint32_t> const &);
+        LinearTransform const &, bool, std::vector<uint32_t> const &);
     void DrawHist2(Gui *, uint32_t, Gui::Axis const &, Gui::Axis const &,
+        LinearTransform const &, LinearTransform const &,
         bool, std::vector<uint32_t> const &);
 
   private:

@@ -318,7 +318,8 @@ void VisualHist::Draw(Gui *a_gui)
   }
 #endif
 
-  g_gui.DrawHist1(a_gui, m_gui_id, m_axis_copy, m_is_log_y, m_hist_copy);
+  g_gui.DrawHist1(a_gui, m_gui_id, m_axis_copy, m_transform, m_is_log_y,
+      m_hist_copy);
 
 #if 0
   // Draw fits.
@@ -507,8 +508,8 @@ VisualHist2::VisualHist2(std::string const &a_title, size_t a_colormap,
   //m_colormap(a_colormap),
   m_xb(a_xb),
   m_yb(a_yb),
-  m_transformx(a_tx),
-  m_transformy(a_ty),
+  m_transform_x(a_tx),
+  m_transform_y(a_ty),
   m_range_x(a_drop_old_s),
   m_range_y(a_drop_old_s),
   m_axis_x(),
@@ -528,8 +529,8 @@ void VisualHist2::Draw(Gui *a_gui)
   if (m_hist_copy.empty()) {
     return;
   }
-  g_gui.DrawHist2(a_gui, m_gui_id, m_axis_x_copy, m_axis_y_copy, m_is_log_z,
-      m_hist_copy);
+  g_gui.DrawHist2(a_gui, m_gui_id, m_axis_x_copy, m_axis_y_copy,
+      m_transform_x, m_transform_y, m_is_log_z, m_hist_copy);
 }
 
 void VisualHist2::Fill(Input::Type a_type_y, Input::Scalar const &a_y,

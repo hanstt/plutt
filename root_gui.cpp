@@ -194,8 +194,9 @@ bool RootGui::Draw(double a_event_rate)
   return !gSystem->ProcessEvents();
 }
 
-void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, bool a_is_log_y,
-    std::vector<uint32_t> const &a_v)
+// TODO: Use axis transform.
+void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
+    const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v)
 {
   auto page_i = a_id >> 16;
   auto plot_i = a_id & 0xffff;
@@ -229,8 +230,10 @@ void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, bool a_is_log_y,
   }
 }
 
+// TODO: Use axis transform.
 void RootGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const
-    &a_axis_y, bool a_is_log_z, std::vector<uint32_t> const &a_v)
+    &a_axis_y, LinearTransform const &a_tranform_x, LinearTransform const
+    &a_transform_y, bool a_is_log_z, std::vector<uint32_t> const &a_v)
 {
   auto page_i = a_id >> 16;
   auto plot_i = a_id & 0xffff;

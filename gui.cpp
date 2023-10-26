@@ -109,22 +109,25 @@ bool GuiCollection::Draw(double a_event_rate)
 }
 
 void GuiCollection::DrawHist1(Gui *a_gui, uint32_t a_id, Gui::Axis const
-    &a_axis, bool a_is_log_y, std::vector<uint32_t> const &a_v)
-{
-  auto it = m_gui_map.find(a_gui);
-  assert(m_gui_map.end() != it);
-  auto gui_i = it->second;
-  auto const &pe = m_plot_vec.at(a_id);
-  a_gui->DrawHist1(pe.id_vec.at(gui_i), a_axis, a_is_log_y, a_v);
-}
-
-void GuiCollection::DrawHist2(Gui *a_gui, uint32_t a_id, Gui::Axis const
-    &a_axis_x, Gui::Axis const &a_axis_y, bool a_is_log_z,
+    &a_axis, LinearTransform const &a_transform, bool a_is_log_y,
     std::vector<uint32_t> const &a_v)
 {
   auto it = m_gui_map.find(a_gui);
   assert(m_gui_map.end() != it);
   auto gui_i = it->second;
   auto const &pe = m_plot_vec.at(a_id);
-  a_gui->DrawHist2(pe.id_vec.at(gui_i), a_axis_x, a_axis_y, a_is_log_z, a_v);
+  a_gui->DrawHist1(pe.id_vec.at(gui_i), a_axis, a_transform, a_is_log_y, a_v);
+}
+
+void GuiCollection::DrawHist2(Gui *a_gui, uint32_t a_id, Gui::Axis const
+    &a_axis_x, Gui::Axis const &a_axis_y, LinearTransform const
+    &a_transform_x, LinearTransform const &a_transform_y, bool a_is_log_z,
+    std::vector<uint32_t> const &a_v)
+{
+  auto it = m_gui_map.find(a_gui);
+  assert(m_gui_map.end() != it);
+  auto gui_i = it->second;
+  auto const &pe = m_plot_vec.at(a_id);
+  a_gui->DrawHist2(pe.id_vec.at(gui_i), a_axis_x, a_axis_y, a_transform_x,
+      a_transform_y, a_is_log_z, a_v);
 }
