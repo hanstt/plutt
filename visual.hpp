@@ -68,14 +68,6 @@ class Range {
 
 class Visual: public Gui::Plot {
   public:
-    struct Peak {
-      Peak(double, double, double, double);
-      double peak_x;
-      double ofs_y;
-      double amp_y;
-      double std_x;
-    };
-
     Visual(std::string const &);
     virtual ~Visual();
     virtual void Draw(Gui *) = 0;
@@ -113,7 +105,7 @@ class VisualHist: public Visual {
     Gui::Axis m_axis_copy;
     std::vector<uint32_t> m_hist_copy;
     bool m_is_log_y;
-    std::vector<Peak> m_peak_vec;
+    std::vector<Gui::Peak> m_peak_vec;
 };
 
 class VisualHist2: public Visual {

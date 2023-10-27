@@ -44,7 +44,7 @@ class RootGui: public Gui {
     bool Draw(double);
 
     void DrawHist1(uint32_t, Axis const &, LinearTransform const &, bool,
-        std::vector<uint32_t> const &);
+        std::vector<uint32_t> const &, std::vector<Peak> const &);
     void DrawHist2(uint32_t, Axis const &, Axis const &,
         LinearTransform const &, LinearTransform const &,
         bool, std::vector<uint32_t> const &);

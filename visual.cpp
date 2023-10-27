@@ -254,15 +254,6 @@ double Range::GetSigma() const
   return sqrt((sum2 - sum * sum / num) / num);
 }
 
-Visual::Peak::Peak(double a_peak_x, double a_ofs_y, double a_amp_y, double
-    a_std_x):
-  peak_x(a_peak_x),
-  ofs_y(a_ofs_y),
-  amp_y(a_amp_y),
-  std_x(a_std_x)
-{
-}
-
 Visual::Visual(std::string const &a_name):
   m_name(a_name),
   m_gui_id(g_gui.AddPlot(m_name, this))
@@ -305,7 +296,6 @@ void VisualHist::Draw(Gui *a_gui)
     return;
   }
 
-#if 0
   // Fitting at 1 Hz should be fine?
   switch (m_fitter) {
     case FITTER_NONE:
@@ -316,34 +306,9 @@ void VisualHist::Draw(Gui *a_gui)
     default:
       throw std::runtime_error(__func__);
   }
-#endif
 
   g_gui.DrawHist1(a_gui, m_gui_id, m_axis_copy, m_transform, m_is_log_y,
-      m_hist_copy);
-
-#if 0
-  // Draw fits.
-  for (auto it = m_peak_vec.begin(); m_peak_vec.end() != it; ++it) {
-    std::vector<ImPlutt::Point> l(20);
-    auto x = m_transform.ApplyAbs(it->peak_x);
-    auto std = m_transform.ApplyRel(it->std_x);
-    auto denom = 1 / (2 * std * std);
-    auto left = x - 3 * std;
-    auto right = x + 3 * std;
-    auto scale = (right - left) / (uint32_t)l.size();
-    for (uint32_t i = 0; i < l.size(); ++i) {
-      l[i].x = (i + 0.5) * scale + left;
-      auto d = l[i].x - x;
-      l[i].y = it->ofs_y + it->amp_y * exp(-d*d * denom);
-    }
-    a_window->VisualLines(&plot, l);
-    char buf[256];
-    snprintf(buf, sizeof buf, "%.3f/%.3f", x, std);
-    auto text_y = it->ofs_y + it->amp_y;
-    a_window->VisualText(&plot, buf, ImPlutt::Point(x, text_y),
-        ImPlutt::TEXT_RIGHT, false, true);
-  }
-#endif
+      m_hist_copy, m_peak_vec);
 }
 
 void VisualHist::Fill(Input::Type a_type, Input::Scalar const &a_x)
@@ -489,7 +454,7 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
         auto mean_x = a_axis.min + mean * scale;
         auto std_x = fit.GetStd() * scale;
         auto ofs = fit.GetOfs();
-        m_peak_vec.push_back(Peak(mean_x, ofs, fit.GetAmp(), std_x));
+        m_peak_vec.push_back(Gui::Peak(mean_x, ofs, fit.GetAmp(), std_x));
       }
     } catch (...) {
     }
@@ -624,7 +589,3 @@ void VisualHist2::Prefill(Input::Type a_type_y, Input::Scalar const &a_y,
   m_range_x.Add(a_type_x, a_x);
   m_range_y.Add(a_type_y, a_y);
 }
-
-#if 0
-
-#endif

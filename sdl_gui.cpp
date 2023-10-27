@@ -194,7 +194,8 @@ bool SdlGui::Draw(double a_event_rate)
 }
 
 void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
-    const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v)
+    const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v,
+    std::vector<Peak> const &a_peak_vec)
 {
   auto page = m_page_vec.at(a_id >> 16);
   auto plot_wrap = page->plot_wrap_vec.at(a_id & 0xffff);
@@ -224,6 +225,28 @@ void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
   m_window->PlotHist1(&plot,
       minx, maxx,
       a_v, (size_t)a_axis.bins);
+
+  // Draw fits.
+  for (auto it = a_peak_vec.begin(); a_peak_vec.end() != it; ++it) {
+    std::vector<ImPlutt::Point> l(20);
+    auto x = a_transform.ApplyAbs(it->peak_x);
+    auto std = a_transform.ApplyRel(it->std_x);
+    auto denom = 1 / (2 * std * std);
+    auto left = x - 3 * std;
+    auto right = x + 3 * std;
+    auto scale = (right - left) / (uint32_t)l.size();
+    for (uint32_t i = 0; i < l.size(); ++i) {
+      l[i].x = (i + 0.5) * scale + left;
+      auto d = l[i].x - x;
+      l[i].y = it->ofs_y + it->amp_y * exp(-d*d * denom);
+    }
+    m_window->PlotLines(&plot, l);
+    char buf[256];
+    snprintf(buf, sizeof buf, "%.3f/%.3f", x, std);
+    auto text_y = it->ofs_y + it->amp_y;
+    m_window->PlotText(&plot, buf, ImPlutt::Point(x, text_y),
+        ImPlutt::TEXT_RIGHT, false, true);
+  }
 }
 
 void SdlGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const

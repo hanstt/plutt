@@ -33,6 +33,15 @@ void Gui::Axis::Clear()
   max = 0.0;
 }
 
+Gui::Peak::Peak(double a_peak_x, double a_ofs_y, double a_amp_y, double
+    a_std_x):
+  peak_x(a_peak_x),
+  ofs_y(a_ofs_y),
+  amp_y(a_amp_y),
+  std_x(a_std_x)
+{
+}
+
 Gui::Plot::~Plot()
 {
 }
@@ -110,13 +119,15 @@ bool GuiCollection::Draw(double a_event_rate)
 
 void GuiCollection::DrawHist1(Gui *a_gui, uint32_t a_id, Gui::Axis const
     &a_axis, LinearTransform const &a_transform, bool a_is_log_y,
-    std::vector<uint32_t> const &a_v)
+    std::vector<uint32_t> const &a_v, std::vector<Gui::Peak> const
+    &a_peak_vec)
 {
   auto it = m_gui_map.find(a_gui);
   assert(m_gui_map.end() != it);
   auto gui_i = it->second;
   auto const &pe = m_plot_vec.at(a_id);
-  a_gui->DrawHist1(pe.id_vec.at(gui_i), a_axis, a_transform, a_is_log_y, a_v);
+  a_gui->DrawHist1(pe.id_vec.at(gui_i), a_axis, a_transform, a_is_log_y, a_v,
+      a_peak_vec);
 }
 
 void GuiCollection::DrawHist2(Gui *a_gui, uint32_t a_id, Gui::Axis const
