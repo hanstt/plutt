@@ -26,11 +26,13 @@
 #include <sstream>
 
 #include <TCanvas.h>
+#include <TGraph.h>
 #include <TH1I.h>
 #include <TH2I.h>
 #include <THttpServer.h>
 #include <TROOT.h>
 #include <TSystem.h>
+#include <TText.h>
 
 #include <root_gui.hpp>
 
@@ -195,7 +197,6 @@ bool RootGui::Draw(double a_event_rate)
 }
 
 // TODO: Use axis transform.
-// TODO: Use peak vector.
 void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
     const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v,
     std::vector<Peak> const &a_peak_vec)
@@ -229,6 +230,40 @@ void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
   }
   for (size_t i = 0; i < a_axis.bins; ++i) {
     plot->h1->SetBinContent(1 + (int)i, a_v.at(i));
+  }
+
+  // Fit-peak graph.
+  plot->gr_vec.resize(a_peak_vec.size());
+  plot->tx_vec.resize(a_peak_vec.size());
+  size_t gr_i = 0;
+  for (auto it = a_peak_vec.begin(); a_peak_vec.end() != it; ++it) {
+    auto &gr = plot->gr_vec.at(gr_i);
+    auto &tx = plot->tx_vec.at(gr_i);
+    gr.Set(20);
+    gr.SetLineColor(kRed);
+    //auto x = a_transform.ApplyAbs(it->peak_x);
+    //auto std = a_transform.ApplyRel(it->std_x);
+    auto x0 = it->peak_x;
+    auto std = it->std_x;
+    auto denom = 1 / (2 * std * std);
+    auto left = x0 - 3 * std;
+    auto right = x0 + 3 * std;
+    auto scale = (right - left) / gr.GetN();
+    for (int i = 0; i < gr.GetN(); ++i) {
+      auto x = (i + 0.5) * scale + left;
+      auto d = x - x0;
+      auto y = it->ofs_y + it->amp_y * exp(-d*d * denom);
+      gr.SetPoint(i, x, y);
+    }
+    gr.Draw("L");
+    char buf[256];
+    snprintf(buf, sizeof buf, "%.3f/%.3f", x0, std);
+    auto text_y = it->ofs_y + it->amp_y;
+    tx.SetTextFont(40);
+    tx.SetTextSize(0.02f);
+    tx.SetText(x0, text_y, buf);
+    tx.Draw();
+    ++gr_i;
   }
 }
 

@@ -27,9 +27,11 @@
 #include <gui.hpp>
 
 class TCanvas;
+class TGraph;
 class TH1I;
 class TH2I;
 class THttpServer;
+class TText;
 
 class RootGui: public Gui {
   public:
@@ -63,6 +65,8 @@ class RootGui: public Gui {
       Plot *plot;
       TH1I *h1;
       TH2I *h2;
+      std::vector<TGraph> gr_vec;
+      std::vector<TText> tx_vec;
       bool do_clear;
       bool is_log_set;
       bool is_log;
