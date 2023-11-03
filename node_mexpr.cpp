@@ -145,7 +145,7 @@ void NodeMExpr::Process(uint64_t a_evid)
         case ATAN: v = atan(l); break;
         case SQRT: v = sqrt(l); break;
         case EXP:  v = exp(l); break;
-        case LOG:  v = log(l); break;
+        case LOG:  v = (1 == m_mix) ? log(l) : log(r) / log(m_d); break;
         case ABS:  v = std::abs(l); break;
         case POW:  v = pow(l, r); break;
       }

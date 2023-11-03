@@ -546,6 +546,9 @@ mexpr
 	| TK_SQRT '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0, SQRT); }
 	| TK_EXP  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  EXP); }
 	| TK_LOG  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  LOG); }
+	| TK_LOG  '(' const ',' mexpr ')' {
+		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(),  LOG);
+	}
 	| TK_ABS  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  ABS); }
 	| TK_POW  '(' mexpr ',' const ')' {
 		MEXPR(@1, $$, $3, nullptr, $5.GetDouble(), POW);
