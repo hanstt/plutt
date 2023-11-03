@@ -554,7 +554,7 @@ mexpr
 		MEXPR(@1, $$, $3, nullptr, $5.GetDouble(), POW);
 	}
 	| TK_POW  '(' const ',' mexpr ')' {
-		MEXPR(@1, $$, $5, nullptr, $3.GetDouble(), POW);
+		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(), POW);
 	}
 
 bitfield_args
