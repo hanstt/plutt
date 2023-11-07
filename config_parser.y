@@ -208,6 +208,7 @@ static double g_drop_old = -1.0;
 %type <u32> cmp_less
 %type <value> coarse_fine
 %type <c> const
+%type <str> hist_name
 %type <range> integer_range
 %type <value> length
 %type <value> max
@@ -596,6 +597,9 @@ cluster
 		free($5);
 	}
 
+hist_name
+	: { $$ = NULL; }
+	| TK_STRING ',' { $$ = $1; }
 hist_cut
 	: cut_invoc {
 		LOC_SAVE(@1);
@@ -645,9 +649,9 @@ coarse_fine
 		$$ = g_config->AddCoarseFine($3, $5, $7);
 	}
 hist
-	: TK_HIST '(' TK_STRING ',' value hist_opts ')' {
+	: TK_HIST '(' hist_name value hist_opts ')' {
 		LOC_SAVE(@1);
-		g_config->AddHist1($3, $5, g_binsx, g_transformx, g_fit,
+		g_config->AddHist1($3, $4, g_binsx, g_transformx, g_fit,
 		    g_logy, g_drop_old);
 		g_binsx = 0;
 		free(g_transformx); g_transformx = nullptr;
@@ -656,9 +660,9 @@ hist
 		g_drop_old = -1.0;
 		free($3);
 	}
-	| TK_HIST2D '(' TK_STRING ',' value hist2d_opts ')' {
+	| TK_HIST2D '(' hist_name value hist2d_opts ')' {
 		LOC_SAVE(@1);
-		g_config->AddHist2($3, $5, nullptr, g_binsy, g_binsx,
+		g_config->AddHist2($3, $4, nullptr, g_binsy, g_binsx,
 		    g_transformy, g_transformx, g_fit, g_logz, g_drop_old);
 		g_binsx = 0;
 		g_binsy = 0;
@@ -669,9 +673,9 @@ hist
 		g_drop_old = -1.0;
 		free($3);
 	}
-	| TK_HIST2D '(' TK_STRING ',' value ',' value hist2d_opts ')' {
+	| TK_HIST2D '(' hist_name value ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
-		g_config->AddHist2($3, $5, $7, g_binsy, g_binsx,
+		g_config->AddHist2($3, $4, $6, g_binsy, g_binsx,
 		    g_transformy, g_transformx, g_fit, g_logz, g_drop_old);
 		g_binsx = 0;
 		g_binsy = 0;
