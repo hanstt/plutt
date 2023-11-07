@@ -91,26 +91,31 @@ namespace {
 
   void help(char const *a_msg)
   {
+    std::cout << "\n";
     if (a_msg) {
       std::cerr << a_msg << '\n';
+      std::cout << "\n";
     }
     std::cout << "Usage: " << g_arg0 <<
         " -f config [-g gui] [-j jobs] input...\n";
-    std::cout << "-g values (this arg can be repeated):";
+    std::cout << "\n";
+    std::cout << " -g values (this arg can be repeated):";
 #if PLUTT_SDL2
     std::cout << " sdl";
 #endif
 #if PLUTT_ROOT
     std::cout << " root";
 #endif
-    std::cout << "\n";
+    std::cout << "\n\n";
     std::cout << "Input options:\n";
+    std::cout << "\n";
 #if PLUTT_ROOT
     std::cout << " -r tree-name root-files...\n";
 #endif
 #if PLUTT_UCESB
     std::cout << " -u unpacker args...\n";
 #endif
+    std::cout << "\n";
     exit(a_msg ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
