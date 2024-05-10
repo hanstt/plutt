@@ -1,6 +1,6 @@
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023
+# Copyright (C) 2023, 2024
 # Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 # Håkan T Johansson <f96hajo@chalmers.se>
 #
@@ -115,7 +115,7 @@ endif
 CPPFLAGS:=$(CPPFLAGS) -MMD \
 	-I$(BUILD_DIR) -I.
 CXXFLAGS_UNSAFE:=$(CXXFLAGS) -fPIC -std=c++11
-CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Weffc++ -Werror -Wshadow
+CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Weffc++ -Werror -Wshadow -Wswitch
 LDFLAGS:=$(LDFLAGS) -fPIC
 
 MKDIR=[ -d $(@D) ] || mkdir -p $(@D)

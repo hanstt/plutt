@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2024
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Håkan T Johansson <f96hajo@chalmers.se>
  *
@@ -147,6 +147,7 @@ void NodeSignal::Process(uint64_t a_evid)
         } \
         break
       COPY_M_HIT(kUint64, u64);
+      COPY_M_HIT(kInt64, u64);
       COPY_M_HIT(kDouble, dbl);
       default:
         throw std::runtime_error(__func__);

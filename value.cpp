@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -45,11 +46,15 @@ int Value::Cmp(Input::Scalar const &a_l, Input::Scalar const &a_r) const
       if (a_l.u64 < a_r.u64) return -1;
       if (a_l.u64 > a_r.u64) return 1;
       return 0;
+    case Input::kInt64:
+      if (a_l.i64 < a_r.i64) return -1;
+      if (a_l.i64 > a_r.i64) return 1;
+      return 0;
     case Input::kDouble:
       if (a_l.dbl < a_r.dbl) return -1;
       if (a_l.dbl > a_r.dbl) return 1;
       return 0;
-    default:
+    case Input::kNone:
       throw std::runtime_error(__func__);
   }
   // Some compilers aren't quite smart enough...
@@ -87,9 +92,17 @@ double Value::GetV(uint32_t a_i, bool a_do_signed) const
         }
         return (double)u64;
       }
+    case Input::kInt64:
+      {
+        auto u64 = m_v.at(a_i).i64;
+        if (a_do_signed) {
+          return (double)(int64_t)u64;
+        }
+        return (double)u64;
+      }
     case Input::kDouble:
       return m_v.at(a_i).dbl;
-    default:
+    case Input::kNone:
       throw std::runtime_error(__func__);
   }
 }

@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,9 +28,11 @@ double Input::Scalar::GetDouble(Input::Type a_type) const
   switch (a_type) {
     case kUint64:
       return (double)u64;
+    case kInt64:
+      return (double)i64;
     case kDouble:
       return dbl;
-    default:
+    case kNone:
       throw std::runtime_error(__func__);
   }
 }

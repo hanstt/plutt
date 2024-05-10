@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2024
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Håkan T Johansson <f96hajo@chalmers.se>
  *
@@ -54,11 +54,13 @@ class Input {
     enum Type {
       kNone,
       kUint64,
+      kInt64,
       kDouble
     };
     union Scalar {
       double GetDouble(Type) const;
       uint64_t u64;
+      int64_t i64;
       double dbl;
     };
 

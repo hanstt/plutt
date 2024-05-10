@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -670,10 +671,13 @@ void Config::DoEvent(Input *a_input)
         case Input::kUint64:
           CLOCK_MATCH_PREP(u64);
           break;
+        case Input::kInt64:
+          CLOCK_MATCH_PREP(u64);
+          break;
         case Input::kDouble:
           CLOCK_MATCH_PREP(dbl);
           break;
-        default:
+        case Input::kNone:
           throw std::runtime_error(__func__);
       }
       if (0 == m_clock_match.t0) {

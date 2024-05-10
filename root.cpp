@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2024
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Håkan T Johansson <f96hajo@chalmers.se>
  *
@@ -55,6 +55,14 @@ class RootImpl {
         in_type(a_in_type),
         out_type(a_out_type),
         is_vector(a_is_vector),
+        val_char(),
+        arr_char(),
+        val_short(),
+        arr_short(),
+        val_int(),
+        arr_int(),
+        val_long(),
+        arr_long(),
         val_uchar(),
         arr_uchar(),
         val_ushort(),
@@ -75,6 +83,14 @@ class RootImpl {
         in_type(),
         out_type(),
         is_vector(),
+        val_char(),
+        arr_char(),
+        val_short(),
+        arr_short(),
+        val_int(),
+        arr_int(),
+        val_long(),
+        arr_long(),
         val_uchar(),
         arr_uchar(),
         val_ushort(),
@@ -100,6 +116,14 @@ class RootImpl {
       EDataType in_type;
       Input::Type out_type;
       bool is_vector;
+      TTreeReaderValue<Char_t> *val_char;
+      TTreeReaderArray<Char_t> *arr_char;
+      TTreeReaderValue<Short_t> *val_short;
+      TTreeReaderArray<Short_t> *arr_short;
+      TTreeReaderValue<Int_t> *val_int;
+      TTreeReaderArray<Int_t> *arr_int;
+      TTreeReaderValue<Long_t> *val_long;
+      TTreeReaderArray<Long_t> *arr_long;
       TTreeReaderValue<UChar_t> *val_uchar;
       TTreeReaderArray<UChar_t> *arr_uchar;
       TTreeReaderValue<UShort_t> *val_ushort;
@@ -126,6 +150,14 @@ class RootImpl {
         // there's really only one place for these.
         // The ownership is really with RootImpl since it allocates, so it
         // must also delete.
+        val_char = a_e.val_char;
+        arr_char = a_e.arr_char;
+        val_short = a_e.val_short;
+        arr_short = a_e.arr_short;
+        val_int = a_e.val_int;
+        arr_int = a_e.arr_int;
+        val_long = a_e.val_long;
+        arr_long = a_e.arr_long;
         val_uchar = a_e.val_uchar;
         arr_uchar = a_e.arr_uchar;
         val_ushort = a_e.val_ushort;
@@ -242,7 +274,15 @@ void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
     case kUShort_t:
     case kUInt_t:
     case kULong_t:
+    case kULong64_t:
       out_type = Input::kUint64;
+      break;
+    case kChar_t:
+    case kShort_t:
+    case kInt_t:
+    case kLong_t:
+    case kLong64_t:
+      out_type = Input::kInt64;
       break;
     case kFloat_t:
     case kDouble_t:
@@ -272,6 +312,10 @@ void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
       } \
       break
 
+    READER_MAKE_TYPE(kChar_t,   Char_t,   char);
+    READER_MAKE_TYPE(kShort_t,  Short_t,  short);
+    READER_MAKE_TYPE(kInt_t,    Int_t,    int);
+    READER_MAKE_TYPE(kLong_t,   Long_t,   long);
     READER_MAKE_TYPE(kUChar_t,  UChar_t,  uchar);
     READER_MAKE_TYPE(kUShort_t, UShort_t, ushort);
     READER_MAKE_TYPE(kUInt_t,   UInt_t,   uint);
@@ -293,25 +337,29 @@ void RootImpl::Buffer()
   for (auto it = m_branch_vec.begin(); m_branch_vec.end() != it; ++it) {
     // TODO: Error-checking!
     switch (it->in_type) {
-#define BUF_COPY_TYPE(root_type, reader_type, s_type) \
+#define BUF_COPY_TYPE(root_type, reader_type, s_type, s_member) \
       case root_type: \
         if (it->is_vector) { \
           auto const size = it->arr_##reader_type->GetSize(); \
           it->buf.resize(size); \
           for (size_t i = 0; i < size; ++i) { \
-            it->buf[i].s_type = it->arr_##reader_type->At(i); \
+            it->buf[i].s_member = (s_type)it->arr_##reader_type->At(i); \
           } \
         } else { \
           it->buf.resize(1); \
-          it->buf[0].s_type = **it->val_##reader_type; \
+          it->buf[0].s_member = (s_type)**it->val_##reader_type; \
         } \
         break
-      BUF_COPY_TYPE(kUChar_t,  uchar,  u64);
-      BUF_COPY_TYPE(kUShort_t, ushort, u64);
-      BUF_COPY_TYPE(kUInt_t,   uint,   u64);
-      BUF_COPY_TYPE(kULong_t,  ulong,  u64);
-      BUF_COPY_TYPE(kFloat_t,  float,  dbl);
-      BUF_COPY_TYPE(kDouble_t, double, dbl);
+      BUF_COPY_TYPE(kChar_t,   char,   uint64_t, u64);
+      BUF_COPY_TYPE(kShort_t,  short,  uint64_t, u64);
+      BUF_COPY_TYPE(kInt_t,    int,    uint64_t, u64);
+      BUF_COPY_TYPE(kLong_t,   long,   uint64_t, u64);
+      BUF_COPY_TYPE(kUChar_t,  uchar,  uint64_t, u64);
+      BUF_COPY_TYPE(kUShort_t, ushort, uint64_t, u64);
+      BUF_COPY_TYPE(kUInt_t,   uint,   uint64_t, u64);
+      BUF_COPY_TYPE(kULong_t,  ulong,  uint64_t, u64);
+      BUF_COPY_TYPE(kFloat_t,  float,  double,   dbl);
+      BUF_COPY_TYPE(kDouble_t, double, double,   dbl);
       default:
         std::cerr << it->name << ": Non-implemented input type.\n";
         throw std::runtime_error(__func__);
