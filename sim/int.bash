@@ -21,6 +21,6 @@
 # MA  02110-1301  USA
 
 cd $(dirname $0)
-root -q gauss.C
-../plutt -f gauss.plutt -r T gauss.root
-rm -f gauss.root
+root -q int.C
+../plutt -f int.plutt -r T int.root
+rm -f int.root

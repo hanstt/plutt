@@ -1,5 +1,3 @@
-#/bin/bash
-
 # plutt, a scriptable monitor for experimental data.
 #
 # Copyright (C) 2023, 2024
@@ -20,7 +18,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301  USA
 
-cd $(dirname $0)
-root -q gauss.C
-../plutt -f gauss.plutt -r T gauss.root
-rm -f gauss.root
+hist("i", i)
+
+#hist("i, binsi=10", i, binsx=10)
+
+hist("i, logy", i, logy)
+
+#hist("i, fit", i, fit="gauss")
+
+hist2d("i vs i", i, i)
+
+hist2d("j vs i", j, i)
+
+#hist2d("j vs i, bins=10/50", j, i, binsx=10, binsy=50)
+
+hist2d("j vs i, logz", j, i, logz)
