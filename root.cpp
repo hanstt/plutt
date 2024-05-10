@@ -269,7 +269,11 @@ void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
     throw std::runtime_error(__func__);
   }
   Input::Type out_type;
-  switch (exp_type) {
+  /*
+   * Cast away enum, new ROOT primitive types are out of our control.
+   * Happens a few times in this file!
+   */
+  switch ((unsigned)exp_type) {
     case kUChar_t:
     case kUShort_t:
     case kUInt_t:
@@ -300,7 +304,7 @@ void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
   auto &entry = m_branch_vec.back();
 
   // Reader instantiation ladder.
-  switch (exp_type) {
+  switch ((unsigned)exp_type) {
 #define READER_MAKE_TYPE(root_type, c_type, reader_type)     \
     case root_type: \
       if (is_vector) { \
@@ -336,7 +340,7 @@ void RootImpl::Buffer()
   // Copy from readers to vectors.
   for (auto it = m_branch_vec.begin(); m_branch_vec.end() != it; ++it) {
     // TODO: Error-checking!
-    switch (it->in_type) {
+    switch ((unsigned)it->in_type) {
 #define BUF_COPY_TYPE(root_type, reader_type, s_type, s_member) \
       case root_type: \
         if (it->is_vector) { \

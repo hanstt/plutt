@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -320,11 +321,15 @@ void VisualHist::Fill(Input::Type a_type, Input::Scalar const &a_x)
   double dx;
   switch (a_type) {
     case Input::kUint64:
-      dx = U64SubDouble(a_x.u64, m_axis.min);
+      dx = IntSubDouble(a_x.u64, m_axis.min);
+      break;
+    case Input::kInt64:
+      dx = IntSubDouble(a_x.i64, m_axis.min);
       break;
     case Input::kDouble:
       dx = a_x.dbl - m_axis.min;
       break;
+    case Input::kNone:
     default:
       throw std::runtime_error(__func__);
   }
@@ -509,22 +514,30 @@ void VisualHist2::Fill(Input::Type a_type_y, Input::Scalar const &a_y,
   double dx;
   switch (a_type_x) {
     case Input::kUint64:
-      dx = U64SubDouble(a_x.u64, m_axis_x.min);
+      dx = IntSubDouble(a_x.u64, m_axis_x.min);
+      break;
+    case Input::kInt64:
+      dx = IntSubDouble(a_x.i64, m_axis_x.min);
       break;
     case Input::kDouble:
       dx = a_x.dbl - m_axis_x.min;
       break;
+    case Input::kNone:
     default:
       throw std::runtime_error(__func__);
   }
   double dy;
   switch (a_type_y) {
     case Input::kUint64:
-      dy = U64SubDouble(a_y.u64, m_axis_y.min);
+      dy = IntSubDouble(a_y.u64, m_axis_y.min);
+      break;
+    case Input::kInt64:
+      dy = IntSubDouble(a_y.i64, m_axis_y.min);
       break;
     case Input::kDouble:
       dy = a_y.dbl - m_axis_y.min;
       break;
+    case Input::kNone:
     default:
       throw std::runtime_error(__func__);
   }

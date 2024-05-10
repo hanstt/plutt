@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2024
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Bastian Loeher <b.loeher@gsi.de>
  *
@@ -313,6 +313,7 @@ int main(int argc, char **argv)
       g_input = new Unpacker(*g_config, argc, argv);
       break;
 #endif
+    case INPUT_NONE:
     default:
       throw std::runtime_error(__func__);
   }

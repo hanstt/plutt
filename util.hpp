@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -79,10 +80,17 @@ uint64_t Time_get_ms();
 void Time_set_ms(uint64_t);
 void Time_wait_ms(uint32_t);
 
-// Subtract a double from a uint64_t:
-//  -) The u64 is "small" -> treat it like a double.
-//  -) The u64 is "huge" -> treat the limit like a u64.
-double U64SubDouble(uint64_t, double);
+// Subtract a double from an integer:
+//  -) The int is "small" -> treat it like a double.
+//  -) The int is "huge" -> treat it like an int.
+template <typename T>
+double IntSubDouble(T a_int, double a_dbl)
+{
+  if (a_int > (T)1e10) {
+    return (double)(a_int - (T)a_dbl);
+  }
+  return (double)a_int - a_dbl;
+}
 
 // UTF-8.
 // Goes to the character left of str[ofs].

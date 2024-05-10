@@ -33,6 +33,7 @@ double Input::Scalar::GetDouble(Input::Type a_type) const
     case kDouble:
       return dbl;
     case kNone:
-      throw std::runtime_error(__func__);
+      break;
   }
+  throw std::runtime_error(__func__);
 }

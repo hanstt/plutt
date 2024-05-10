@@ -55,10 +55,9 @@ int Value::Cmp(Input::Scalar const &a_l, Input::Scalar const &a_r) const
       if (a_l.dbl > a_r.dbl) return 1;
       return 0;
     case Input::kNone:
-      throw std::runtime_error(__func__);
+      break;
   }
-  // Some compilers aren't quite smart enough...
-  return 0;
+  throw std::runtime_error(__func__);
 }
 
 Input::Type Value::GetType() const
@@ -103,8 +102,9 @@ double Value::GetV(uint32_t a_i, bool a_do_signed) const
     case Input::kDouble:
       return m_v.at(a_i).dbl;
     case Input::kNone:
-      throw std::runtime_error(__func__);
+      break;
   }
+  throw std::runtime_error(__func__);
 }
 
 void Value::Push(uint32_t a_i, Input::Scalar const &a_v)

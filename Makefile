@@ -115,7 +115,7 @@ endif
 CPPFLAGS:=$(CPPFLAGS) -MMD \
 	-I$(BUILD_DIR) -I.
 CXXFLAGS_UNSAFE:=$(CXXFLAGS) -fPIC -std=c++11
-CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Weffc++ -Werror -Wshadow -Wswitch
+CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Weffc++ -Werror -Wshadow -Wswitch-enum
 LDFLAGS:=$(LDFLAGS) -fPIC
 
 MKDIR=[ -d $(@D) ] || mkdir -p $(@D)

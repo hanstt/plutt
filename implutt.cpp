@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2024
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Bastian Loeher <b.loeher@gsi.de>
  * Håkan T Johansson <f96hajo@chalmers.se>
@@ -1648,6 +1648,11 @@ namespace ImPlutt {
                   break;
               }
               break;
+            case PlotState::PROJ_X:
+            case PlotState::PROJ_Y:
+            case PlotState::ZOOM_X:
+            case PlotState::ZOOM_Y:
+            case PlotState::ZOOM_XY:
             default:
               break;
           }
@@ -1698,6 +1703,11 @@ namespace ImPlutt {
                     PointFromPosY(it->pointer.y - l.cursor.y)));
               }
               break;
+            case PlotState::PROJ_X:
+            case PlotState::PROJ_Y:
+            case PlotState::ZOOM_X:
+            case PlotState::ZOOM_Y:
+            case PlotState::ZOOM_XY:
             default:
               break;
           }

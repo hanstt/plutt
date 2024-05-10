@@ -79,17 +79,7 @@ void NodeSignal::BindSignal(std::string const &a_suffix, size_t a_id,
     throw std::runtime_error(__func__);
   }
   *mem = new Member;
-  switch (a_type) {
-    case Input::kUint64:
-      (*mem)->type = Input::kUint64;
-      break;
-    case Input::kDouble:
-      (*mem)->type = Input::kDouble;
-      break;
-    default:
-    std::cerr << GetLocStr() << ": Non-implemented input type.\n";
-      throw std::runtime_error(__func__);
-  }
+  (*mem)->type = a_type;
   (*mem)->id = a_id;
 }
 
@@ -117,8 +107,8 @@ void NodeSignal::Process(uint64_t a_evid)
     return; \
   } \
 } while (0)
-#define IF_VALUE_u64(v)
-#define IF_VALUE_dbl(v) if (!std::isnan(v.dbl) && !std::isinf(v.dbl))
+#define IF_VALUE_NOP(v)
+#define IF_VALUE_INVALID(v) if (!std::isnan(v.dbl) && !std::isinf(v.dbl))
   if (m_ME) {
     // Multi-hit array.
     FETCH_SIGNAL_DATA(M);
@@ -133,22 +123,23 @@ void NodeSignal::Process(uint64_t a_evid)
     m_value.SetType(m_v->type);
     uint32_t v_i = 0;
     switch (m_v->type) {
-#define COPY_M_HIT(input_type, member) \
+#define COPY_M_HIT(input_type, kind) \
       case Input::input_type: \
         for (uint32_t i = 0; i < p_M->u64; ++i) { \
           auto mi = (uint32_t)p_MI[i].u64; \
           auto me = (uint32_t)p_ME[i].u64; \
           for (; v_i < me; ++v_i) { \
             auto v_ = p_v[v_i]; \
-            IF_VALUE_##member(v_) { \
+            IF_VALUE_##kind(v_) { \
               m_value.Push(mi, v_); \
             } \
           } \
         } \
         break
-      COPY_M_HIT(kUint64, u64);
-      COPY_M_HIT(kInt64, u64);
-      COPY_M_HIT(kDouble, dbl);
+      COPY_M_HIT(kUint64, NOP);
+      COPY_M_HIT(kInt64, NOP);
+      COPY_M_HIT(kDouble, INVALID);
+      case Input::kNone:
       default:
         throw std::runtime_error(__func__);
     }
@@ -162,18 +153,20 @@ void NodeSignal::Process(uint64_t a_evid)
     SIGNAL_LEN_CHECK(p_->u64, <=, len_v);
     m_value.SetType(m_v->type);
     switch (m_v->type) {
-#define COPY_S_HIT(input_type, member) \
+#define COPY_S_HIT(input_type, kind) \
     case Input::input_type: \
       for (uint32_t i = 0; i < p_->u64; ++i) { \
         auto mi = (uint32_t)p_MI[i].u64; \
         auto v_ = p_v[i]; \
-        IF_VALUE_##member(v_) { \
+        IF_VALUE_##kind(v_) { \
           m_value.Push(mi, v_); \
         } \
       } \
       break
-      COPY_S_HIT(kUint64, u64);
-      COPY_S_HIT(kDouble, dbl);
+      COPY_S_HIT(kUint64, NOP);
+      COPY_S_HIT(kInt64, NOP);
+      COPY_S_HIT(kDouble, INVALID);
+      case Input::kNone:
       default:
         throw std::runtime_error(__func__);
     }
@@ -185,17 +178,19 @@ void NodeSignal::Process(uint64_t a_evid)
     SIGNAL_LEN_CHECK(p_->u64, <=, len_v);
     m_value.SetType(m_v->type);
     switch (m_v->type) {
-#define COPY_INDEX(input_type, member) \
+#define COPY_INDEX(input_type, kind) \
       case Input::input_type: \
         for (uint32_t i = 0; i < p_->u64; ++i) { \
           auto v_ = p_v[i]; \
-          IF_VALUE_##member(v_) { \
+          IF_VALUE_##kind(v_) { \
             m_value.Push(0, v_); \
           } \
         } \
         break
-      COPY_INDEX(kUint64, u64);
-      COPY_INDEX(kDouble, dbl);
+      COPY_INDEX(kUint64, NOP);
+      COPY_INDEX(kInt64, NOP);
+      COPY_INDEX(kDouble, INVALID);
+      case Input::kNone:
       default:
         throw std::runtime_error(__func__);
     }
@@ -204,17 +199,19 @@ void NodeSignal::Process(uint64_t a_evid)
     FETCH_SIGNAL_DATA();
     m_value.SetType(m_->type);
     switch (m_->type) {
-#define COPY_SCALAR(input_type, member) \
+#define COPY_SCALAR(input_type, kind) \
       case Input::input_type: \
         for (uint32_t i = 0; i < len_; ++i) { \
           auto v_ = p_[i]; \
-          IF_VALUE_##member(v_) { \
+          IF_VALUE_##kind(v_) { \
             m_value.Push(0, v_); \
           } \
         } \
         break
-      COPY_SCALAR(kUint64, u64);
-      COPY_SCALAR(kDouble, dbl);
+      COPY_SCALAR(kUint64, NOP);
+      COPY_SCALAR(kInt64, NOP);
+      COPY_SCALAR(kDouble, INVALID);
+      case Input::kNone:
       default:
         throw std::runtime_error(__func__);
     }
