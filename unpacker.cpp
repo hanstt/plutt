@@ -149,7 +149,7 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   m_out_buf.resize(m_out_size);
 
   /* Run unpacker and connect. */
-  std::string cmd = std::string(m_path) + " --ntuple=UNPACK," + signals_str +
+  std::string cmd = std::string(m_path) + " --ntuple=RAW," + signals_str +
       "STRUCT,-";
   for (int arg_i = 1; arg_i < a_argc; ++arg_i) {
     cmd += " ";
