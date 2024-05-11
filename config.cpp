@@ -652,7 +652,8 @@ void Config::DoEvent(Input *a_input)
     auto const &v = val.GetV();
     if (!v.empty()) {
       auto const &s = v.at(0);
-      double dts;
+      // Init needed for some compilers.
+      double dts = 0.0;
 #define CLOCK_MATCH_PREP(field) do { \
   if (s.field <= m_clock_match.ts_prev.field) { \
     std::cerr << "Non-monotonic clock for rate-matching!\n"; \
