@@ -16,15 +16,15 @@ jobs:
           bison build-essential flex pkg-config \
           libnlopt-dev \
           libsdl2-dev
-    - name: make debug
-      run: make
-    - name: make release
-      run: make BUILD_MODE=release
-    - name: make debug no-nlopt
-      run: make clean all ALLOW_NLOPT=
-    - name: make release no-nlopt
-      run: make clean all ALLOW_NLOPT= BUILD_MODE=release
-    - name: make debug no-sdl2
-      run: make clean all ALLOW_SDL2=
-    - name: make release no-sdl2
-      run: make clean all ALLOW_SDL2= BUILD_MODE=release
+    - name: make -k debug
+      run: make -k
+    - name: make -k release
+      run: make -k BUILD_MODE=release
+    - name: make -k debug no-nlopt
+      run: make -k clean all ALLOW_NLOPT=
+    - name: make -k release no-nlopt
+      run: make -k clean all ALLOW_NLOPT= BUILD_MODE=release
+    - name: make -k debug no-sdl2
+      run: make -k clean all ALLOW_SDL2=
+    - name: make -k release no-sdl2
+      run: make -k clean all ALLOW_SDL2= BUILD_MODE=release
