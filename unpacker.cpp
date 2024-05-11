@@ -46,7 +46,8 @@
     !isalnum(p[sizeof str - 1]) && '_' != p[sizeof str - 1])
 
 Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
-  m_path(a_argv[0]),
+  m_path(),
+  m_is_struct_writer(),
   m_clnt(),
   m_pip(),
   m_struct_info(),
@@ -55,6 +56,23 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   m_out_size(),
   m_out_buf()
 {
+  // Expand unpacker path.
+  wordexp_t exp = {0};
+  if (0 != wordexp(a_argv[0], &exp, 0)) {
+    perror("wordexp");
+    _exit(EXIT_FAILURE);
+  }
+  if (1 != exp.we_wordc) {
+    std::cerr << m_path << ": Does not resolve to single unpacker.\n";
+    _exit(EXIT_FAILURE);
+  }
+  m_path = exp.we_wordv[0];
+  std::string host;
+  if (std::string::npos != m_path.find("struct_writer")) {
+    m_is_struct_writer = true;
+    host = a_argv[1];
+  }
+
   // Make string of signals.
   std::string signals_str;
   auto signal_list = a_config.GetSignalList();
@@ -82,21 +100,19 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   }
   if (0 == pid) {
     std::ostringstream oss;
-    oss << "--ntuple=STRUCT_HH," << signals_str << "id=plutt," << temp_path;
-    wordexp_t exp = {0};
-    if (0 != wordexp(m_path.c_str(), &exp, 0)) {
-      perror("wordexp");
-      _exit(EXIT_FAILURE);
+    if (m_is_struct_writer) {
+      oss << "--header=" << temp_path;
+      std::cout << "Struct call: " << m_path << ' ' << m_path << ' ' << host
+          << ' ' << oss.str() << '\n';
+      execl(m_path.c_str(), m_path.c_str(), host.c_str(), oss.str().c_str(),
+          nullptr);
+    } else {
+      oss << "--ntuple=STRUCT_HH," << signals_str << "id=plutt," << temp_path;
+      std::cout << "Struct call: " << m_path << ' ' << m_path << ' ' <<
+          oss.str() << '\n';
+      execl(m_path.c_str(), m_path.c_str(), oss.str().c_str(), nullptr);
     }
-    if (1 != exp.we_wordc) {
-      std::cerr << m_path << ": Does not resolve to single unpacker.\n";
-      _exit(EXIT_FAILURE);
-    }
-    std::string path = exp.we_wordv[0];
-    std::cout << "Struct call: " << path << ' ' << path << ' ' << oss.str() <<
-        '\n';
-    execl(path.c_str(), path.c_str(), oss.str().c_str(), nullptr);
-    perror("exec");
+    perror("execl");
     _exit(EXIT_FAILURE);
   } else {
     int status = 0;
@@ -149,11 +165,15 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   m_out_buf.resize(m_out_size);
 
   /* Run unpacker and connect. */
-  std::string cmd = std::string(m_path) + " --ntuple=RAW," + signals_str +
-      "STRUCT,-";
-  for (int arg_i = 1; arg_i < a_argc; ++arg_i) {
-    cmd += " ";
-    cmd += a_argv[arg_i];
+  std::string cmd;
+  if (m_is_struct_writer) {
+    cmd = m_path + " " + host + " --stdout";
+  } else {
+    cmd = m_path + " --ntuple=RAW," + signals_str + "STRUCT,-";
+    for (int arg_i = 1; arg_i < a_argc; ++arg_i) {
+      cmd += " ";
+      cmd += a_argv[arg_i];
+    }
   }
   std::cout << "popen(" << cmd << ")\n";
   m_pip = popen(cmd.c_str(), "r");

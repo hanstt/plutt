@@ -55,6 +55,7 @@ class Unpacker: public Input {
     char const *RewindNewline(std::vector<char> const &, char const *);
 
     std::string m_path;
+    bool m_is_struct_writer;
     ext_data_clnt *m_clnt;
     FILE *m_pip;
     ext_data_struct_info m_struct_info;

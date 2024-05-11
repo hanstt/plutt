@@ -85,6 +85,13 @@ Examples:
 		reads event-data from a stream server. The GUI will be the
 		sdl2-driven ImPlutt.
 
+	./plutt -f myconf.plutt \
+	    -u ../ucesb/hbook/struct_writer localhost
+		The input will be structures from an unpacker running on
+		localhost, e.g.:
+		../upexps/myunp/myunp --stream=some-host \
+		    --ntuple=RAW,SERVER,port=10000
+
 	./plutt -f myconf.plutt -g sdl -g root -r myfiles...root
 		Plots with both ImPlutt and THttpServer.
 
