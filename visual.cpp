@@ -255,6 +255,11 @@ double Range::GetSigma() const
   return sqrt((sum2 - sum * sum / num) / num);
 }
 
+bool Range::IsAdded() const
+{
+  return Input::kNone != m_type;
+}
+
 Visual::Visual(std::string const &a_name):
   m_name(a_name),
   m_gui_id(g_gui.AddPlot(m_name, this))
@@ -342,7 +347,8 @@ void VisualHist::Fit()
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
-  if (m_range.GetMin() < m_axis.min || m_range.GetMax() >= m_axis.max) {
+  if (m_range.IsAdded() &&
+      (m_range.GetMin() < m_axis.min || m_range.GetMax() >= m_axis.max)) {
     auto axis = m_range.GetExtents(m_xb);
     if (m_axis.bins != axis.bins ||
         m_axis.min != axis.min ||
@@ -552,10 +558,11 @@ void VisualHist2::Fit()
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
-  if (m_range_x.GetMin() < m_axis_x.min ||
-      m_range_x.GetMax() >= m_axis_x.max ||
-      m_range_y.GetMin() < m_axis_y.min ||
-      m_range_y.GetMax() >= m_axis_y.max) {
+  if (m_range_x.IsAdded() &&
+      (m_range_x.GetMin() < m_axis_x.min ||
+       m_range_x.GetMax() >= m_axis_x.max ||
+       m_range_y.GetMin() < m_axis_y.min ||
+       m_range_y.GetMax() >= m_axis_y.max)) {
     auto axis_x = m_range_x.GetExtents(m_xb);
     auto axis_y = m_range_y.GetExtents(m_yb);
     if (m_axis_x.bins != axis_x.bins ||

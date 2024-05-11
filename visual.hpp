@@ -50,6 +50,7 @@ class Range {
     double GetMean() const;
     double GetMin() const;
     double GetSigma() const;
+    bool IsAdded() const;
     void SetMode(Mode);
   private:
     Mode m_mode;
