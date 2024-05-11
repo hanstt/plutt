@@ -48,7 +48,7 @@ NodeSignal::NodeSignal(Config &a_config, char const *a_name):
 void NodeSignal::BindSignal(std::string const &a_suffix, size_t a_id,
     Input::Type a_type)
 {
-#define BIND_SIGNAL_ASSERT_INT do { \
+#define BIND_SIGNAL_ASSERT_UINT do { \
     if (Input::kUint64 != a_type) { \
       std::cerr << GetLocStr() << ": 'M' member not integer!\n"; \
       throw std::runtime_error(__func__); \
@@ -58,13 +58,13 @@ void NodeSignal::BindSignal(std::string const &a_suffix, size_t a_id,
   if (0 == a_suffix.compare("")) {
     mem = &m_;
   } else if (0 == a_suffix.compare("M")) {
-    BIND_SIGNAL_ASSERT_INT;
+    BIND_SIGNAL_ASSERT_UINT;
     mem = &m_M;
   } else if (0 == a_suffix.compare("I") || 0 == a_suffix.compare("MI")) {
-    BIND_SIGNAL_ASSERT_INT;
+    BIND_SIGNAL_ASSERT_UINT;
     mem = &m_MI;
   } else if (0 == a_suffix.compare("ME")) {
-    BIND_SIGNAL_ASSERT_INT;
+    BIND_SIGNAL_ASSERT_UINT;
     mem = &m_ME;
   } else if (0 == a_suffix.compare("v")) {
     mem = &m_v;

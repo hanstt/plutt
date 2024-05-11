@@ -64,6 +64,8 @@ class Input {
       double dbl;
     };
 
+    static bool IsTypeInt(Type);
+
     virtual ~Input() {}
     // Copy data to read buffers.
     virtual void Buffer() = 0;

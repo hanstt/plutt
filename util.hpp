@@ -83,6 +83,7 @@ void Time_wait_ms(uint32_t);
 // Subtract a double from an integer:
 //  -) The int is "small" -> treat it like a double.
 //  -) The int is "huge" -> treat it like an int.
+// Necessary to retain lower bits in the subtraction.
 template <typename T>
 double IntSubDouble(T a_int, double a_dbl)
 {

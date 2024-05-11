@@ -23,6 +23,20 @@
 #include <stdexcept>
 #include <input.hpp>
 
+bool Input::IsTypeInt(Type a_type)
+{
+  switch (a_type) {
+    case kUint64:
+    case kInt64:
+      return true;
+    case kDouble:
+      return false;
+    case kNone:
+      break;
+  }
+  throw std::runtime_error(__func__);
+}
+
 double Input::Scalar::GetDouble(Input::Type a_type) const
 {
   switch (a_type) {

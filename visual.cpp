@@ -108,7 +108,7 @@ Gui::Axis Range::GetExtents(uint32_t a_bins) const
       {
         l = GetMin();
         r = GetMax();
-        if (Input::kUint64 == m_type) {
+        if (Input::IsTypeInt(m_type)) {
           // For integers, 'r' is on the right side of max.
           ++r;
         }
@@ -121,7 +121,7 @@ Gui::Axis Range::GetExtents(uint32_t a_bins) const
           d = std::max(std::abs(l) * 1e-10, 1e-20);
         }
         // If we're looking at floats or huge integers, add some margin.
-        if (Input::kUint64 != m_type || d > (1 << 16)) {
+        if (!Input::IsTypeInt(m_type) || d > (1 << 16)) {
           l -= d * 0.1;
           r += d * 0.1;
         }
@@ -165,9 +165,7 @@ Gui::Axis Range::GetExtents(uint32_t a_bins) const
 
   // Choose bins, which may fudge range.
   uint32_t bins;
-  if (Input::kDouble == m_type) {
-    bins = a_bins > 0 ? a_bins : 200;
-  } else {
+  if (Input::IsTypeInt(m_type)) {
     if (a_bins > 0) {
       bins = a_bins;
       auto d = r - l;
@@ -182,6 +180,8 @@ Gui::Axis Range::GetExtents(uint32_t a_bins) const
     } else {
       for (bins = (uint32_t)ceil(r - l); bins > 128; bins /= 2);
     }
+  } else {
+    bins = a_bins > 0 ? a_bins : 200;
   }
 
   Gui::Axis a;

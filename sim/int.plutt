@@ -20,7 +20,7 @@
 
 hist("i", i)
 
-#hist("i, binsi=10", i, binsx=10)
+hist("i, bins=20", i, binsx=20)
 
 hist("i, logy", i, logy)
 
@@ -30,6 +30,6 @@ hist2d("i vs i", i, i)
 
 hist2d("j vs i", j, i)
 
-#hist2d("j vs i, bins=10/50", j, i, binsx=10, binsy=50)
+hist2d("j vs i, bins=10/50", j, i, binsx=10, binsy=50)
 
 hist2d("j vs i, logz", j, i, logz)

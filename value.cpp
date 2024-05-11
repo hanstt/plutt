@@ -93,11 +93,8 @@ double Value::GetV(uint32_t a_i, bool a_do_signed) const
       }
     case Input::kInt64:
       {
-        auto u64 = m_v.at(a_i).i64;
-        if (a_do_signed) {
-          return (double)(int64_t)u64;
-        }
-        return (double)u64;
+        auto i64 = m_v.at(a_i).i64;
+        return (double)i64;
       }
     case Input::kDouble:
       return m_v.at(a_i).dbl;
