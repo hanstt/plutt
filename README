@@ -75,24 +75,29 @@ chooses the build directory.
 Examples:
 
 	./plutt -f myconf.plutt -r mytree myfile1.root myfile2.root
+
 		Loads script 'myconf.plutt', and the input will be two root
 		files, both with a TTree named 'mytree'. A default GUI will be
 		chosen, depending on what's built in.
 
 	./plutt -f myconf.plutt -g sdl \
 	    -u ../upexps/myunp/myunp --stream=localhost
+
 		The input will be structures from the 'myunp' unpacker which
 		reads event-data from a stream server. The GUI will be the
 		sdl2-driven ImPlutt.
 
 	./plutt -f myconf.plutt \
 	    -u ../ucesb/hbook/struct_writer localhost
+
 		The input will be structures from an unpacker running on
 		localhost, e.g.:
+
 		../upexps/myunp/myunp --stream=some-host \
-		    --ntuple=RAW,SERVER,port=10000
+		    --ntuple=RAW,SERVER,dummy
 
 	./plutt -f myconf.plutt -g sdl -g root -r myfiles...root
+
 		Plots with both ImPlutt and THttpServer.
 
 GUI's
