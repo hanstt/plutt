@@ -64,6 +64,8 @@ RootGui::PlotWrap::PlotWrap():
   plot(),
   h1(),
   h2(),
+  gr_vec(),
+  tx_vec(),
   do_clear(),
   is_log_set(),
   is_log()
