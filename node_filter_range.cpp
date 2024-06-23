@@ -86,10 +86,14 @@ void NodeFilterRange::Process(uint64_t a_evid)
       if (ok) {
         for (auto it = m_arg_vec.begin(); m_arg_vec.end() != it; ++it) {
           auto const &val = it->node->GetValue();
-          auto mi = val.GetMI().at(i);
-          NODE_ASSERT(mi, ==, mi0);
-          auto const &s = val.GetV().at(vi);
-          it->value->Push(mi, s);
+	  auto const &miv = val.GetMI();
+	  // We _should_ have equal layout, but don't crash if we don't...
+	  if (i < miv.size()) {
+            auto mi = miv.at(i);
+            NODE_ASSERT(mi, ==, mi0);
+            auto const &s = val.GetV().at(vi);
+            it->value->Push(mi, s);
+	  }
         }
       }
     }
