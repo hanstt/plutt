@@ -331,11 +331,13 @@ int main(int argc, char **argv)
 
   std::cout << "Entering main loop...\n";
   while (g_event_running) {
+    bool allow_auto_quit = true;
     bool is_throttled = false;
     (void)is_throttled;
 
 #if PLUTT_SDL2
     if (GUI_SDL & gui_type) {
+      allow_auto_quit = false;
       // Use event timeout to cap UI rate.
       auto t_end = SDL_GETTICKS() + 1000 / g_config->UIRateGet();
       for (;;) {
@@ -363,6 +365,11 @@ int main(int argc, char **argv)
       }
     }
 #endif
+
+    if (allow_auto_quit && !g_data_running) {
+      // If no data is coming in and the GUI is not interactive, break out.
+      break;
+    }
 
     g_event_running &= g_gui.Draw(event_rate);
 
