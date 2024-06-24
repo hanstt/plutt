@@ -194,7 +194,7 @@ int main(int argc, char **argv)
 #endif
 #if PLUTT_ROOT
   std::cout << " ROOT";
-  uint16_t web_port;
+  uint16_t web_port = 8080;
 #endif
 #if PLUTT_UCESB
   std::cout << " ucesb";
