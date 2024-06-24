@@ -211,15 +211,17 @@ RootChain::RootChain(Config &a_config, int a_argc, char **a_argv):
   }
   m_ev_n = m_chain.GetEntries();
 
-  // Look for branches for each signal.
-  for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-    BindBranch(a_config, *it,   "",   "", false);
-    BindBranch(a_config, *it,  "M",  "M", true);
-    BindBranch(a_config, *it,  "I",  "I", true);
-    BindBranch(a_config, *it, "MI", "MI", true);
-    BindBranch(a_config, *it, "ME", "ME", true);
-    BindBranch(a_config, *it,  "v",  "v", true);
-    BindBranch(a_config, *it,  "E",  "v", true);
+  if (m_chain.GetTree()) {
+    // Look for branches for each signal.
+    for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
+      BindBranch(a_config, *it,   "",   "", false);
+      BindBranch(a_config, *it,  "M",  "M", true);
+      BindBranch(a_config, *it,  "I",  "I", true);
+      BindBranch(a_config, *it, "MI", "MI", true);
+      BindBranch(a_config, *it, "ME", "ME", true);
+      BindBranch(a_config, *it,  "v",  "v", true);
+      BindBranch(a_config, *it,  "E",  "v", true);
+    }
   }
 }
 
@@ -383,6 +385,9 @@ void RootChain::Buffer()
 
 bool RootChain::Fetch()
 {
+  if (!m_chain.GetTree()) {
+    return false;
+  }
   if (!m_reader.Next()) {
     return false;
   }
