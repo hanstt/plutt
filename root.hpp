@@ -28,7 +28,7 @@
 
 class Config;
 // Root has less strict headers, hide everything in root.cpp...
-class RootImpl;
+class RootChain;
 
 /*
  * Root input.
@@ -36,7 +36,7 @@ class RootImpl;
  */
 class Root: public Input {
   public:
-    Root(Config &, int, char **);
+    Root(bool, Config *, int, char **);
     ~Root();
     void Buffer();
     bool Fetch();
@@ -46,7 +46,23 @@ class Root: public Input {
     Root(Root const &);
     Root &operator=(Root const &);
 
-    RootImpl *m_impl;
+    bool m_is_files;
+    struct Notify {
+      Notify():
+        config(),
+        tree_name(),
+        fd(),
+        wd_map()
+      {
+      }
+      Notify(Notify const &);
+      Notify &operator=(Notify const &);
+      Config *config;
+      std::string tree_name;
+      int fd;
+      std::map<int, std::string> wd_map;
+    } m_inotify;
+    RootChain *m_chain;
 };
 
 #endif

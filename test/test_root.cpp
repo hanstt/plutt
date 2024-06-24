@@ -82,7 +82,7 @@ void MyTest::Run()
   char *argv[2];
   argv[0] = strdup("tree");
   argv[1] = strdup(FILENAME);
-  auto root = new Root(*config, 2, argv);
+  auto root = new Root(true, config, 2, argv);
   free(argv[0]);
   free(argv[1]);
 

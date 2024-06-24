@@ -89,6 +89,7 @@ class Config {
     Input const *GetInput() const;
     Input *GetInput();
     std::list<std::string> GetSignalList() const;
+    void UnbindSignals();
 
   private:
     Config(Config const &);

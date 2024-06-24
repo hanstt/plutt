@@ -94,6 +94,7 @@ void NodeSignal::Process(uint64_t a_evid)
   m_value.Clear();
 
 #define FETCH_SIGNAL_DATA(SUFF) \
+  if (!m_##SUFF) return; \
   auto const pair_##SUFF = m_config->GetInput()->GetData(m_##SUFF->id); \
   auto const p_##SUFF = pair_##SUFF.first; \
   auto const len_##SUFF = pair_##SUFF.second
@@ -221,4 +222,17 @@ void NodeSignal::Process(uint64_t a_evid)
 void NodeSignal::SetLocStr(std::string const &a_loc)
 {
   m_loc = a_loc;
+}
+
+void NodeSignal::UnbindSignal()
+{
+#define UNBIND(suff) do { \
+  delete m_##suff; \
+  m_##suff = nullptr; \
+} while (0)
+  UNBIND();
+  UNBIND(M);
+  UNBIND(MI);
+  UNBIND(ME);
+  UNBIND(v);
 }

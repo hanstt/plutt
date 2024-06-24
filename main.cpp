@@ -58,8 +58,9 @@ namespace {
 
   enum InputType {
 #if PLUTT_ROOT
-#       define ROOT_ARGOPT "r"
-    INPUT_ROOT,
+#       define ROOT_ARGOPT "rR"
+    INPUT_ROOT_FILES,
+    INPUT_ROOT_DIR,
 #else
 #       define ROOT_ARGOPT
 #endif
@@ -77,7 +78,7 @@ namespace {
     GUI_SDL = 1 << 0,
 #endif
 #if PLUTT_ROOT
-    GUI_ROOT = 2 << 1,
+    GUI_ROOT = 1 << 1,
 #endif
     GUI_LAST
   };
@@ -107,6 +108,7 @@ namespace {
     std::cout << "Input options:\n";
 #if PLUTT_ROOT
     std::cout << " -r tree-name root-files...\n";
+    std::cout << " -R tree-name directories...\n";
 #endif
 #if PLUTT_UCESB
     std::cout << " -u unpacker args...\n";
@@ -239,7 +241,13 @@ int main(int argc, char **argv)
         if (argc - optind < 2) {
           help("Not enough parameters for -r.");
         }
-        input_type = INPUT_ROOT;
+        input_type = INPUT_ROOT_FILES;
+        break;
+      case 'R':
+        if (argc - optind < 2) {
+          help("Not enough parameters for -R.");
+        }
+        input_type = INPUT_ROOT_DIR;
         break;
 #endif
 #if PLUTT_UCESB
@@ -304,8 +312,11 @@ int main(int argc, char **argv)
   new Config(g_conf_path);
   switch (input_type) {
 #if PLUTT_ROOT
-    case INPUT_ROOT:
-      g_input = new Root(*g_config, argc, argv);
+    case INPUT_ROOT_FILES:
+      g_input = new Root(true, g_config, argc, argv);
+      break;
+    case INPUT_ROOT_DIR:
+      g_input = new Root(false, g_config, argc, argv);
       break;
 #endif
 #if PLUTT_UCESB

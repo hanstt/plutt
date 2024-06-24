@@ -36,6 +36,7 @@ class NodeSignal: public NodeValue {
     Value const &GetValue(uint32_t);
     void Process(uint64_t);
     void SetLocStr(std::string const &);
+    void UnbindSignal();
 
   private:
     NodeSignal(NodeSignal const &);

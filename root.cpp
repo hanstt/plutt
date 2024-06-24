@@ -23,6 +23,9 @@
 
 #if PLUTT_ROOT
 
+#include <linux/limits.h>
+#include <sys/inotify.h>
+#include <sys/poll.h>
 #include <sys/stat.h>
 
 #include <TChain.h>
@@ -34,10 +37,10 @@
 #include <util.hpp>
 #include <root.hpp>
 
-class RootImpl {
+class RootChain {
   public:
-    RootImpl(Config &, int, char **);
-    ~RootImpl();
+    RootChain(Config &, int, char **);
+    ~RootChain();
     void Buffer();
     bool Fetch();
     std::pair<Input::Scalar const *, size_t> GetData(size_t);
@@ -148,7 +151,7 @@ class RootImpl {
         // We can cheat a bit here:
         // If we never copy m_branch_vec, copying is only done on resizing so
         // there's really only one place for these.
-        // The ownership is really with RootImpl since it allocates, so it
+        // The ownership is really with RootChain since it allocates, so it
         // must also delete.
         val_char = a_e.val_char;
         arr_char = a_e.arr_char;
@@ -179,7 +182,7 @@ class RootImpl {
     uint64_t m_progress_t_last;
 };
 
-RootImpl::RootImpl(Config &a_config, int a_argc, char **a_argv):
+RootChain::RootChain(Config &a_config, int a_argc, char **a_argv):
   m_chain(a_argv[0]),
   m_reader(&m_chain),
   m_branch_vec(),
@@ -190,13 +193,20 @@ RootImpl::RootImpl(Config &a_config, int a_argc, char **a_argv):
 {
   auto signal_list = a_config.GetSignalList();
 
+  if (a_argc < 2) {
+    std::cerr << "Missing input files.\n";
+    throw std::runtime_error(__func__);
+  }
+
   // Setup chain.
   for (int i = 1; i < a_argc; ++i) {
     struct stat st;
-    if (0 != stat(a_argv[i], &st)) {
+    auto rc = stat(a_argv[i], &st);
+    if (0 != rc) {
       std::cerr << a_argv[i] << ": Could not stat.\n";
       throw std::runtime_error(__func__);
     }
+    std::cout << a_argv[i] << ": Adding.\n";
     m_chain.Add(a_argv[i]);
   }
   m_ev_n = m_chain.GetEntries();
@@ -213,7 +223,7 @@ RootImpl::RootImpl(Config &a_config, int a_argc, char **a_argv):
   }
 }
 
-RootImpl::~RootImpl()
+RootChain::~RootChain()
 {
   for (auto it = m_branch_vec.begin(); m_branch_vec.end() != it; ++it) {
     delete it->val_uchar;
@@ -231,7 +241,7 @@ RootImpl::~RootImpl()
   }
 }
 
-void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
+void RootChain::BindBranch(Config &a_config, std::string const &a_name, char
     const *a_suffix, char const *a_config_suffix, bool a_optional)
 {
   // full = name + suffix
@@ -299,7 +309,7 @@ void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
   }
 
   auto id = m_branch_vec.size();
-  m_branch_vec.push_back(RootImpl::Entry(full_name, exp_type, out_type,
+  m_branch_vec.push_back(RootChain::Entry(full_name, exp_type, out_type,
         is_vector));
   auto &entry = m_branch_vec.back();
 
@@ -335,7 +345,7 @@ void RootImpl::BindBranch(Config &a_config, std::string const &a_name, char
   a_config.BindSignal(a_name, a_config_suffix, id, out_type);
 }
 
-void RootImpl::Buffer()
+void RootChain::Buffer()
 {
   // Copy from readers to vectors.
   for (auto it = m_branch_vec.begin(); m_branch_vec.end() != it; ++it) {
@@ -371,7 +381,7 @@ void RootImpl::Buffer()
   }
 }
 
-bool RootImpl::Fetch()
+bool RootChain::Fetch()
 {
   if (!m_reader.Next()) {
     return false;
@@ -398,7 +408,7 @@ bool RootImpl::Fetch()
   return true;
 }
 
-std::pair<Input::Scalar const *, size_t> RootImpl::GetData(size_t a_id)
+std::pair<Input::Scalar const *, size_t> RootChain::GetData(size_t a_id)
 {
   auto const &entry = m_branch_vec.at(a_id);
   if (entry.is_vector) {
@@ -410,29 +420,115 @@ std::pair<Input::Scalar const *, size_t> RootImpl::GetData(size_t a_id)
   return std::make_pair(&entry.buf.at(0), 1);
 }
 
-Root::Root(Config &a_config, int a_argc, char **a_argv):
-  m_impl(new RootImpl(a_config, a_argc, a_argv))
+Root::Root(bool a_is_files, Config *a_config, int a_argc, char **a_argv):
+  m_is_files(a_is_files),
+  m_inotify(),
+  m_chain()
 {
+  if (m_is_files) {
+    m_chain = new RootChain(*a_config, a_argc, a_argv);
+  } else {
+    /* Setup directory watching. */
+    m_inotify.config = a_config;
+    m_inotify.tree_name = a_argv[0];
+    m_inotify.fd = inotify_init();
+    if (m_inotify.fd < 0) {
+      std::cerr << "inotify_init: " << strerror(errno) << ".\n";
+      throw std::runtime_error(__func__);
+    }
+    for (int i = 1; i < a_argc; ++i) {
+      int wd;
+
+      wd = inotify_add_watch(m_inotify.fd, a_argv[i], IN_CLOSE_WRITE);
+      if (wd < 0) {
+        std::cerr << "inotify_add_watch(" << a_argv[i] << "): " <<
+            strerror(errno) << ".\n";
+        throw std::runtime_error(__func__);
+      }
+      m_inotify.wd_map.insert(std::make_pair(wd, a_argv[i]));
+    }
+  }
 }
 
 Root::~Root()
 {
-  delete m_impl;
+  delete m_chain;
+  if (!m_is_files) {
+    for (auto it = m_inotify.wd_map.begin(); m_inotify.wd_map.end() != it;
+        ++it) {
+      if (inotify_rm_watch(m_inotify.fd, it->first) < 0) {
+        std::cerr << "inotify_rm_watch: " << strerror(errno) << ".\n";
+      }
+    }
+    if (close(m_inotify.fd) < 0) {
+      std::cerr << "close(inotify): " << strerror(errno) << ".\n";
+    }
+  }
 }
 
 void Root::Buffer()
 {
-  m_impl->Buffer();
+  if (m_chain) {
+    m_chain->Buffer();
+  }
 }
 
 bool Root::Fetch()
 {
-  return m_impl->Fetch();
+  if (!m_chain) {
+    // If there's a newly written + close file, start a chain on it.
+    int nfds;
+    {
+      struct pollfd fds[1];
+      fds[0].fd = m_inotify.fd;
+      fds[0].events = POLLIN;
+      nfds = poll(fds, LENGTH(fds), 1000);
+      if (nfds < 0) {
+        std::cerr << "poll: " << strerror(errno) << ".\n";
+        throw std::runtime_error(__func__);
+      }
+    }
+    if (nfds > 0) {
+      char buffer[sizeof(inotify_event) + NAME_MAX];
+      auto rc = read(m_inotify.fd, buffer, sizeof buffer);
+      if (rc < 0) {
+        std::cerr << "read: " << strerror(errno) << ".\n";
+        throw std::runtime_error(__func__);
+      }
+      auto ev = (struct inotify_event *)buffer;
+      if (ev->mask & IN_CLOSE_WRITE) {
+        std::cout << "Found " << ev->name << ".\n";
+        auto it = m_inotify.wd_map.find(ev->wd);
+        auto dir = it->second;
+        auto path = dir + '/' + ev->name;
+        char *argv[2];
+        argv[0] = (char *)m_inotify.tree_name.c_str();
+        argv[1] = (char *)path.c_str();
+        m_chain = new RootChain(*m_inotify.config, LENGTH(argv), argv);
+      }
+    }
+  }
+  if (m_chain) {
+    auto ok = m_chain->Fetch();
+    if (m_is_files) {
+      // Only auto-quit input if we have fixed files.
+      return ok;
+    }
+    if (!ok) {
+      delete m_chain;
+      m_chain = nullptr;
+      m_inotify.config->UnbindSignals();
+    }
+  }
+  return true;
 }
 
 std::pair<Input::Scalar const *, size_t> Root::GetData(size_t a_id)
 {
-  return m_impl->GetData(a_id);
+  if (m_chain) {
+    return m_chain->GetData(a_id);
+  }
+  return std::make_pair(nullptr, 0);
 }
 
 #endif

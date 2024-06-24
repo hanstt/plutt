@@ -551,6 +551,14 @@ void Config::BindSignal(std::string const &a_name, char const *a_suffix,
   signal->BindSignal(a_suffix ? a_suffix : "", a_id, a_type);
 }
 
+void Config::UnbindSignals()
+{
+  for (auto it = m_signal_map.begin(); m_signal_map.end() != it; ++it) {
+    auto signal = it->second;
+    signal->UnbindSignal();
+  }
+}
+
 void Config::AppearanceSet(char const *a_name)
 {
 #if PLUTT_SDL2
