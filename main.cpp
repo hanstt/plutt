@@ -82,6 +82,7 @@ namespace {
 #endif
     GUI_LAST
   };
+  uint16_t g_web_port;
 
   char const *g_arg0;
   char const *g_conf_path;
@@ -102,7 +103,7 @@ namespace {
     std::cout << " sdl";
 #endif
 #if PLUTT_ROOT
-    std::cout << " root";
+    std::cout << " root(:port)";
 #endif
     std::cout << "\n";
     std::cout << "Input options:\n";
@@ -219,7 +220,21 @@ int main(int argc, char **argv)
         } else
 #endif
 #if PLUTT_ROOT
-        if (0 == strcmp(optarg, "root")) {
+        if (0 == strncmp(optarg, "root", 4)) {
+          if ('\0' != optarg[4]) {
+            if (':' != optarg[4]) {
+              help("Invalid GUI type for -g.");
+            }
+            char *end;
+            auto port = strtol(optarg + 5, &end, 0);
+            if (port < 1 || port > 65535) {
+              help("Invalid port for -g ROOT gui.");
+            }
+            if ('\0' != *end) {
+              help("Invalid ROOT GUI argument for -g.");
+            }
+            g_web_port = (uint16_t)port;
+          }
           gui_type |= GUI_ROOT;
         } else
 #endif
@@ -300,8 +315,8 @@ int main(int argc, char **argv)
 #if PLUTT_ROOT
   RootGui *root_gui = nullptr;
   if (GUI_ROOT & gui_type) {
-    std::cout << "Creating ROOT GUI...\n";
-    root_gui = new RootGui(8080);
+    std::cout << "Creating ROOT GUI on port " << g_web_port << "...\n";
+    root_gui = new RootGui(g_web_port);
     g_gui.AddGui(root_gui);
   }
 #endif

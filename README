@@ -115,7 +115,9 @@ The default GUI is chosen from top to bottom in the above list.
 ROOT GUI
 --------
 
-Will open a local server on port 8080, connect there with your browser.
+Opens a THttpServer on port 8080 by default, connect there with your browser.
+To run on e.g. port 10000, invoke the GUI like "-g root:10000" on the command
+line.
 
 ImPlutt GUI
 -----------
