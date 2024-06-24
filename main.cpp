@@ -82,7 +82,6 @@ namespace {
 #endif
     GUI_LAST
   };
-  uint16_t g_web_port;
 
   char const *g_arg0;
   char const *g_conf_path;
@@ -195,6 +194,7 @@ int main(int argc, char **argv)
 #endif
 #if PLUTT_ROOT
   std::cout << " ROOT";
+  uint16_t web_port;
 #endif
 #if PLUTT_UCESB
   std::cout << " ucesb";
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
             if ('\0' != *end) {
               help("Invalid ROOT GUI argument for -g.");
             }
-            g_web_port = (uint16_t)port;
+            web_port = (uint16_t)port;
           }
           gui_type |= GUI_ROOT;
         } else
@@ -315,8 +315,8 @@ int main(int argc, char **argv)
 #if PLUTT_ROOT
   RootGui *root_gui = nullptr;
   if (GUI_ROOT & gui_type) {
-    std::cout << "Creating ROOT GUI on port " << g_web_port << "...\n";
-    root_gui = new RootGui(g_web_port);
+    std::cout << "Creating ROOT GUI on port " << web_port << "...\n";
+    root_gui = new RootGui(web_port);
     g_gui.AddGui(root_gui);
   }
 #endif
