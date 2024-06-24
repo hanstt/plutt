@@ -2,7 +2,7 @@
 
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023, 2024
+# Copyright (C) 2023-2024
 # Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 #
 # This library is free software; you can redistribute it and/or
