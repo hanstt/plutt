@@ -272,7 +272,8 @@ Visual::~Visual()
 
 VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
     LinearTransform const &a_transform, char const *a_fitter, bool a_is_log_y,
-    double a_drop_stats_s):
+    double a_drop_counts_s, unsigned a_drop_counts_num, double
+    a_drop_stats_s):
   Visual(a_title),
   m_xb(a_xb),
   m_transform(a_transform),
@@ -280,7 +281,8 @@ VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
   m_range(a_drop_stats_s),
   m_axis(),
   m_hist_mutex(),
-  m_hist(),
+  m_drop_counts_ms((uint64_t)(1000 * a_drop_counts_s)),
+  m_hist(a_drop_counts_num),
   m_axis_copy(),
   m_hist_copy(),
   m_is_log_y(a_is_log_y),
@@ -340,7 +342,7 @@ void VisualHist::Fill(Input::Type a_type, Input::Scalar const &a_x)
   }
   uint32_t i = (uint32_t)(m_axis.bins * dx / span);
   assert(i < m_axis.bins);
-  ++m_hist.at(i);
+  ++m_hist.slice_vec.at(m_hist.active_i).at(i);
 }
 
 void VisualHist::Fit()
@@ -353,9 +355,14 @@ void VisualHist::Fit()
     if (m_axis.bins != axis.bins ||
         m_axis.min != axis.min ||
         m_axis.max != axis.max) {
-      m_hist = Rebin1(m_hist,
-          m_axis.bins, m_axis.min, m_axis.max,
-          axis.bins, axis.min, axis.max);
+      // Have to re-bin all slices.
+      auto &v = m_hist.slice_vec;
+      for (auto it = v.begin(); v.end() != it; ++it) {
+        auto &h = *it;
+        h = Rebin1(h,
+            m_axis.bins, m_axis.min, m_axis.max,
+            axis.bins, axis.min, axis.max);
+      }
       m_axis = axis;
     }
   }
@@ -366,19 +373,46 @@ void VisualHist::Latch()
   // The data thread will keep filling and modifying m_hist while the plotter
   // tries to figure out ranges, so a locked copy is important!
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  auto &v = m_hist.slice_vec;
+
   if (g_gui.DoClear(m_gui_id)) {
     // We should clear.
     // TODO: Clear all, or just histogram contents?
     m_range.Clear();
     m_axis.Clear();
-    m_hist.clear();
+    for (auto it = v.begin(); v.end() != it; ++it) {
+      it->clear();
+    }
   }
+
   m_axis_copy = m_axis;
-  if (m_hist_copy.size() != m_hist.size()) {
-    m_hist_copy.resize(m_hist.size());
+
+  if (v.size() > 1) {
+    // Update slices, i.e. throw away oldest slice and start filling it.
+    auto t_cur = Time_get_ms();
+    if (t_cur > m_hist.t_prev + m_drop_counts_ms) {
+      m_hist.active_i = (m_hist.active_i + 1) % v.size();
+      auto &h = v.at(m_hist.active_i);
+      memset(h.data(), 0, h.size() * sizeof h[0]);
+      m_hist.t_prev = t_cur;
+    }
   }
-  memcpy(m_hist_copy.data(), m_hist.data(),
-      m_hist.size() * sizeof m_hist[0]);
+
+  if (m_hist_copy.size() != v.at(0).size()) {
+    m_hist_copy.resize(v.at(0).size());
+  }
+
+  // Sum up slices.
+  memcpy(m_hist_copy.data(), v.at(0).data(),
+      m_hist_copy.size() * sizeof m_hist_copy[0]);
+  for (size_t i = 1; i < v.size(); ++i) {
+    auto const &h = v.at(i);
+    assert(m_hist_copy.size() == h.size());
+    for (size_t j = 0; j < h.size(); ++j) {
+      m_hist_copy[j] += h[j];
+    }
+  }
 }
 
 void VisualHist::Prefill(Input::Type a_type, Input::Scalar const &a_x)
@@ -480,7 +514,7 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
 VisualHist2::VisualHist2(std::string const &a_title, size_t a_colormap,
     uint32_t a_yb, uint32_t a_xb, LinearTransform const &a_ty, LinearTransform
     const &a_tx, char const *a_fitter, bool a_is_log_z, double
-    a_drop_stats_s):
+    a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s):
   Visual(a_title),
   //m_colormap(a_colormap),
   m_xb(a_xb),
@@ -492,7 +526,8 @@ VisualHist2::VisualHist2(std::string const &a_title, size_t a_colormap,
   m_axis_x(),
   m_axis_y(),
   m_hist_mutex(),
-  m_hist(),
+  m_drop_counts_ms((uint64_t)(1000 * a_drop_counts_s)),
+  m_hist(a_drop_counts_num),
   m_axis_x_copy(),
   m_axis_y_copy(),
   m_hist_copy(),
@@ -552,7 +587,7 @@ void VisualHist2::Fill(Input::Type a_type_y, Input::Scalar const &a_y,
   uint32_t i = (uint32_t)(m_axis_y.bins * dy / span_y);
   assert(i < m_axis_y.bins);
   assert(j < m_axis_x.bins);
-  ++m_hist.at(i * m_axis_x.bins + j);
+  ++m_hist.slice_vec.at(m_hist.active_i).at(i * m_axis_x.bins + j);
 }
 
 void VisualHist2::Fit()
@@ -572,11 +607,16 @@ void VisualHist2::Fit()
         m_axis_y.bins != axis_y.bins ||
         m_axis_y.min != axis_y.min ||
         m_axis_y.max != axis_y.max) {
-      m_hist = Rebin2(m_hist,
-          m_axis_x.bins, m_axis_x.min, m_axis_x.max,
-          m_axis_y.bins, m_axis_y.min, m_axis_y.max,
-          axis_x.bins, axis_x.min, axis_x.max,
-          axis_y.bins, axis_y.min, axis_y.max);
+      // Have to re-bin all slices.
+      auto &v = m_hist.slice_vec;
+      for (auto it = v.begin(); v.end() != it; ++it) {
+        auto &h = *it;
+        h = Rebin2(h,
+            m_axis_x.bins, m_axis_x.min, m_axis_x.max,
+            m_axis_y.bins, m_axis_y.min, m_axis_y.max,
+            axis_x.bins, axis_x.min, axis_x.max,
+            axis_y.bins, axis_y.min, axis_y.max);
+      }
       m_axis_x = axis_x;
       m_axis_y = axis_y;
     }
@@ -586,20 +626,48 @@ void VisualHist2::Fit()
 void VisualHist2::Latch()
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  auto &v = m_hist.slice_vec;
+
   if (g_gui.DoClear(m_gui_id)) {
+    // TODO: See VisualHist::Latch.
     m_range_x.Clear();
     m_range_y.Clear();
     m_axis_x.Clear();
     m_axis_y.Clear();
-    m_hist.clear();
+    for (auto it = v.begin(); v.end() != it; ++it) {
+      it->clear();
+    }
   }
+
   m_axis_x_copy = m_axis_x;
   m_axis_y_copy = m_axis_y;
-  if (m_hist_copy.size() != m_hist.size()) {
-    m_hist_copy.resize(m_hist.size());
+
+  if (v.size() > 1) {
+    // Update slices, i.e. throw away oldest slice and start filling it.
+    auto t_cur = Time_get_ms();
+    if (t_cur > m_hist.t_prev + m_drop_counts_ms) {
+      m_hist.active_i = (m_hist.active_i + 1) % v.size();
+      auto &h = v.at(m_hist.active_i);
+      memset(h.data(), 0, h.size() * sizeof h[0]);
+      m_hist.t_prev = t_cur;
+    }
   }
-  memcpy(m_hist_copy.data(), m_hist.data(),
-      m_hist.size() * sizeof m_hist[0]);
+
+  if (m_hist_copy.size() != v.at(0).size()) {
+    m_hist_copy.resize(v.at(0).size());
+  }
+
+  // Sum up slices.
+  memcpy(m_hist_copy.data(), v.at(0).data(),
+      m_hist_copy.size() * sizeof m_hist_copy[0]);
+  for (size_t i = 1; i < v.size(); ++i) {
+    auto const &h = v.at(i);
+    assert(m_hist_copy.size() == h.size());
+    for (size_t j = 0; j < h.size(); ++j) {
+      m_hist_copy[j] += h[j];
+    }
+  }
 }
 
 void VisualHist2::Prefill(Input::Type a_type_y, Input::Scalar const &a_y,

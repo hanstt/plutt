@@ -68,6 +68,7 @@ colormap               return TK_COLORMAP;
 cos                    return TK_COS;
 ctdc                   return TK_CTDC;
 cut                    return TK_CUT;
+drop_counts            return TK_DROP_COUNTS;
 drop_stats             return TK_DROP_STATS;
 exp                    return TK_EXP;
 filter_range           return TK_FILTER_RANGE;

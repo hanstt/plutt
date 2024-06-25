@@ -26,6 +26,8 @@
 #include <gui.hpp>
 #include <input.hpp>
 
+typedef std::vector<uint32_t> VisualHistVec;
+
 /*
  * Visual representations of data, eg histograms.
  * Not really visual until they're drawn, just a bunch of numbers, but
@@ -87,7 +89,7 @@ class VisualHist: public Visual {
     };
 
     VisualHist(std::string const &, uint32_t, LinearTransform const &, char
-        const *, bool, double);
+        const *, bool, double, unsigned, double);
     void Draw(Gui *);
     void Fill(Input::Type, Input::Scalar const &);
     void Fit();
@@ -103,9 +105,18 @@ class VisualHist: public Visual {
     Range m_range;
     Gui::Axis m_axis;
     std::mutex m_hist_mutex;
-    std::vector<uint32_t> m_hist;
+    uint64_t m_drop_counts_ms;
+    struct Slices {
+      Slices(unsigned a_num):
+        slice_vec(a_num),
+        active_i(0),
+        t_prev(0) {}
+      std::vector<VisualHistVec> slice_vec;
+      size_t active_i;
+      uint64_t t_prev;
+    } m_hist;
     Gui::Axis m_axis_copy;
-    std::vector<uint32_t> m_hist_copy;
+    VisualHistVec m_hist_copy;
     bool m_is_log_y;
     std::vector<Gui::Peak> m_peak_vec;
 };
@@ -114,7 +125,7 @@ class VisualHist2: public Visual {
   public:
     VisualHist2(std::string const &, size_t, uint32_t, uint32_t,
         LinearTransform const &, LinearTransform const &, char const *, bool,
-        double);
+        double, unsigned, double);
     void Draw(Gui *);
     void Fill(
         Input::Type, Input::Scalar const &,
@@ -136,10 +147,19 @@ class VisualHist2: public Visual {
     Gui::Axis m_axis_x;
     Gui::Axis m_axis_y;
     std::mutex m_hist_mutex;
-    std::vector<uint32_t> m_hist;
+    uint64_t m_drop_counts_ms;
+    struct Slices {
+      Slices(unsigned a_num):
+        slice_vec(a_num),
+        active_i(0),
+        t_prev(0) {}
+      std::vector<VisualHistVec> slice_vec;
+      size_t active_i;
+      uint64_t t_prev;
+    } m_hist;
     Gui::Axis m_axis_x_copy;
     Gui::Axis m_axis_y_copy;
-    std::vector<uint32_t> m_hist_copy;
+    VisualHistVec m_hist_copy;
     bool m_is_log_z;
     std::vector<uint8_t> m_pixels;
 };

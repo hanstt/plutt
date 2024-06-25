@@ -109,6 +109,10 @@ static char *g_transformx;
 static char *g_transformy;
 static char *g_fit;
 static int g_logy, g_logz;
+static struct {
+	double time;
+	unsigned slice_num;
+} g_drop_counts = {-1.0, 0};
 static double g_drop_stats = -1.0;
 
 #define CTDC_BITS 12
@@ -156,6 +160,7 @@ static double g_drop_stats = -1.0;
 %token TK_COS
 %token TK_CTDC
 %token TK_CUT
+%token TK_DROP_COUNTS
 %token TK_DROP_STATS
 %token TK_EXP
 %token TK_FILTER_RANGE
@@ -605,8 +610,20 @@ hist_cut
 		g_config->HistCutAdd(g_cut_poly);
 		g_cut_poly = nullptr;
 	}
+hist_drop_counts
+	: TK_DROP_COUNTS '(' const unit_time ')' {
+		LOC_SAVE(@1);
+		g_drop_counts.time = $3.GetDouble() * $4;
+		g_drop_counts.slice_num = 3;
+	}
+	| TK_DROP_COUNTS '(' const unit_time ',' const ')' {
+		LOC_SAVE(@1);
+		g_drop_counts.time = $3.GetDouble() * $4;
+		g_drop_counts.slice_num = $6.GetI64();
+	}
 hist_drop_stats
 	: TK_DROP_STATS '=' const unit_time {
+		LOC_SAVE(@1);
 		g_drop_stats = $3.GetDouble() * $4;
 	}
 
@@ -624,6 +641,7 @@ hist_arg
 	| TK_LOGY { g_logy = 1; }
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| hist_cut
+	| hist_drop_counts
 	| hist_drop_stats
 hist2d_opts
 	:
@@ -640,6 +658,7 @@ hist2d_arg
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| TK_TRANSFORMY '=' TK_IDENT { g_transformy = $3; }
 	| hist_cut
+	| hist_drop_counts
 	| hist_drop_stats
 
 coarse_fine
@@ -651,37 +670,45 @@ hist
 	: TK_HIST '(' TK_STRING ',' value hist_opts ')' {
 		LOC_SAVE(@1);
 		g_config->AddHist1($3, $5, g_binsx, g_transformx, g_fit,
-		    g_logy, g_drop_stats);
+		    g_logy, g_drop_counts.time, g_drop_counts.slice_num,
+		    g_drop_stats);
 		g_binsx = 0;
 		free(g_transformx); g_transformx = nullptr;
 		free(g_fit); g_fit = nullptr;
 		g_logy = 0;
+		g_drop_counts.time = -1.0;
 		g_drop_stats = -1.0;
 		free($3);
 	}
 	| TK_HIST2D '(' TK_STRING ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
 		g_config->AddHist2($3, $5, nullptr, g_binsy, g_binsx,
-		    g_transformy, g_transformx, g_fit, g_logz, g_drop_stats);
+		    g_transformy, g_transformx, g_fit, g_logz,
+		    g_drop_counts.time, g_drop_counts.slice_num,
+		    g_drop_stats);
 		g_binsx = 0;
 		g_binsy = 0;
 		free(g_transformx); g_transformx = nullptr;
 		free(g_transformy); g_transformy = nullptr;
 		free(g_fit); g_fit = nullptr;
 		g_logz = 0;
+		g_drop_counts.time = -1.0;
 		g_drop_stats = -1.0;
 		free($3);
 	}
 	| TK_HIST2D '(' TK_STRING ',' value ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
 		g_config->AddHist2($3, $5, $7, g_binsy, g_binsx,
-		    g_transformy, g_transformx, g_fit, g_logz, g_drop_stats);
+		    g_transformy, g_transformx, g_fit, g_logz,
+		    g_drop_counts.time, g_drop_counts.slice_num,
+		    g_drop_stats);
 		g_binsx = 0;
 		g_binsy = 0;
 		free(g_transformx); g_transformx = nullptr;
 		free(g_transformy); g_transformy = nullptr;
 		free(g_fit); g_fit = nullptr;
 		g_logz = 0;
+		g_drop_counts.time = -1.0;
 		g_drop_stats = -1.0;
 		free($3);
 	}

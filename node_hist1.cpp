@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023-2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,11 +31,13 @@
 
 NodeHist1::NodeHist1(std::string const &a_loc, char const *a_title, NodeValue
     *a_x, uint32_t a_xb, LinearTransform const &a_transform, char const
-    *a_fit, bool a_log_y, double a_drop_stats_s):
+    *a_fit, bool a_log_y, double a_drop_counts_s, unsigned a_drop_counts_num,
+    double a_drop_stats_s):
   NodeCuttable(a_loc, a_title),
   m_x(a_x),
   m_xb(a_xb),
-  m_visual_hist(a_title, m_xb, a_transform, a_fit, a_log_y, a_drop_stats_s)
+  m_visual_hist(a_title, m_xb, a_transform, a_fit, a_log_y, a_drop_counts_s,
+      a_drop_counts_num, a_drop_stats_s)
 {
 }
 

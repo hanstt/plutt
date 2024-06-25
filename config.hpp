@@ -54,9 +54,10 @@ class Config {
         std::vector<NodeValue *> const &);
     void AddFit(char const *, double, double);
     void AddHist1(char const *, NodeValue *, uint32_t, char const *, char
-        const *, bool, double);
+        const *, bool, double, unsigned, double);
     void AddHist2(char const *, NodeValue *, NodeValue *, uint32_t, uint32_t,
-        char const *, char const *, char const *, bool, double);
+        char const *, char const *, char const *, bool, double, unsigned,
+        double);
     NodeValue *AddLength(NodeValue *);
     NodeValue *AddMatchIndex(NodeValue *, NodeValue *);
     NodeValue *AddMatchValue(NodeValue *, NodeValue *, double);
