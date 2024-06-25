@@ -37,11 +37,11 @@
 
 extern GuiCollection g_gui;
 
-Range::Range(double a_drop_old_s):
+Range::Range(double a_drop_stats_s):
   m_mode(MODE_ALL),
   m_type(Input::kNone),
-  m_drop_old_ms(a_drop_old_s < 0 ? 0 :
-      (uint64_t)(1000 * a_drop_old_s / LENGTH(m_stat))),
+  m_drop_stats_ms(a_drop_stats_s < 0 ? 0 :
+      (uint64_t)(1000 * a_drop_stats_s / LENGTH(m_stat))),
   m_stat(),
   m_stat_i()
 {
@@ -75,8 +75,8 @@ void Range::Add(Input::Type a_type, Input::Scalar const &a_v)
   }
 
   ++s.num;
-  if (m_drop_old_ms > 0 &&
-      s.t_oldest + m_drop_old_ms < t_cur) {
+  if (m_drop_stats_ms > 0 &&
+      s.t_oldest + m_drop_stats_ms < t_cur) {
     m_stat_i = (m_stat_i + 1) % LENGTH(m_stat);
     auto &s2 = m_stat[m_stat_i];
     s2.sum = 0.0;
@@ -272,12 +272,12 @@ Visual::~Visual()
 
 VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
     LinearTransform const &a_transform, char const *a_fitter, bool a_is_log_y,
-    double a_drop_old_s):
+    double a_drop_stats_s):
   Visual(a_title),
   m_xb(a_xb),
   m_transform(a_transform),
   m_fitter(),
-  m_range(a_drop_old_s),
+  m_range(a_drop_stats_s),
   m_axis(),
   m_hist_mutex(),
   m_hist(),
@@ -479,15 +479,16 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
 
 VisualHist2::VisualHist2(std::string const &a_title, size_t a_colormap,
     uint32_t a_yb, uint32_t a_xb, LinearTransform const &a_ty, LinearTransform
-    const &a_tx, char const *a_fitter, bool a_is_log_z, double a_drop_old_s):
+    const &a_tx, char const *a_fitter, bool a_is_log_z, double
+    a_drop_stats_s):
   Visual(a_title),
   //m_colormap(a_colormap),
   m_xb(a_xb),
   m_yb(a_yb),
   m_transform_x(a_tx),
   m_transform_y(a_ty),
-  m_range_x(a_drop_old_s),
-  m_range_y(a_drop_old_s),
+  m_range_x(a_drop_stats_s),
+  m_range_y(a_drop_stats_s),
   m_axis_x(),
   m_axis_y(),
   m_hist_mutex(),

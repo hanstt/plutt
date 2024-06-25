@@ -30,11 +30,11 @@
 
 NodeHist1::NodeHist1(std::string const &a_loc, char const *a_title, NodeValue
     *a_x, uint32_t a_xb, LinearTransform const &a_transform, char const
-    *a_fit, bool a_log_y, double a_drop_old_s):
+    *a_fit, bool a_log_y, double a_drop_stats_s):
   NodeCuttable(a_loc, a_title),
   m_x(a_x),
   m_xb(a_xb),
-  m_visual_hist(a_title, m_xb, a_transform, a_fit, a_log_y, a_drop_old_s)
+  m_visual_hist(a_title, m_xb, a_transform, a_fit, a_log_y, a_drop_stats_s)
 {
 }
 

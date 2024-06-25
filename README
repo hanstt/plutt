@@ -346,14 +346,14 @@ hist(title, x [, args])
 			This histogram processes the current event only if the
 			given cut has seen a hit. For more info about the cut
 			syntax, see above.
-		drop_old=n time-unit
+		drop_stats=n time-unit
 			Drops old data statistics, used to size histogram
 			extents, that is older than about n time-units;
 			s or min.
-			Note that it doesn't primarily drop histogram counts,
-			it drops the knowledge of min/max values to auto-fit
-			ranges, and parts of the histogram counts can
-			disappear if they go outside the auto-fitted range.
+			Note that it doesn't drop histogram counts, it drops
+			knowledge of min/max values to auto-fit ranges, and
+			parts of the histogram counts can disappear if they go
+			outside the auto-fitted range.
 
 hist2d(title, y, x [, args])
 	Histograms 'y:v' vs 'x:v', pairing up the n:th entry in both vectors,

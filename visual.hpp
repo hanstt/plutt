@@ -56,7 +56,7 @@ class Range {
   private:
     Mode m_mode;
     Input::Type m_type;
-    uint64_t m_drop_old_ms;
+    uint64_t m_drop_stats_ms;
     struct {
       double min;
       double max;

@@ -289,7 +289,8 @@ void Config::AddFit(char const *a_name, double a_k, double a_m)
 }
 
 void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
-    const *a_transform, char const *a_fit, bool a_log_y, double a_drop_old_s)
+    const *a_transform, char const *a_fit, bool a_log_y, double
+    a_drop_stats_s)
 {
   double k = 1.0;
   double m = 0.0;
@@ -304,13 +305,13 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
     m = it->second.m;
   }
   auto node = new NodeHist1(GetLocStr(), a_title, a_x, a_xb,
-      LinearTransform(k, m), a_fit, a_log_y, a_drop_old_s);
+      LinearTransform(k, m), a_fit, a_log_y, a_drop_stats_s);
   NodeCuttableAdd(node);
 }
 
 void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
     uint32_t a_yb, uint32_t a_xb, char const *a_transformy, char const
-    *a_transformx, char const *a_fit, bool a_log_z, double a_drop_old_s)
+    *a_transformx, char const *a_fit, bool a_log_z, double a_drop_stats_s)
 {
   double kx = 1.0;
   double mx = 0.0;
@@ -338,7 +339,7 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
   }
   auto node = new NodeHist2(GetLocStr(), a_title, m_colormap, a_y, a_x,
       a_yb, a_xb, LinearTransform(ky, my), LinearTransform(kx, mx), a_fit,
-      a_log_z, a_drop_old_s);
+      a_log_z, a_drop_stats_s);
   NodeCuttableAdd(node);
 }
 
