@@ -54,7 +54,7 @@ class Config {
         std::vector<NodeValue *> const &);
     void AddFit(char const *, double, double);
     void AddHist1(char const *, NodeValue *, uint32_t, char const *, char
-        const *, bool, double, unsigned, double);
+        const *, bool, bool, double, unsigned, double);
     void AddHist2(char const *, NodeValue *, NodeValue *, uint32_t, uint32_t,
         char const *, char const *, char const *, bool, double, unsigned,
         double);

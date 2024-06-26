@@ -61,7 +61,8 @@ class Gui {
     virtual bool Draw(double) = 0;
 
     virtual void DrawHist1(uint32_t, Axis const &, LinearTransform const &,
-        bool, std::vector<uint32_t> const &, std::vector<Peak> const &) = 0;
+        bool, bool, std::vector<uint32_t> const &, std::vector<Peak> const &)
+        = 0;
     virtual void DrawHist2(uint32_t, Axis const &, Axis const &,
         LinearTransform const &, LinearTransform const &,
         bool, std::vector<uint32_t> const &) = 0;
@@ -81,7 +82,7 @@ class GuiCollection {
     bool Draw(double);
 
     void DrawHist1(Gui *, uint32_t, Gui::Axis const &,
-        LinearTransform const &, bool, std::vector<uint32_t> const &,
+        LinearTransform const &, bool, bool, std::vector<uint32_t> const &,
         std::vector<Gui::Peak> const &);
     void DrawHist2(Gui *, uint32_t, Gui::Axis const &, Gui::Axis const &,
         LinearTransform const &, LinearTransform const &,

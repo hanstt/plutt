@@ -289,8 +289,8 @@ void Config::AddFit(char const *a_name, double a_k, double a_m)
 }
 
 void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
-    const *a_transform, char const *a_fit, bool a_log_y, double
-    a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s)
+    const *a_transform, char const *a_fit, bool a_log_y, bool a_contour,
+    double a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s)
 {
   double k = 1.0;
   double m = 0.0;
@@ -319,7 +319,7 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
   a_drop_counts_num = std::max(a_drop_counts_num, 1U);
 
   auto node = new NodeHist1(GetLocStr(), a_title, a_x, a_xb,
-      LinearTransform(k, m), a_fit, a_log_y, a_drop_counts_s,
+      LinearTransform(k, m), a_fit, a_log_y, a_contour, a_drop_counts_s,
       a_drop_counts_num, a_drop_stats_s);
   NodeCuttableAdd(node);
 }

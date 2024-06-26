@@ -271,7 +271,7 @@ namespace ImPlutt {
       enum InputStatus TextInput(TextInputState *);
 
       template <typename T> void PlotHist1(Plot const *, double, double,
-          std::vector<T> const &, size_t);
+          std::vector<T> const &, size_t, bool);
       template <typename T> void PlotHist2(Plot  *, size_t, Point const &,
           Point const &, std::vector<T> const &, size_t, size_t,
           std::vector<uint8_t> &);

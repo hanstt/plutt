@@ -272,8 +272,8 @@ Visual::~Visual()
 
 VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
     LinearTransform const &a_transform, char const *a_fitter, bool a_is_log_y,
-    double a_drop_counts_s, unsigned a_drop_counts_num, double
-    a_drop_stats_s):
+    bool a_is_contour, double a_drop_counts_s, unsigned a_drop_counts_num,
+    double a_drop_stats_s):
   Visual(a_title),
   m_xb(a_xb),
   m_transform(a_transform),
@@ -286,6 +286,7 @@ VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
   m_axis_copy(),
   m_hist_copy(),
   m_is_log_y(a_is_log_y),
+  m_is_contour(a_is_contour),
   m_peak_vec()
 {
   if (!a_fitter) {
@@ -316,7 +317,7 @@ void VisualHist::Draw(Gui *a_gui)
   }
 
   g_gui.DrawHist1(a_gui, m_gui_id, m_axis_copy, m_transform, m_is_log_y,
-      m_hist_copy, m_peak_vec);
+      m_is_contour, m_hist_copy, m_peak_vec);
 }
 
 void VisualHist::Fill(Input::Type a_type, Input::Scalar const &a_x)

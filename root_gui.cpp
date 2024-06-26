@@ -201,8 +201,8 @@ bool RootGui::Draw(double a_event_rate)
 
 // TODO: Use axis transform.
 void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
-    const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v,
-    std::vector<Peak> const &a_peak_vec)
+    const &a_transform, bool a_is_log_y, bool a_is_contour,
+    std::vector<uint32_t> const &a_v, std::vector<Peak> const &a_peak_vec)
 {
   auto page_i = a_id >> 16;
   auto plot_i = a_id & 0xffff;

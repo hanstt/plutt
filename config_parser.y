@@ -110,6 +110,7 @@ static char *g_transformx;
 static char *g_transformy;
 static char *g_fit;
 static int g_logy, g_logz;
+static int g_contour;
 static struct {
 	double time;
 	unsigned slice_num;
@@ -158,12 +159,14 @@ static double g_drop_stats = -1.0;
 %token TK_CLUSTER
 %token TK_COARSE_FINE
 %token TK_COLORMAP
+%token TK_CONTOURED
 %token TK_COS
 %token TK_CTDC
 %token TK_CUT
 %token TK_DROP_COUNTS
 %token TK_DROP_STATS
 %token TK_EXP
+%token TK_FILLED
 %token TK_FILTER_RANGE
 %token TK_FIT
 %token TK_HIST
@@ -638,6 +641,8 @@ hist_opt
 	: ',' hist_arg
 hist_arg
 	: TK_BINSX '=' const { g_binsx = $3.GetI64(); }
+	| TK_CONTOURED { g_contour = 1; }
+	| TK_FILLED { g_contour = 0; }
 	| TK_FIT '=' TK_STRING { g_fit = $3; }
 	| TK_LOGY { g_logy = 1; }
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
@@ -671,12 +676,13 @@ hist
 	: TK_HIST '(' TK_STRING ',' value hist_opts ')' {
 		LOC_SAVE(@1);
 		g_config->AddHist1($3, $5, g_binsx, g_transformx, g_fit,
-		    g_logy, g_drop_counts.time, g_drop_counts.slice_num,
-		    g_drop_stats);
+		    g_logy, g_contour, g_drop_counts.time,
+		    g_drop_counts.slice_num, g_drop_stats);
 		g_binsx = 0;
 		free(g_transformx); g_transformx = nullptr;
 		free(g_fit); g_fit = nullptr;
 		g_logy = 0;
+		g_contour = 0;
 		g_drop_counts.time = -1.0;
 		g_drop_stats = -1.0;
 		free($3);

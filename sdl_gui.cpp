@@ -194,8 +194,8 @@ bool SdlGui::Draw(double a_event_rate)
 }
 
 void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
-    const &a_transform, bool a_is_log_y, std::vector<uint32_t> const &a_v,
-    std::vector<Peak> const &a_peak_vec)
+    const &a_transform, bool a_is_log_y, bool a_is_contour,
+    std::vector<uint32_t> const &a_v, std::vector<Peak> const &a_peak_vec)
 {
   auto page = m_page_vec.at(a_id >> 16);
   auto plot_wrap = page->plot_wrap_vec.at(a_id & 0xffff);
@@ -224,7 +224,7 @@ void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
 
   m_window->PlotHist1(&plot,
       minx, maxx,
-      a_v, (size_t)a_axis.bins);
+      a_v, (size_t)a_axis.bins, a_is_contour);
 
   // Draw fits.
   for (auto it = a_peak_vec.begin(); a_peak_vec.end() != it; ++it) {

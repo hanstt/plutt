@@ -2097,7 +2097,7 @@ namespace ImPlutt {
 #define PLOT_TMPL(T) \
   void Window::PlotHist1(Plot const *a_plot, \
       double a_min, double a_max, \
-      std::vector<T> const &a_vec, size_t a_bins)
+      std::vector<T> const &a_vec, size_t a_bins, bool a_is_contour)
   template <typename T> PLOT_TMPL(T)
   {
     auto const &r = a_plot->m_rect_graph;
@@ -2112,8 +2112,11 @@ namespace ImPlutt {
     auto right = a_plot->PosFromPointX(a_max);
     auto pixels = right - left;
     if (pixels >= (int)a_bins) {
-      // We have at least 1px/bin, render one rect per entry.
+      // We have at least 1px/bin:
+      //  Contour: render lines simply.
+      //  Filled: render one rect per entry.
       auto pos_x_prev = left;
+      auto pos_y_prev = 0;
       for (size_t i = 0; i < a_bins; ++i) {
         auto x = a_min + (a_max - a_min) * ((double)i + 1) / (double)a_bins;
         auto pos_x = a_plot->PosFromPointX(x);
@@ -2121,17 +2124,47 @@ namespace ImPlutt {
         auto v = (double)a_vec.at(i);
         auto h = a_plot->PosFromPointY(v);
 
-        Rect r_col;
-        r_col.x = pos_x_prev;
-        r_col.y = h;
-        r_col.w = pos_x - pos_x_prev;
-        r_col.h = r.h - h;
-        RenderRect(r_col, false);
+        if (a_is_contour) {
+          if (0 != pos_x_prev) {
+            // Draw the left edge if it's away from the view edge.
+            Pos p1(pos_x_prev, pos_y_prev);
+            Pos p2(pos_x_prev, h);
+            RenderLine(p1, p2);
+          }
+          {
+            // Top.
+            Pos p1(pos_x_prev, h);
+            Pos p2(pos_x, h);
+            RenderLine(p1, p2);
+          }
+        } else {
+          Rect r_col;
+          r_col.x = pos_x_prev;
+          r_col.y = h;
+          r_col.w = pos_x - pos_x_prev;
+          r_col.h = r.h - h;
+          RenderRect(r_col, false);
+        }
         pos_x_prev = pos_x;
+        pos_y_prev = h;
+      }
+      if (a_is_contour && pos_x_prev < pixels) {
+        // Only draw the right edge at the end and if we don't touch the right
+        // edge of the view.
+        Pos p1(pos_x_prev, pos_y_prev);
+        Pos p2(pos_x_prev, 0);
+        RenderLine(p1, p2);
       }
     } else {
-      // Fewer pixels than bins, do nearest-neighbour boundaries and draw
-      // filtered pixel-columns from vertical min to max.
+      // Fewer pixels than bins:
+      //  Contour: draw vertical min to max in covered bins, including the
+      //  previous iteration.
+      //  Filled: do nearest-neighbour boundaries and draw filtered
+      //          pixel-columns from vertical min to max.
+      struct {
+        int min;
+        int max;
+      } contour_prev = {0, 0};
       struct Blurred {
         int min;
         int max;
@@ -2161,34 +2194,51 @@ namespace ImPlutt {
         auto h_min = a_plot->PosFromPointY(v_min);
         auto h_max = a_plot->PosFromPointY(v_max);
 
-        Rect r_col;
-        r_col.x = pi;
-        r_col.y = h_min;
-        r_col.w = 1;
-        r_col.h = r.h - h_min;
-        RenderRect(r_col, false);
+        if (a_is_contour) {
+          // Draw while caring about min/max of previous.
+          int y1 = std::min(contour_prev.min, h_max);
+          int y2 = std::max(contour_prev.max, h_min);
 
-        auto &b = blurred.at((size_t)pi);
-        b.min = h_min;
-        b.max = h_max;
+          Pos p1(pi, y1);
+          Pos p2(pi, y2);
+          RenderLine(p1, p2);
+
+          contour_prev.min = h_max;
+          contour_prev.max = h_min;
+        } else {
+          // Draw solid base rects.
+          Rect r_col;
+          r_col.x = pi;
+          r_col.y = h_min;
+          r_col.w = 1;
+          r_col.h = r.h - h_min;
+          RenderRect(r_col, false);
+
+          auto &b = blurred.at((size_t)pi);
+          b.min = h_min;
+          b.max = h_max;
+        }
 
         i0 = i1;
       }
-      // Draw blurred min-max columns.
-      SDL_Color col = g_style[g_style_i][STYLE_PLOT_FG];
-      col.a = 128;
-      RenderColor(col);
-      a_plot->m_window->RenderTransparent(true);
-      for (int pi = 0; pi < r.w; ++pi) {
-        auto const &b = blurred.at((size_t)pi);
-        Rect r_col;
-        r_col.x = pi;
-        r_col.y = b.max;
-        r_col.w = 1;
-        r_col.h = b.min - b.max;
-        RenderRect(r_col, false);
+      if (a_is_contour) {
+      } else {
+        // Draw blurred min-max columns on top of the solid rects.
+        SDL_Color col = g_style[g_style_i][STYLE_PLOT_FG];
+        col.a = 128;
+        RenderColor(col);
+        a_plot->m_window->RenderTransparent(true);
+        for (int pi = 0; pi < r.w; ++pi) {
+          auto const &b = blurred.at((size_t)pi);
+          Rect r_col;
+          r_col.x = pi;
+          r_col.y = b.max;
+          r_col.w = 1;
+          r_col.h = b.min - b.max;
+          RenderRect(r_col, false);
+        }
+        a_plot->m_window->RenderTransparent(false);
       }
-      a_plot->m_window->RenderTransparent(false);
     }
   }
   PLOT_TMPL_INSTANTIATE;
@@ -2407,7 +2457,7 @@ namespace ImPlutt {
             ImPlutt::Point(max_x, max_y * 1.1),
             a_plot->m_state->is_log.is_on, false);
         win->PlotHist1(&plot, min_x, max_x, state->proj.vec,
-            state->proj.vec.size());
+            state->proj.vec.size(), false);
       }
       win->End();
     }

@@ -89,7 +89,7 @@ class VisualHist: public Visual {
     };
 
     VisualHist(std::string const &, uint32_t, LinearTransform const &, char
-        const *, bool, double, unsigned, double);
+        const *, bool, bool, double, unsigned, double);
     void Draw(Gui *);
     void Fill(Input::Type, Input::Scalar const &);
     void Fit();
@@ -118,6 +118,7 @@ class VisualHist: public Visual {
     Gui::Axis m_axis_copy;
     VisualHistVec m_hist_copy;
     bool m_is_log_y;
+    bool m_is_contour;
     std::vector<Gui::Peak> m_peak_vec;
 };
 
