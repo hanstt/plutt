@@ -41,6 +41,9 @@ class RootChain {
     bool Fetch();
 
   private:
+    RootChain(RootChain const &);
+    RootChain &operator=(RootChain const &);
+
     void BindBranch(Config &, std::string const &, char const *, char const *,
         bool);
 
@@ -441,12 +444,18 @@ Root::~Root()
 
 void Root::BindSignal(size_t a_id)
 {
-  m_buf_vec.resize(a_id + 1);
+  if (a_id >= m_buf_vec.size()) {
+    auto i = m_buf_vec.size();
+    m_buf_vec.resize(a_id + 1);
+    for (; i < m_buf_vec.size(); ++i) {
+      m_buf_vec.at(i) = new Vector<Input::Scalar>();
+    }
+  }
 }
 
 Vector<Input::Scalar> &Root::GetBuffer(size_t a_id)
 {
-  return m_buf_vec.at(a_id);
+  return *m_buf_vec.at(a_id);
 }
 
 void Root::Buffer()

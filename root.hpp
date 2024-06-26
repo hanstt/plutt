@@ -60,9 +60,12 @@ class Root: public Input {
       Config *config;
       std::string tree_name;
       FileWatcher *file_watcher;
+      private:
+        Watcher(Watcher const &);
+        Watcher &operator=(Watcher const &);
     } m_watcher;
     RootChain *m_chain;
-    Vector<Vector<Input::Scalar>> m_buf_vec;
+    std::vector<Vector<Input::Scalar> *> m_buf_vec;
 };
 
 #endif
