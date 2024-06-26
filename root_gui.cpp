@@ -234,6 +234,7 @@ void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
   for (size_t i = 0; i < a_axis.bins; ++i) {
     plot->h1->SetBinContent(1 + (int)i, a_v.at(i));
   }
+  plot->h1->ResetStats();
 
   // Fit-peak graph.
   plot->gr_vec.resize(a_peak_vec.size());
@@ -313,6 +314,7 @@ void RootGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const
       plot->h2->SetBinContent(1 + (int)j, 1 + (int)i, a_v.at(k++));
     }
   }
+  plot->h2->ResetStats();
 }
 
 #endif
