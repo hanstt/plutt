@@ -28,6 +28,7 @@
 #include <input.hpp>
 
 class Config;
+class FileWatcher;
 // Root has less strict headers, hide everything in root.cpp...
 class RootChain;
 
@@ -43,27 +44,25 @@ class Root: public Input {
     bool Fetch();
     std::pair<Input::Scalar const *, size_t> GetData(size_t);
 
+    // Called by RootChain.
+    void BindSignal(size_t);
+    Vector<Input::Scalar> &GetBuffer(size_t);
+
   private:
     Root(Root const &);
     Root &operator=(Root const &);
 
-    bool m_is_files;
-    struct Notify {
-      Notify():
+    struct Watcher {
+      Watcher():
         config(),
         tree_name(),
-        fd(),
-        wd_map()
-      {
-      }
-      Notify(Notify const &);
-      Notify &operator=(Notify const &);
+        file_watcher() {}
       Config *config;
       std::string tree_name;
-      int fd;
-      std::map<int, std::string> wd_map;
-    } m_inotify;
+      FileWatcher *file_watcher;
+    } m_watcher;
     RootChain *m_chain;
+    Vector<Vector<Input::Scalar>> m_buf_vec;
 };
 
 #endif

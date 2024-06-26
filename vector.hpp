@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023-2024
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -99,7 +100,7 @@ class Vector {
       m_array[m_size++] = a_t;
     }
     void resize(size_t a_size) {
-      if (a_size >= m_capacity) {
+      if (a_size > m_capacity) {
         m_capacity = a_size;
         auto array = new T [m_capacity];
         if (m_array) {

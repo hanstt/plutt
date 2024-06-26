@@ -90,6 +90,12 @@ else
 $(info UCESB: no)
 endif
 
+# MacOS CoreServices for file watching.
+
+ifeq (Darwin,$(shell uname -s))
+LDFLAGS:=-framework CoreServices
+endif
+
 # Bison flags.
 
 # --version prints info to stdout if the -W flags are accepted, else stderr.
