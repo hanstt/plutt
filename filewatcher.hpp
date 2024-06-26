@@ -33,6 +33,9 @@ class FileWatcher {
     std::string WaitFile(unsigned);
 
   private:
+    FileWatcher(FileWatcher const &);
+    FileWatcher &operator=(FileWatcher const &);
+
     FileWatcherImpl *m_impl;
 };
 

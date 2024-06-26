@@ -21,7 +21,6 @@
  */
 
 #include <iostream>
-#include <list>
 #include <string>
 #include <vector>
 #include <filewatcher.hpp>
@@ -31,6 +30,10 @@
 #       include <linux/limits.h>
 #       include <sys/inotify.h>
 #       include <sys/poll.h>
+#       include <cstring>
+#       include <map>
+#       include <unistd.h>
+#       include <util.hpp>
 
 class FileWatcherImpl {
   public:
@@ -44,7 +47,7 @@ class FileWatcherImpl {
     std::map<int, std::string> m_wd_map;
 };
 
-FileWatcherImpl::FileWatcherImpl(std::vector<std::string> const &a_vec)
+FileWatcherImpl::FileWatcherImpl(std::vector<std::string> const &a_vec):
   m_fd(),
   m_wd_map()
 {
@@ -113,6 +116,7 @@ std::string FileWatcherImpl::WaitFile(unsigned a_timeout_ms)
 
 #ifdef __APPLE__
 
+#       include <list>
 #       include <CoreServices/CoreServices.h>
 
 class FileWatcherImpl {
@@ -194,11 +198,13 @@ void FileWatcherImpl::callback(ConstFSEventStreamRef, void *a_user_info,
   auto watcher = (FileWatcherImpl *)a_user_info;
   char **path_array = (char **)a_path_array;
   for (size_t i = 0; i < a_ev_num; i++) {
-    // Where are the flags?
-    // /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/\
-    //     Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/\
-    //     CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/\
-    //     Versions/A/Headers/FSEvents.h
+    /*
+     * Where are the flags?
+     * /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/\
+     *     Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/\
+     *     CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/\
+     *     Versions/A/Headers/FSEvents.h
+     */
     FSEventStreamEventFlags flags =
         kFSEventStreamEventFlagItemIsFile |
         kFSEventStreamEventFlagItemModified;
