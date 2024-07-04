@@ -60,6 +60,28 @@ class RootGui::Bind: public TNamed
     PlotWrap *m_plot_wrap;
 };
 
+class RootGui::AllClear: public TNamed
+{
+  public:
+    AllClear(std::string const &a_name, RootGui *a_root_gui):
+      TNamed(a_name.c_str(), a_name.c_str()),
+      m_root_gui(a_root_gui)
+    {
+    }
+    void Clear(Option_t *) {
+      auto &list = m_root_gui->m_bind_list;
+      for (auto it = list.begin(); list.end() != it; ++it) {
+        (*it)->Clear(nullptr);
+      }
+    }
+
+  private:
+    AllClear(AllClear const &);
+    AllClear &operator=(AllClear const &);
+
+    RootGui *m_root_gui;
+};
+
 RootGui::PlotWrap::PlotWrap():
   name(),
   plot(),
@@ -88,6 +110,15 @@ RootGui::RootGui(uint16_t a_port):
   std::ostringstream oss;
   oss << "http:" << a_port << ";noglobal";
   m_server = new THttpServer(oss.str().c_str());
+  {
+    // Add clearer for all histograms.
+    std::string bind_name = "plutt_Clear_ALL";
+    auto clearer = new AllClear(bind_name, this);
+    gROOT->Append(clearer);
+    std::string cmdname = "/Clear/ALL";
+    m_server->RegisterCommand(cmdname.c_str(),
+        (bind_name + "->Clear()").c_str());
+  }
 }
 
 RootGui::~RootGui()

@@ -57,6 +57,7 @@ class RootGui: public Gui {
 
     std::string CleanName(std::string const &);
 
+    class AllClear;
     class Bind;
 
     struct PlotWrap {
