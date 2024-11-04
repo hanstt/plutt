@@ -59,6 +59,7 @@ ifeq ($(shell ($(ROOT_CONFIG) --version 2>/dev/null && echo YesBox) | grep YesBo
 CPPFLAGS+=-DPLUTT_ROOT=1
 ROOT_CFLAGS:=$(shell $(ROOT_CONFIG) --cflags | sed 's/-I/-isystem/')
 LIBS+=$(shell $(ROOT_CONFIG) --libs) -lRHTTP
+ROOT_CLING:=$(shell $(ROOT_CONFIG) --prefix)/bin/rootcling
 ROOT_DICT_O:=$(BUILD_DIR)/test/test_root_dict.o
 ROOT_DICT_PCM:=$(BUILD_DIR)/test_root_dict_rdict.pcm
 $(info ROOT: yes)
@@ -121,7 +122,7 @@ endif
 CPPFLAGS:=$(CPPFLAGS) -MMD \
 	-I$(BUILD_DIR) -I.
 CXXFLAGS_UNSAFE:=$(CXXFLAGS) -fPIC -std=c++11
-CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Weffc++ -Werror -Wshadow -Wswitch-enum
+CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Werror -Wshadow -Wswitch-enum
 LDFLAGS:=$(LDFLAGS) -fPIC
 
 MKDIR=[ -d $(@D) ] || mkdir -p $(@D)
@@ -130,22 +131,28 @@ SRC:=$(wildcard *.cpp)
 OBJ:=$(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRC)) \
 	$(addprefix $(BUILD_DIR)/,config_parser.yy.o config_parser.tab.o) \
 	$(addprefix $(BUILD_DIR)/,trig_map_parser.yy.o trig_map_parser.tab.o)
+PLUTT:=$(BUILD_DIR)/plutt
 
 TEST_SRC:=$(wildcard test/*.cpp)
 TEST_OBJ:=$(patsubst %.cpp,$(BUILD_DIR)/%.o,$(TEST_SRC)) $(ROOT_DICT_O)
+TEST_OK:=$(BUILD_DIR)/test.ok
+TEST:=$(BUILD_DIR)/tests
 
 .PHONY: clean
-all: $(BUILD_DIR)/plutt test
+all: $(PLUTT)
 
 .PHONY: test
-test: $(BUILD_DIR)/tests $(ROOT_DICT_PCM)
+test: $(TEST) $(ROOT_DICT_PCM)
 	$(QUIET)./$<
 
-$(BUILD_DIR)/plutt: $(OBJ)
+$(PLUTT): $(OBJ) $(TEST_OK)
 	@echo LD $@
-	$(QUIET)$(CXX) -o $@ $^ $(LDFLAGS) $(LIBS)
+	$(QUIET)$(CXX) -o $@ $(filter %.o,$^) $(LDFLAGS) $(LIBS)
 
-$(BUILD_DIR)/tests: $(TEST_OBJ) $(filter-out %main.o,$(OBJ))
+$(TEST_OK): $(TEST)
+	$(QUIET)./$< && touch $@
+
+$(TEST): $(TEST_OBJ) $(filter-out %main.o,$(OBJ))
 	@echo LD $@
 	$(QUIET)$(CXX) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -207,7 +214,7 @@ $(BUILD_DIR)/test/test_root_dict.o: $(BUILD_DIR)/test/test_root_dict.cpp
 $(BUILD_DIR)/test/test_root_dict.cpp: test/test_root.hpp test/test_root_linkdef.hpp
 	@echo CLING $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)rootcling -f -DPLUTT_ROOT=1 -I. $@ $^
+	$(QUIET)$(ROOT_CLING) -f -DPLUTT_ROOT=1 -I. $@ $^
 
 $(BUILD_DIR)/test/test_root_dict_rdict.pcm: $(BUILD_DIR)/test/test_root_dict.cpp
 $(BUILD_DIR)/test_root_dict_rdict.pcm: $(BUILD_DIR)/test/test_root_dict_rdict.pcm
