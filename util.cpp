@@ -28,7 +28,9 @@
 #include <cassert>
 #include <cstdarg>
 #include <cstdint>
+#include <cstdio>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include <util.hpp>
