@@ -25,7 +25,6 @@
 #ifndef UNPACKER_HPP
 #define UNPACKER_HPP
 
-#include <set>
 #include <input.hpp>
 
 class Config;
