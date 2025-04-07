@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -58,8 +59,8 @@ void NodeMeanGeom::Process(uint64_t a_evid)
       double sum = 0.0;
       uint32_t num = 0;
       uint32_t me_0 = 0;
-      for (uint32_t i = 0; i < val_l.GetMI().size(); ++i) {
-        auto me_1 = val_l.GetME()[i];
+      for (uint32_t i = 0; i < val_l.GetID().size(); ++i) {
+        auto me_1 = val_l.GetEnd()[i];
         if (me_0 + vi < me_1) {
           sum += val_l.GetV(me_0 + vi, false);
           ++num;
@@ -77,15 +78,15 @@ void NodeMeanGeom::Process(uint64_t a_evid)
     // Arith-mean between two signals for each "I".
     NODE_PROCESS(m_r, a_evid);
     auto const &val_r = m_r->GetValue();
-    NODE_ASSERT(val_l.GetMI().size(), ==, val_r.GetMI().size());
+    NODE_ASSERT(val_l.GetID().size(), ==, val_r.GetID().size());
 
     uint32_t me0_l = 0;
     uint32_t me0_r = 0;
-    for (uint32_t i = 0; i < val_l.GetMI().size(); ++i) {
-      auto mi = val_l.GetMI()[i];
-      NODE_ASSERT(mi, ==, val_r.GetMI()[i]);
-      auto me1_l = val_l.GetME()[i];
-      auto me1_r = val_r.GetME()[i];
+    for (uint32_t i = 0; i < val_l.GetID().size(); ++i) {
+      auto mi = val_l.GetID()[i];
+      NODE_ASSERT(mi, ==, val_r.GetID()[i]);
+      auto me1_l = val_l.GetEnd()[i];
+      auto me1_r = val_r.GetEnd()[i];
       while (me0_l < me1_l && me0_r < me1_r) {
         Input::Scalar mean;
         double prod = 1.0;

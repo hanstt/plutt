@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,12 +33,12 @@ NodeMember::NodeMember(std::string const &a_loc, NodeValue *a_child, char
   NodeValue(a_loc),
   m_value(),
   m_child(a_child),
-  m_is_i()
+  m_is_id()
 {
-  if (0 == strcmp(a_suffix, "I")) {
-    m_is_i = true;
-  } else if (0 == strcmp(a_suffix, "v") || 0 == strcmp(a_suffix, "E")) {
-    m_is_i = false;
+  if (0 == strcmp(a_suffix, "id")) {
+    m_is_id = true;
+  } else if (0 == strcmp(a_suffix, "v")) {
+    m_is_id = false;
   } else {
     std::cerr << GetLocStr() << ": Invalid suffix '" << a_suffix << "'.\n";
     throw std::runtime_error(__func__);
@@ -58,9 +59,9 @@ void NodeMember::Process(uint64_t a_evid)
   m_value.Clear();
 
   auto const &val = m_child->GetValue();
-  if (m_is_i) {
+  if (m_is_id) {
     m_value.SetType(Input::kUint64);
-    for (auto it = val.GetMI().begin(); val.GetMI().end() != it; ++it) {
+    for (auto it = val.GetID().begin(); val.GetID().end() != it; ++it) {
       Input::Scalar s;
       s.u64 = *it;
       m_value.Push(0, s);

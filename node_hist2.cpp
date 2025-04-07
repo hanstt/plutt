@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -58,8 +58,8 @@ void NodeHist2::Process(uint64_t a_evid)
 
   if (!m_x) {
     // Plot y.v vs y.I.
-    auto const &vmi = val_y.GetMI();
-    auto const &vme = val_y.GetME();
+    auto const &vmi = val_y.GetID();
+    auto const &vme = val_y.GetEnd();
     // Pre-fill.
     uint32_t vi = 0;
     for (uint32_t i = 0; i < vmi.size(); ++i) {

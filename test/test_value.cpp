@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,47 +48,47 @@ void MyTest::Run()
     TEST_CMP(v.GetType(), ==, Input::kNone);
     v.SetType(Input::kUint64);
     TEST_CMP(v.GetType(), ==, Input::kUint64);
-    TEST_BOOL(v.GetMI().empty());
-    TEST_BOOL(v.GetME().empty());
+    TEST_BOOL(v.GetID().empty());
+    TEST_BOOL(v.GetEnd().empty());
     TEST_BOOL(v.GetV().empty());
 
     Input::Scalar s;
     s.u64 = 10;
     v.Push(1, s);
-    TEST_CMP(v.GetMI().size(), ==, 1U);
-    TEST_CMP(v.GetME().size(), ==, 1U);
+    TEST_CMP(v.GetID().size(), ==, 1U);
+    TEST_CMP(v.GetEnd().size(), ==, 1U);
     TEST_CMP(v.GetV().size(), ==, 1U);
-    TEST_CMP(v.GetMI().at(0), ==, 1U);
-    TEST_CMP(v.GetME().at(0), ==, 1U);
+    TEST_CMP(v.GetID().at(0), ==, 1U);
+    TEST_CMP(v.GetEnd().at(0), ==, 1U);
     TEST_CMP(v.GetV().at(0).u64, ==, 10U);
 
     s.u64 = 100;
     v.Push(1, s);
-    TEST_CMP(v.GetMI().size(), ==, 1U);
-    TEST_CMP(v.GetME().size(), ==, 1U);
+    TEST_CMP(v.GetID().size(), ==, 1U);
+    TEST_CMP(v.GetEnd().size(), ==, 1U);
     TEST_CMP(v.GetV().size(), ==, 2U);
-    TEST_CMP(v.GetMI().at(0), ==, 1U);
-    TEST_CMP(v.GetME().at(0), ==, 2U);
+    TEST_CMP(v.GetID().at(0), ==, 1U);
+    TEST_CMP(v.GetEnd().at(0), ==, 2U);
     TEST_CMP(v.GetV().at(0).u64, ==, 10U);
     TEST_CMP(v.GetV().at(1).u64, ==, 100U);
 
     s.u64 = 1000;
     v.Push(2, s);
-    TEST_CMP(v.GetMI().size(), ==, 2U);
-    TEST_CMP(v.GetME().size(), ==, 2U);
+    TEST_CMP(v.GetID().size(), ==, 2U);
+    TEST_CMP(v.GetEnd().size(), ==, 2U);
     TEST_CMP(v.GetV().size(), ==, 3U);
-    TEST_CMP(v.GetMI().at(0), ==, 1U);
-    TEST_CMP(v.GetMI().at(1), ==, 2U);
-    TEST_CMP(v.GetME().at(0), ==, 2U);
-    TEST_CMP(v.GetME().at(1), ==, 3U);
+    TEST_CMP(v.GetID().at(0), ==, 1U);
+    TEST_CMP(v.GetID().at(1), ==, 2U);
+    TEST_CMP(v.GetEnd().at(0), ==, 2U);
+    TEST_CMP(v.GetEnd().at(1), ==, 3U);
     TEST_CMP(v.GetV().at(0).u64, ==, 10U);
     TEST_CMP(v.GetV().at(1).u64, ==, 100U);
     TEST_CMP(v.GetV().at(2).u64, ==, 1000U);
 
     v.Clear();
     TEST_CMP(v.GetType(), ==, Input::kUint64);
-    TEST_BOOL(v.GetMI().empty());
-    TEST_BOOL(v.GetME().empty());
+    TEST_BOOL(v.GetID().empty());
+    TEST_BOOL(v.GetEnd().empty());
     TEST_BOOL(v.GetV().empty());
   }
 }

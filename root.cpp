@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Håkan T Johansson <f96hajo@chalmers.se>
  *
@@ -44,8 +44,9 @@ class RootChain {
     RootChain(RootChain const &);
     RootChain &operator=(RootChain const &);
 
-    void BindBranch(Config &, std::string const &, char const *, char const *,
-        bool);
+    void BindBranch(Config &, std::string const &, std::string const &,
+        NodeSignal::MemberType);
+    bool FindBranch(std::string const &);
 
     Root *m_root;
     TChain m_chain;
@@ -57,26 +58,26 @@ class RootChain {
         in_type(a_in_type),
         out_type(a_out_type),
         is_vector(a_is_vector),
-        val_char(),
-        arr_char(),
-        val_short(),
-        arr_short(),
-        val_int(),
-        arr_int(),
-        val_long(),
-        arr_long(),
-        val_uchar(),
-        arr_uchar(),
-        val_ushort(),
-        arr_ushort(),
-        val_uint(),
-        arr_uint(),
-        val_ulong(),
-        arr_ulong(),
-        val_float(),
-        arr_float(),
-        val_double(),
-        arr_double()
+        val_Char_t(),
+        arr_Char_t(),
+        val_Short_t(),
+        arr_Short_t(),
+        val_Int_t(),
+        arr_Int_t(),
+        val_Long_t(),
+        arr_Long_t(),
+        val_UChar_t(),
+        arr_UChar_t(),
+        val_UShort_t(),
+        arr_UShort_t(),
+        val_UInt_t(),
+        arr_UInt_t(),
+        val_ULong_t(),
+        arr_ULong_t(),
+        val_Float_t(),
+        arr_Float_t(),
+        val_Double_t(),
+        arr_Double_t()
       {
       }
       Entry(Entry const &a_e):
@@ -84,26 +85,26 @@ class RootChain {
         in_type(),
         out_type(),
         is_vector(),
-        val_char(),
-        arr_char(),
-        val_short(),
-        arr_short(),
-        val_int(),
-        arr_int(),
-        val_long(),
-        arr_long(),
-        val_uchar(),
-        arr_uchar(),
-        val_ushort(),
-        arr_ushort(),
-        val_uint(),
-        arr_uint(),
-        val_ulong(),
-        arr_ulong(),
-        val_float(),
-        arr_float(),
-        val_double(),
-        arr_double()
+        val_Char_t(),
+        arr_Char_t(),
+        val_Short_t(),
+        arr_Short_t(),
+        val_Int_t(),
+        arr_Int_t(),
+        val_Long_t(),
+        arr_Long_t(),
+        val_UChar_t(),
+        arr_UChar_t(),
+        val_UShort_t(),
+        arr_UShort_t(),
+        val_UInt_t(),
+        arr_UInt_t(),
+        val_ULong_t(),
+        arr_ULong_t(),
+        val_Float_t(),
+        arr_Float_t(),
+        val_Double_t(),
+        arr_Double_t()
       {
         Copy(a_e);
       }
@@ -116,26 +117,26 @@ class RootChain {
       EDataType in_type;
       Input::Type out_type;
       bool is_vector;
-      TTreeReaderValue<Char_t> *val_char;
-      TTreeReaderArray<Char_t> *arr_char;
-      TTreeReaderValue<Short_t> *val_short;
-      TTreeReaderArray<Short_t> *arr_short;
-      TTreeReaderValue<Int_t> *val_int;
-      TTreeReaderArray<Int_t> *arr_int;
-      TTreeReaderValue<Long_t> *val_long;
-      TTreeReaderArray<Long_t> *arr_long;
-      TTreeReaderValue<UChar_t> *val_uchar;
-      TTreeReaderArray<UChar_t> *arr_uchar;
-      TTreeReaderValue<UShort_t> *val_ushort;
-      TTreeReaderArray<UShort_t> *arr_ushort;
-      TTreeReaderValue<UInt_t> *val_uint;
-      TTreeReaderArray<UInt_t> *arr_uint;
-      TTreeReaderValue<ULong_t> *val_ulong;
-      TTreeReaderArray<ULong_t> *arr_ulong;
-      TTreeReaderValue<Float_t> *val_float;
-      TTreeReaderArray<Float_t> *arr_float;
-      TTreeReaderValue<Double_t> *val_double;
-      TTreeReaderArray<Double_t> *arr_double;
+      TTreeReaderValue<Char_t> *val_Char_t;
+      TTreeReaderArray<Char_t> *arr_Char_t;
+      TTreeReaderValue<Short_t> *val_Short_t;
+      TTreeReaderArray<Short_t> *arr_Short_t;
+      TTreeReaderValue<Int_t> *val_Int_t;
+      TTreeReaderArray<Int_t> *arr_Int_t;
+      TTreeReaderValue<Long_t> *val_Long_t;
+      TTreeReaderArray<Long_t> *arr_Long_t;
+      TTreeReaderValue<UChar_t> *val_UChar_t;
+      TTreeReaderArray<UChar_t> *arr_UChar_t;
+      TTreeReaderValue<UShort_t> *val_UShort_t;
+      TTreeReaderArray<UShort_t> *arr_UShort_t;
+      TTreeReaderValue<UInt_t> *val_UInt_t;
+      TTreeReaderArray<UInt_t> *arr_UInt_t;
+      TTreeReaderValue<ULong_t> *val_ULong_t;
+      TTreeReaderArray<ULong_t> *arr_ULong_t;
+      TTreeReaderValue<Float_t> *val_Float_t;
+      TTreeReaderArray<Float_t> *arr_Float_t;
+      TTreeReaderValue<Double_t> *val_Double_t;
+      TTreeReaderArray<Double_t> *arr_Double_t;
       private:
       void Copy(Entry const &a_e)
       {
@@ -149,26 +150,26 @@ class RootChain {
         // there's really only one place for these.
         // The ownership is really with RootChain since it allocates, so it
         // must also delete.
-        val_char = a_e.val_char;
-        arr_char = a_e.arr_char;
-        val_short = a_e.val_short;
-        arr_short = a_e.arr_short;
-        val_int = a_e.val_int;
-        arr_int = a_e.arr_int;
-        val_long = a_e.val_long;
-        arr_long = a_e.arr_long;
-        val_uchar = a_e.val_uchar;
-        arr_uchar = a_e.arr_uchar;
-        val_ushort = a_e.val_ushort;
-        arr_ushort = a_e.arr_ushort;
-        val_uint = a_e.val_uint;
-        arr_uint = a_e.arr_uint;
-        val_ulong = a_e.val_ulong;
-        arr_ulong = a_e.arr_ulong;
-        val_float = a_e.val_float;
-        arr_float = a_e.arr_float;
-        val_double = a_e.val_double;
-        arr_double = a_e.arr_double;
+        val_Char_t = a_e.val_Char_t;
+        arr_Char_t = a_e.arr_Char_t;
+        val_Short_t = a_e.val_Short_t;
+        arr_Short_t = a_e.arr_Short_t;
+        val_Int_t = a_e.val_Int_t;
+        arr_Int_t = a_e.arr_Int_t;
+        val_Long_t = a_e.val_Long_t;
+        arr_Long_t = a_e.arr_Long_t;
+        val_UChar_t = a_e.val_UChar_t;
+        arr_UChar_t = a_e.arr_UChar_t;
+        val_UShort_t = a_e.val_UShort_t;
+        arr_UShort_t = a_e.arr_UShort_t;
+        val_UInt_t = a_e.val_UInt_t;
+        arr_UInt_t = a_e.arr_UInt_t;
+        val_ULong_t = a_e.val_ULong_t;
+        arr_ULong_t = a_e.arr_ULong_t;
+        val_Float_t = a_e.val_Float_t;
+        arr_Float_t = a_e.arr_Float_t;
+        val_Double_t = a_e.val_Double_t;
+        arr_Double_t = a_e.arr_Double_t;
       }
     };
     std::vector<Entry> m_branch_vec;
@@ -207,13 +208,31 @@ RootChain::RootChain(Config &a_config, Root *a_root, int a_argc, char
   if (m_chain.GetTree()) {
     // Look for branches for each signal.
     for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-      BindBranch(a_config, *it,   "",   "", false);
-      BindBranch(a_config, *it,  "M",  "M", true);
-      BindBranch(a_config, *it,  "I",  "I", true);
-      BindBranch(a_config, *it, "MI", "MI", true);
-      BindBranch(a_config, *it, "ME", "ME", true);
-      BindBranch(a_config, *it,  "v",  "v", true);
-      BindBranch(a_config, *it,  "E",  "v", true);
+      auto sig = *it;
+      if (!sig->id.empty() && !sig->v.empty()) {
+        BindBranch(a_config, sig->name, sig->id, NodeSignal::kId);
+        if (!sig->end.empty()) {
+          BindBranch(a_config, sig->name, sig->end, NodeSignal::kEnd);
+        }
+        BindBranch(a_config, sig->name, sig->v, NodeSignal::kV);
+        continue;
+      }
+      auto has_MI = FindBranch(sig->name + "MI");
+      auto has_ME = FindBranch(sig->name + "ME");
+      auto has_v = FindBranch(sig->name + "v");
+      if (has_MI && has_ME && has_v) {
+        BindBranch(a_config, sig->name, sig->name + "MI", NodeSignal::kId);
+        BindBranch(a_config, sig->name, sig->name + "ME", NodeSignal::kEnd);
+        BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+        continue;
+      }
+      auto has_I = FindBranch(sig->name + "I");
+      if (has_I && has_v) {
+        BindBranch(a_config, sig->name, sig->name + "I", NodeSignal::kId);
+        BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+        continue;
+      }
+      BindBranch(a_config, sig->name, sig->name, NodeSignal::kV);
     }
   }
 }
@@ -221,54 +240,52 @@ RootChain::RootChain(Config &a_config, Root *a_root, int a_argc, char
 RootChain::~RootChain()
 {
   for (auto it = m_branch_vec.begin(); m_branch_vec.end() != it; ++it) {
-    delete it->val_char;
-    delete it->arr_char;
-    delete it->val_short;
-    delete it->arr_short;
-    delete it->val_int;
-    delete it->arr_int;
-    delete it->val_long;
-    delete it->arr_long;
-    delete it->val_uchar;
-    delete it->arr_uchar;
-    delete it->val_ushort;
-    delete it->arr_ushort;
-    delete it->val_uint;
-    delete it->arr_uint;
-    delete it->val_ulong;
-    delete it->arr_ulong;
-    delete it->val_float;
-    delete it->arr_float;
-    delete it->val_double;
-    delete it->arr_double;
+    delete it->val_Char_t;
+    delete it->arr_Char_t;
+    delete it->val_Short_t;
+    delete it->arr_Short_t;
+    delete it->val_Int_t;
+    delete it->arr_Int_t;
+    delete it->val_Long_t;
+    delete it->arr_Long_t;
+    delete it->val_UChar_t;
+    delete it->arr_UChar_t;
+    delete it->val_UShort_t;
+    delete it->arr_UShort_t;
+    delete it->val_UInt_t;
+    delete it->arr_UInt_t;
+    delete it->val_ULong_t;
+    delete it->arr_ULong_t;
+    delete it->val_Float_t;
+    delete it->arr_Float_t;
+    delete it->val_Double_t;
+    delete it->arr_Double_t;
   }
 }
 
-void RootChain::BindBranch(Config &a_config, std::string const &a_name, char
-    const *a_suffix, char const *a_config_suffix, bool a_optional)
+void RootChain::BindBranch(Config &a_config, std::string const &a_base_name,
+    std::string const &a_name, NodeSignal::MemberType a_member_type)
 {
-  // full = name + suffix
-  // If full = "m*", then GetBranch("m*").GetTitle() = "m*".
-  // If full = "b.m*", then GetBranch("b.m*").GetTitle() = "m*".
-  auto full_name = a_name + (a_suffix ? a_suffix : "");
-  auto dot = full_name.find_first_of('.');
-  std::string member =
-      full_name.npos == dot ? full_name : full_name.substr(dot + 1);
+  // branch.GetFullName() gives only the full name which we already know:
+  //  GetBranch("m").GetFullName() = "b.m".
+  //  GetBranch("b.m").GetFullName() = "b.m".
+  // branch.GetTitle() gives vector and type info, but only the leaf name:
+  //  GetBranch("m").GetTitle() = "m[arr_ref]/i".
+  //  GetBranch("b.m").GetTitle() = "m[arr_ref]/i".
+  auto dot = a_name.find_last_of('.');
+  std::string member = a_name.npos == dot ? a_name : a_name.substr(dot + 1);
 
-  auto branch = m_chain.GetBranch(full_name.c_str());
+  auto branch = m_chain.GetBranch(a_name.c_str());
   if (!branch) {
-    if (a_optional) {
-      return;
-    }
-    std::cerr << full_name << ": Could not find branch for signal.\n";
+    std::cerr << a_name << ": Could not find branch for signal.\n";
     throw std::runtime_error(__func__);
   }
 
-  // The title looks like "full_name*" or "full_name[arr_ref]*".
+  // The title looks like "name/type" or "name[arr_ref]/type".
   auto title = branch->GetTitle();
   if (0 != strncmp(member.c_str(), title, member.length())) {
-    std::cerr << full_name << ": member=" << member <<
-        " title=" << title << " mismatch.\n";
+    std::cerr << a_name << ": member=" << member << " title=" << title <<
+        " mismatch.\n";
     throw std::runtime_error(__func__);
   }
   auto bracket = &title[member.length()];
@@ -278,7 +295,7 @@ void RootChain::BindBranch(Config &a_config, std::string const &a_name, char
   EDataType exp_type;
   branch->GetExpectedType(exp_cls, exp_type);
   if (exp_cls) {
-    std::cerr << full_name << ": Class members not supported.\n";
+    std::cerr << a_name << ": Class members not supported.\n";
     throw std::runtime_error(__func__);
   }
   Input::Type out_type;
@@ -306,47 +323,51 @@ void RootChain::BindBranch(Config &a_config, std::string const &a_name, char
       out_type = Input::kDouble;
       break;
     default:
-      std::cerr << full_name <<
-          ": Unsupported ROOT type " << exp_type << ".\n";
+      std::cerr << a_name << ": Unsupported ROOT type " << exp_type << ".\n";
       throw std::runtime_error(__func__);
   }
 
   auto id = m_branch_vec.size();
-  m_branch_vec.push_back(RootChain::Entry(full_name, exp_type, out_type,
-        is_vector));
+  m_branch_vec.push_back(
+      RootChain::Entry(a_name, exp_type, out_type, is_vector));
   auto &entry = m_branch_vec.back();
 
   // Reader instantiation ladder.
   switch ((unsigned)exp_type) {
-#define READER_MAKE_TYPE(root_type, c_type, reader_type)     \
-    case root_type: \
+#define READER_MAKE_TYPE(root_type) \
+    case k##root_type: \
       if (is_vector) { \
-        entry.arr_##reader_type = new \
-            TTreeReaderArray<c_type>(m_reader, full_name.c_str()); \
+        entry.arr_##root_type = new \
+            TTreeReaderArray<root_type>(m_reader, a_name.c_str()); \
       } else { \
-        entry.val_##reader_type = new                                        \
-            TTreeReaderValue<c_type>(m_reader, full_name.c_str()); \
+        entry.val_##root_type = new \
+            TTreeReaderValue<root_type>(m_reader, a_name.c_str()); \
       } \
       break
 
-    READER_MAKE_TYPE(kChar_t,   Char_t,   char);
-    READER_MAKE_TYPE(kShort_t,  Short_t,  short);
-    READER_MAKE_TYPE(kInt_t,    Int_t,    int);
-    READER_MAKE_TYPE(kLong_t,   Long_t,   long);
-    READER_MAKE_TYPE(kUChar_t,  UChar_t,  uchar);
-    READER_MAKE_TYPE(kUShort_t, UShort_t, ushort);
-    READER_MAKE_TYPE(kUInt_t,   UInt_t,   uint);
-    READER_MAKE_TYPE(kULong_t,  ULong_t,  ulong);
-    READER_MAKE_TYPE(kFloat_t,  float,    float);
-    READER_MAKE_TYPE(kDouble_t, double,   double);
+    READER_MAKE_TYPE(Char_t);
+    READER_MAKE_TYPE(Short_t);
+    READER_MAKE_TYPE(Int_t);
+    READER_MAKE_TYPE(Long_t);
+    READER_MAKE_TYPE(UChar_t);
+    READER_MAKE_TYPE(UShort_t);
+    READER_MAKE_TYPE(UInt_t);
+    READER_MAKE_TYPE(ULong_t);
+    READER_MAKE_TYPE(Float_t);
+    READER_MAKE_TYPE(Double_t);
     default:
-      std::cerr << full_name <<
+      std::cerr << a_name <<
           ": Non-implemented input type " << out_type << ".\n";
       throw std::runtime_error(__func__);
   }
 
-  a_config.BindSignal(a_name, a_config_suffix, id, out_type);
+  a_config.BindSignal(a_base_name, a_member_type, id, out_type);
   m_root->BindSignal(id);
+}
+
+bool RootChain::FindBranch(std::string const &a_name)
+{
+  return nullptr != m_chain.GetBranch(a_name.c_str());
 }
 
 void RootChain::Buffer()
@@ -357,29 +378,29 @@ void RootChain::Buffer()
     auto &buf = m_root->GetBuffer(id); \
     // TODO: Error-checking!
     switch ((unsigned)it->in_type) {
-#define BUF_COPY_TYPE(root_type, reader_type, s_type, s_member) \
-      case root_type: \
+#define BUF_COPY_TYPE(root_type, s_type, s_member) \
+      case k##root_type: \
         if (it->is_vector) { \
-          auto const size = it->arr_##reader_type->GetSize(); \
+          auto const size = it->arr_##root_type->GetSize(); \
           buf.resize(size); \
           for (size_t i = 0; i < size; ++i) { \
-            buf[i].s_member = (s_type)it->arr_##reader_type->At(i); \
+            buf[i].s_member = (s_type)it->arr_##root_type->At(i); \
           } \
         } else { \
           buf.resize(1); \
-          buf[0].s_member = (s_type)**it->val_##reader_type; \
+          buf[0].s_member = (s_type)**it->val_##root_type; \
         } \
         break
-      BUF_COPY_TYPE(kChar_t,   char,   uint64_t, u64);
-      BUF_COPY_TYPE(kShort_t,  short,  uint64_t, u64);
-      BUF_COPY_TYPE(kInt_t,    int,    uint64_t, u64);
-      BUF_COPY_TYPE(kLong_t,   long,   uint64_t, u64);
-      BUF_COPY_TYPE(kUChar_t,  uchar,  uint64_t, u64);
-      BUF_COPY_TYPE(kUShort_t, ushort, uint64_t, u64);
-      BUF_COPY_TYPE(kUInt_t,   uint,   uint64_t, u64);
-      BUF_COPY_TYPE(kULong_t,  ulong,  uint64_t, u64);
-      BUF_COPY_TYPE(kFloat_t,  float,  double,   dbl);
-      BUF_COPY_TYPE(kDouble_t, double, double,   dbl);
+      BUF_COPY_TYPE(Char_t,   uint64_t, u64);
+      BUF_COPY_TYPE(Short_t,  uint64_t, u64);
+      BUF_COPY_TYPE(Int_t,    uint64_t, u64);
+      BUF_COPY_TYPE(Long_t,   uint64_t, u64);
+      BUF_COPY_TYPE(UChar_t,  uint64_t, u64);
+      BUF_COPY_TYPE(UShort_t, uint64_t, u64);
+      BUF_COPY_TYPE(UInt_t,   uint64_t, u64);
+      BUF_COPY_TYPE(ULong_t,  uint64_t, u64);
+      BUF_COPY_TYPE(Float_t,  double,   dbl);
+      BUF_COPY_TYPE(Double_t, double,   dbl);
       default:
         std::cerr << it->name << ": Non-implemented input type.\n";
         throw std::runtime_error(__func__);

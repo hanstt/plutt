@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -186,6 +186,7 @@ static double g_drop_stats = -1.0;
 %token TK_POW
 %token TK_S
 %token TK_SELECT_INDEX
+%token TK_SIGNAL
 %token TK_SIN
 %token TK_SQRT
 %token TK_SUB_MOD
@@ -257,6 +258,7 @@ stmt
 	| match_value
 	| page
 	| pedestal
+	| signal
 	| ui_rate
 
 appearance
@@ -409,13 +411,6 @@ alias
 		$$ = g_config->AddAlias($1, NULL, 0);
 		free($1);
 	}
-	| TK_IDENT '.' TK_IDENT {
-		LOC_SAVE(@1);
-		auto s = std::string($1) + "." + $3;
-		$$ = g_config->AddAlias(s.c_str(), NULL, 0);
-		free($1);
-		free($3);
-	}
 
 cmp_less
 	: TK_OP_LESS {
@@ -498,6 +493,23 @@ fit
 		g_config->AddFit($1, k, m);
 		g_fit_vec.clear();
 		free($1);
+	}
+
+signal
+	: TK_IDENT '=' TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ')' {
+		LOC_SAVE(@1);
+		g_config->AddSignal($1, $5, nullptr, $7);
+		free($1);
+		free($5);
+		free($7);
+	}
+	| TK_IDENT '=' TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ',' TK_IDENT ')' {
+		LOC_SAVE(@1);
+		g_config->AddSignal($1, $5, $7, $9);
+		free($1);
+		free($5);
+		free($7);
+		free($9);
 	}
 
 value
@@ -722,7 +734,7 @@ hist
 match_index
 	: TK_IDENT ',' TK_IDENT '=' TK_MATCH_INDEX '(' value ',' value ')' {
 		LOC_SAVE(@5);
-		auto node = g_config->AddMatchIndex($7, $9);
+		auto node = g_config->AddMatchId($7, $9);
 		LOC_SAVE(@1);
 		g_config->AddAlias($1, node, 0);
 		LOC_SAVE(@3);
@@ -803,11 +815,11 @@ ui_rate
 select_index
 	: TK_SELECT_INDEX '(' value ',' const ')' {
 		LOC_SAVE(@1);
-		$$ = g_config->AddSelectIndex($3, $5.GetI64(), $5.GetI64());
+		$$ = g_config->AddSelectId($3, $5.GetI64(), $5.GetI64());
 	}
 	| TK_SELECT_INDEX '(' value ',' integer_range ')' {
 		LOC_SAVE(@1);
-		$$ = g_config->AddSelectIndex($3, $5.first, $5.last);
+		$$ = g_config->AddSelectId($3, $5.first, $5.last);
 	}
 sub_mod
 	: TK_SUB_MOD '(' value ',' value ',' clock_range ')' {

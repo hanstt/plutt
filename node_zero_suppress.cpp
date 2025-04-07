@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,8 +52,8 @@ void NodeZeroSuppress::Process(uint64_t a_evid)
   m_value.Clear();
   m_value.SetType(val.GetType());
 
-  auto const &vmi = val.GetMI();
-  auto const &vme = val.GetME();
+  auto const &vmi = val.GetID();
+  auto const &vme = val.GetEnd();
   uint32_t vi = 0;
   for (uint32_t i = 0; i < vmi.size(); ++i) {
     auto mi = vmi.at(i);

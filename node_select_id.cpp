@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,9 +25,9 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <node_select_index.hpp>
+#include <node_select_id.hpp>
 
-NodeSelectIndex::NodeSelectIndex(std::string const &a_loc, NodeValue *a_child,
+NodeSelectId::NodeSelectId(std::string const &a_loc, NodeValue *a_child,
     uint32_t a_first, uint32_t a_last):
   NodeValue(a_loc),
   m_child(a_child),
@@ -37,13 +38,13 @@ NodeSelectIndex::NodeSelectIndex(std::string const &a_loc, NodeValue *a_child,
   assert(m_first <= m_last);
 }
 
-Value const &NodeSelectIndex::GetValue(uint32_t a_ret_i)
+Value const &NodeSelectId::GetValue(uint32_t a_ret_i)
 {
   assert(0 == a_ret_i);
   return m_value;
 }
 
-void NodeSelectIndex::Process(uint64_t a_evid)
+void NodeSelectId::Process(uint64_t a_evid)
 {
   NODE_PROCESS_GUARD(a_evid);
   NODE_PROCESS(m_child, a_evid);
@@ -53,8 +54,8 @@ void NodeSelectIndex::Process(uint64_t a_evid)
   auto const &val = m_child->GetValue();
   m_value.SetType(val.GetType());
 
-  auto const &vmi = val.GetMI();
-  auto const &vme = val.GetME();
+  auto const &vmi = val.GetID();
+  auto const &vme = val.GetEnd();
   auto const &vv = val.GetV();
 
   for (uint32_t i = 0; i < vmi.size(); ++i) {

@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Håkan T Johansson <f96hajo@chalmers.se>
  *
@@ -31,50 +31,50 @@
 #include <config.hpp>
 #include <node_signal.hpp>
 
-NodeSignal::NodeSignal(Config &a_config, char const *a_name):
+NodeSignal::NodeSignal(Config &a_config, std::string const &a_name):
   NodeValue(a_config.GetLocStr()),
   // This is nasty, but a_config will always outlive all nodes.
   m_config(&a_config),
   m_name(a_name),
   m_value(),
-  m_M(),
-  m_MI(),
-  m_ME(),
-  m_(),
+  m_id(),
+  m_end(),
   m_v()
 {
 }
 
-void NodeSignal::BindSignal(std::string const &a_suffix, size_t a_id,
-    Input::Type a_type)
+void NodeSignal::BindSignal(std::string const &a_name, MemberType
+    a_member_type, size_t a_id, Input::Type a_type)
 {
-#define BIND_SIGNAL_ASSERT_UINT do { \
-    if (Input::kUint64 != a_type) { \
-      std::cerr << GetLocStr() << ": 'M' member not integer!\n"; \
+#define BIND_SIGNAL_ASSERT_UINT(member) do { \
+    if (Input::kUint64 != a_type && Input::kInt64 != a_type) { \
+      std::cerr << GetLocStr() << ": member '" << #member << \
+          "' not integer (type id=" << a_type << ")!\n"; \
       throw std::runtime_error(__func__); \
     } \
   } while (0)
   Member **mem;
-  if (0 == a_suffix.compare("")) {
-    mem = &m_;
-  } else if (0 == a_suffix.compare("M")) {
-    BIND_SIGNAL_ASSERT_UINT;
-    mem = &m_M;
-  } else if (0 == a_suffix.compare("I") || 0 == a_suffix.compare("MI")) {
-    BIND_SIGNAL_ASSERT_UINT;
-    mem = &m_MI;
-  } else if (0 == a_suffix.compare("ME")) {
-    BIND_SIGNAL_ASSERT_UINT;
-    mem = &m_ME;
-  } else if (0 == a_suffix.compare("v")) {
+  char const *str;
+  switch (a_member_type) {
+  case kId:
+    BIND_SIGNAL_ASSERT_UINT(id);
+    mem = &m_id;
+    str = "id";
+    break;
+  case kEnd:
+    BIND_SIGNAL_ASSERT_UINT(end);
+    mem = &m_end;
+    str = "end";
+    break;
+  case kV:
     mem = &m_v;
-  } else {
-    std::cerr << GetLocStr() << ": Weird signal suffix '" << a_suffix <<
-        "'.\n";
-    throw std::runtime_error(__func__);
+    str = "v";
+    break;
+  default:
+    abort();
   }
   if (*mem) {
-    std::cerr << GetLocStr() << ": Signal member '" << m_name << a_suffix <<
+    std::cerr << GetLocStr() << ": Signal member '" << m_name << ':' << str <<
         "' already set.\n";
     throw std::runtime_error(__func__);
   }
@@ -110,29 +110,25 @@ void NodeSignal::Process(uint64_t a_evid)
 } while (0)
 #define IF_VALUE_NOP(v)
 #define IF_VALUE_INVALID(v) if (!std::isnan(v.dbl) && !std::isinf(v.dbl))
-  if (m_ME) {
+  if (m_end) {
     // Multi-hit array.
-    FETCH_SIGNAL_DATA(M);
-    FETCH_SIGNAL_DATA(MI);
-    FETCH_SIGNAL_DATA(ME);
-    FETCH_SIGNAL_DATA();
+    FETCH_SIGNAL_DATA(id);
+    FETCH_SIGNAL_DATA(end);
     FETCH_SIGNAL_DATA(v);
-    SIGNAL_LEN_CHECK(1U, ==, len_M);
-    SIGNAL_LEN_CHECK(len_ME, ==, len_MI);
-    SIGNAL_LEN_CHECK(1U, ==, len_);
-    SIGNAL_LEN_CHECK(p_->u64, <=, len_v);
+    SIGNAL_LEN_CHECK(len_id, ==, len_end);
+    SIGNAL_LEN_CHECK(len_id, <=, len_v);
     m_value.SetType(m_v->type);
     uint32_t v_i = 0;
     switch (m_v->type) {
 #define COPY_M_HIT(input_type, kind) \
       case Input::input_type: \
-        for (uint32_t i = 0; i < p_M->u64; ++i) { \
-          auto mi = (uint32_t)p_MI[i].u64; \
-          auto me = (uint32_t)p_ME[i].u64; \
-          for (; v_i < me; ++v_i) { \
+        for (uint32_t i_ = 0; i_ < len_id; ++i_) { \
+          auto id = (uint32_t)p_id[i_].u64; \
+          auto end = (uint32_t)p_end[i_].u64; \
+          for (; v_i < end; ++v_i) { \
             auto v_ = p_v[v_i]; \
             IF_VALUE_##kind(v_) { \
-              m_value.Push(mi, v_); \
+              m_value.Push(id, v_); \
             } \
           } \
         } \
@@ -144,21 +140,18 @@ void NodeSignal::Process(uint64_t a_evid)
       default:
         throw std::runtime_error(__func__);
     }
-  } else if (m_MI) {
+  } else if (m_id) {
     // Single-hit array.
-    FETCH_SIGNAL_DATA();
-    FETCH_SIGNAL_DATA(MI);
+    FETCH_SIGNAL_DATA(id);
     FETCH_SIGNAL_DATA(v);
-    SIGNAL_LEN_CHECK(1U, ==, len_);
-    SIGNAL_LEN_CHECK(p_->u64, <=, len_MI);
-    SIGNAL_LEN_CHECK(p_->u64, <=, len_v);
+    SIGNAL_LEN_CHECK(len_id, ==, len_v);
     m_value.SetType(m_v->type);
     switch (m_v->type) {
 #define COPY_S_HIT(input_type, kind) \
     case Input::input_type: \
-      for (uint32_t i = 0; i < p_->u64; ++i) { \
-        auto mi = (uint32_t)p_MI[i].u64; \
-        auto v_ = p_v[i]; \
+      for (uint32_t i_ = 0; i_ < len_id; ++i_) { \
+        auto mi = (uint32_t)p_id[i_].u64; \
+        auto v_ = p_v[i_]; \
         IF_VALUE_##kind(v_) { \
           m_value.Push(mi, v_); \
         } \
@@ -172,38 +165,14 @@ void NodeSignal::Process(uint64_t a_evid)
         throw std::runtime_error(__func__);
     }
   } else if (m_v) {
-    // Non-indexed array.
-    FETCH_SIGNAL_DATA();
+    // Scalar or simple array.
     FETCH_SIGNAL_DATA(v);
-    SIGNAL_LEN_CHECK(1U, ==, len_);
-    SIGNAL_LEN_CHECK(p_->u64, <=, len_v);
     m_value.SetType(m_v->type);
     switch (m_v->type) {
-#define COPY_INDEX(input_type, kind) \
-      case Input::input_type: \
-        for (uint32_t i = 0; i < p_->u64; ++i) { \
-          auto v_ = p_v[i]; \
-          IF_VALUE_##kind(v_) { \
-            m_value.Push(0, v_); \
-          } \
-        } \
-        break
-      COPY_INDEX(kUint64, NOP);
-      COPY_INDEX(kInt64, NOP);
-      COPY_INDEX(kDouble, INVALID);
-      case Input::kNone:
-      default:
-        throw std::runtime_error(__func__);
-    }
-  } else {
-    // Scalar or simple array.
-    FETCH_SIGNAL_DATA();
-    m_value.SetType(m_->type);
-    switch (m_->type) {
 #define COPY_SCALAR(input_type, kind) \
       case Input::input_type: \
-        for (uint32_t i = 0; i < len_; ++i) { \
-          auto v_ = p_[i]; \
+        for (uint32_t i_ = 0; i_ < len_v; ++i_) { \
+          auto v_ = p_v[i_]; \
           IF_VALUE_##kind(v_) { \
             m_value.Push(0, v_); \
           } \
@@ -216,6 +185,9 @@ void NodeSignal::Process(uint64_t a_evid)
       default:
         throw std::runtime_error(__func__);
     }
+  } else {
+    std::cerr << m_name << ": Has no value member!" << std::endl;
+    throw std::runtime_error(__func__);
   }
 }
 
@@ -230,9 +202,7 @@ void NodeSignal::UnbindSignal()
   delete m_##suff; \
   m_##suff = nullptr; \
 } while (0)
-  UNBIND();
-  UNBIND(M);
-  UNBIND(MI);
-  UNBIND(ME);
+  UNBIND(id);
+  UNBIND(end);
   UNBIND(v);
 }

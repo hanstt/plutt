@@ -1,21 +1,19 @@
 plutt
 =====
 
+
 What's the idea?
 ----------------
 
-Say we have an event stream from a detector outfitted with eg scintillator
-paddles or silicon segments, and they are read out on both ends. Let's say we
-have another such detector rotated by 90 degrees. How hard can/should it be to
-draw one vs the other in a Y vs X plot?
+Say we have an event stream from a detector outfitted with e.g. scintillator
+paddles or silicon segments that are read out on both ends. What's an easy way
+to plot this?
 
-Expanding on this, what if we quickly want to correlate two experimental
-signals that were never correlated before in human history?
+Let's say we have another such detector rotated by 90 degrees. How hard
+can/should it be to draw one vs the other in a Y vs X plot?
 
 The ROOT prompt, as powerful as it is, has its limitations, for example when
 dealing with zero-suppressed or multi-hit arrays.
-
-And that's where this little thing comes in.
 
 Here's some human-readable pseudo-code for the first example:
 	- get array for left side -> "left"
@@ -26,27 +24,37 @@ Here's some human-readable pseudo-code for the first example:
 Typical pseudo-C++&ROOT could be:
 	// Init.
 	h1 = new TH1F(name, title, bins_x, min_x, max_x, ...);
-	left_handle = Input.GetHandle("left-side");
-	right_handle = Input.GetHandle("right-side");
+	left_handle = Input.GetHandle("MY_DET_LEFT");
+	right_handle = Input.GetHandle("MY_DET_RIGHT");
 
 	// For each event.
 	auto left = Input.GetData(left_handle);
 	auto right = Input.GetData(right_handle);
 	int l_i, r_i;
 	for (r_i = l_i = 0; l_i < left->size && r_i < right->size;) {
-		if (left[l_i]->channel == right[r_i]->channel) {
-			h1->Fill(right[r_i]->value, left[l_i]->value);
+		auto l_id = left[l_i]->channel;
+		auto r_id = right[r_i]->channel;
+		if (l_id == r_id) {
+			h1->Fill(l_id);
 		} else if (l < r) ++l_i;
 		} else ++r_i;
 	}
-And we copy-paste all of that for every detector, refactor, add calibration
-and complicate the logic states, build, debug, ignore warnings, fight with git
-or copy between each other or forget the code ever existed... This is a huge
-time-sink while expensive beam is vehemently showering our experimental setup.
 
-Now, even if plutt will provide something like the pseudo-code, don't forget
-that computers don't have brains! Don't put yours on the shelf just yet,
-there's a couple of things to go through!
+To solve the 2nd example, we copy and adjust. And we copy-pasta all of that for
+every detector, refactor, add calibration and complicate the logic states,
+build, debug, ignore warnings, fight with git or copy between each other or
+forget the code ever existed... This is a huge time-sink while expensive beam
+is vehemently showering our experimental setup.
+
+Plutt tries to implement the human-readable version via scripting:
+	l = MY_DET_LEFT
+	r = MY_DET_RIGHT
+	matched_l, matched_r = match_index(l, r)
+	hist("My detector hit-pattern", matched_l:id)
+
+Now, don't forget that computers don't have brains! Don't put yours on the
+shelf just yet, there's a couple of things to go through!
+
 
 Running
 -------
@@ -57,7 +65,7 @@ ccache
 libnlopt-dev
 libsdl2-dev
 
-User-installed:
+User-installed for input and the THttpServer:
 
 root
 ucesb
@@ -67,7 +75,7 @@ To compile:
 make -jN
 ./plutt
 
-Make builds a version based on the compiler and build mode, eg debug or
+Make builds a version based on the compiler and build mode, e.g. debug or
 release.
 The latter is a script that chooses the binary the same way the Makefile
 chooses the build directory.
@@ -100,6 +108,7 @@ Examples:
 
 		Plots with both ImPlutt and THttpServer.
 
+
 GUI's
 -----
 
@@ -112,12 +121,6 @@ client-side ImPlutt plotting will be built.
 
 The default GUI is chosen from top to bottom in the above list.
 
-ROOT GUI
---------
-
-Opens a THttpServer on port 8080 by default, connect there with your browser.
-To run on e.g. port 10000, invoke the GUI like "-g root:10000" on the command
-line.
 
 ImPlutt GUI
 -----------
@@ -154,147 +157,94 @@ Pressing 'x'/'y':
 	  the main window plots are disabled.
 
 Pressing shift+'x':
-	- Clears the histogram, including statistics and data range, under the
-	  pointer.
+	- Clears the histogram under the pointer, including statistics and data
+	  ranges.
+
+
+ROOT GUI
+--------
+
+Opens a THttpServer on port 8080 by default, direct your web-brower to the
+address "localhost:8080".
+To run on e.g. port 10000, invoke the GUI like "-g root:10000" on the command
+line.
+
 
 Let's define the data
 ---------------------
 
-This program started as a plotting interface to the mapped signals in ucesb
-unpackers. The typical ucesb arrays:
+It is important to understand the internal data structure before operating on
+them.
 
-	data SCALAR;
+In principle, plutt tries to bundle ID's (e.g. channel indices) and values into
+signals, which have two important parts:
+	1) A list of ID's which have data.
+	2) A list of values for the ID's.
 
-	int  SUPP;
-	data SUPPI [0..SUPP-1];
-	data SUPPv [0..SUPP-1];
+To be more detailed, a signal looks pretty much like:
+	struct {
+		// List of ID's with data, -1 means "no ID".
+		vector<uint32_t>	id;
+		// Offsets into the 'value' vector for each ID.
+		vector<uint32_t>	end;
+		// All values over all ID's.
+		vector<Scalar>	v;
+	};
 
-	int  MHITM;
-	data MHITMI [0..MHITM-1];
-	data MHITME [0..MHITM-1];
-	int  MHIT;
-	data MHITv [0..MHIT-1];
+Plutt creates signals based on typical suffixes from ucesb style unpackers, or
+user input. For example, given "MYDET" and other existing inputs:
 
-are all transformed into multi-hit arrays (the last type) which simplifies
-data-flow code a lot. If detector data are mapped from electronics channels to
-"reasonable" detector channels, most detector events can be described this
-way.
+	Multi-hit zero-suppressed ucesb style:
+		MYDETM
+		MYDETMI
+		MYDETME
+		MYDET
+		MYDETv
+		-> MYDETMI used as ID's,
+		   MYDETME used as value offsets,
+		   MYDETv used as values
+	Can be explicitly defined with:
+		MYDET = signal(MYDETMI, MYDETME, MYDETv)
 
-There are some operations we like to do over, and over, and over, for all
-detectors as was described in the introduction, and this little program tries
-to fulfill these oprations like this:
+	Single-hit zero-suppressed ucesb style:
+		MYDET
+		MYDETI
+		MYDETv
+		-> MYDETI used as ID's,
+		   MYDETv used as values
+	Can be explicitly defined with:
+		MYDET = signal(MYDETI, MYDETv)
 
-	-) Plot scalar spectrum:
-		TH1I hist...
-		hist.Fill(SCALAR);
-		-> hist("This be my scalar", SCALAR);
-	-) Plot channel multiplicity:
-		TH1I hist...
-		hist.Fill(SUPP);
-		-> hist("Sup?", SUPP)
-	-) Plot fired channels in log scale:
-		canvas->cd(0)->SetLogy();
-		for (i = 0; i < SUPP; ++i)
-			hist.Fill(SUPPI[i]);
-		-> hist("Channel map", SUPP:I, logy)
-	-) Plot energy against channel with 1000 energy bins:
-		TH2I hist...
-		for (i = 0; i < SUPP; ++i)
-			hist.Fill(SUPPI[i], SUPPv[i]);
-		-> hist2d("Energy vs ch", SUPP:v, SUPP:I, binsy=1000)
-	-) Plot multi-hit energies against channels:
-		i = 0;
-		for (j = 0; j < SUPPM; ++j) {
-			ch = SUPPMI[j];
-			end = SUPPME[j];
-			for (; i < end; ++i)
-				hist->Fill(ch, SUPPv[i]);
-		}
-		-> hist2d("Energy vs ch", MHIT:v, MHIT:I)
-	-) Match two sides of a single-hit detector and draw geom mean energy:
-		// Too much brain-wrangling code...
-		-> e1, e2 = match_index(SUPP_S1E, SUPP_S2E)
-		e = mean_geom(e1, e2)
-		hist2d("Energy vs ch", e:v, e:I)
-	-) Same with multi-hit mapping:
-		// Even more unbearable code :o
-		-> e1, e2 = match_index(MHIT_S1E, MHIT_S2E)
-		e = mean_geom(e1, e2)
-		hist2d("Energy vs ch", e:v, e:I)
-	-) X-vs-X of two detectors:
-		-> e11, e12 = match_index(DET1_S1E, DET1_S2E)
-		e1 = max(mean_geom(e11, e12))
-		e21, e22 = match_index(DET2_S1E, DET2_S2E)
-		e2 = max(mean_geom(e21, e22))
-		hist2d("x2 vs x1" e2:I, e1:I)
-	-) ToF between two detectors:
-		-> a1,a2 = match_index(START_S1T, START_S2T)
-		a = mean_arith(a1:v, a2:v)
-		b1,b2 = match_index(STOP_S1T, STOP_S2T)
-		b = mean_arith(b1:v, b2:v)
-		hist("ToF", sub_mod(b, a, 1000), logy)
+	egmw-style:
+		MYDET = signal(MYDET_id, MYDET_adc_a)
 
-Note that custom mappings can replace the value array 'v' with anything. This
-program allows a few other suffixes to be used instead, eg 'E'.
+	Typical ROOT-style:
+		MYDET = signal(MYDET.my_ch, MYDET.my_value)
+
+	Scalar ucesb style:
+		MYDET
+		-> No ID,
+		   MYDET used as value
+
+So to be clear about the 'signal' syntax:
+
+	alias = signal(id-name, value-name)
+	alias = signal(id-name, end-name, value-name)
+
 
 What's the grammar/syntax?
 --------------------------
 
-The internal data structure is all multi-hit arrays:
-
-	scalar =
-		I = [0]
-		E = [1]
-		v = value
-	zero suppressed list =
-		I = [ch_1, ..., ch_n]
-		E = [1, ..., n]
-		v = [val_1, ..., val_n]
-	multi-hit list =
-		I = [ch_1, ..., ch_n]
-		E = [e_1, ..., e_n], e_n=m
-		v = [val_1, ..., val_m]
-
-where 'I' is a potentially zero-suppressed array containing typically channels
-or indices, 'v' contain the values of all channels laid out after each other,
-and 'E' contains offsets in 'v' for the next channel. Some examples:
-
-	                I = [2]
-	ch 2 : v = 3 => E = [1]
-	                v = [3]
-
-	ch 1 : 1, 3    I = [1, 5]
-	ch 5 : 2, 4 => E = [2, 4]
-	               v = [1, 3, 2, 4]
-
-Channel '0' is treated as a "non-channel" by data operations that flatten the
-structure. ucesb only allows positive numbers for channel numbers in its
-mapping.
-
-An example how one would iterate through such a structure:
-
-	v_i = 0;
-	for (i = 0; i < I.length(); ++i) {
-		ch = I.at(i);
-		next_i = E.at(i);
-		for (; v_i < next_i; ++v_i) {
-			value = v.at(v_i);
-			// 'value' belongs to channel 'ch'.
-		}
-	}
-
-And here are the operations:
-
-signal:I
-	Ignores 'signal:v' and returns 'signal:I' as values:
-		I = [0]
-		E = [signal:I.length]
-		v = [signal:I_1, ..., signal:I_n]
+signal:id
+	Creates a new signal with the ID's as values:
+		id = [-1]
+		end = [length(signal.id)]
+		v = signal.id
 signal:v
-	Ignores 'signal:I' and returns 'signal:v' as a flat array:
-		I = [0]
-		E = [signal:v.length]
-		v = [signal:v_1, ..., signal:v_n]
+	Creates a new signal without any ID's:
+		id = [-1]
+		end = [length(signal.id)]
+		v = signal.v
 
 y = f(x)
 	Chainable mathematical operations are available with signals and
@@ -320,7 +270,7 @@ y = f(x)
 		pow(const, x)
 
 cut(path)
-	"path" points to a file which has a histogram title and an x, y pair
+	"path" points to a file which has a histogram title and an x/y pair
 	per line which makes a cutting polygon:
 		My histo
 		0, 0
@@ -328,8 +278,8 @@ cut(path)
 		0, 10
 		10, 10
 cut(histogram-name, (x,y)...)
-	This is the inline version of the previous syntax, ie the same example
-	would be:
+	This is the inline version of the previous syntax, so the same example
+	would look like:
 		cut("My histo", (0,0), (10,0), (0,10), (10,10))
 
 hist(title, x [, args])
@@ -582,6 +532,64 @@ page("name")
 ui_rate(a)
 	Throttles the ImPlutt UI update rate to 'a' times per second, default
 	and maximum is 20.
+
+
+Examples
+--------
+
+- Plot scalar spectrum:
+	TH1I hist...
+	hist.Fill(SCALAR);
+	-> hist("This be my scalar", SCALAR);
+- Plot channel multiplicity:
+	TH1I hist...
+	hist.Fill(SUPP);
+	-> hist("Sup?", SUPP)
+- Plot fired channels in log scale:
+	canvas->cd(0)->SetLogy();
+	for (i = 0; i < SUPP; ++i)
+		hist.Fill(SUPPI[i]);
+	-> hist("Channel map", SUPP:I, logy)
+- Plot energy against channel with 1000 energy bins:
+	TH2I hist...
+	for (i = 0; i < SUPP; ++i)
+		hist.Fill(SUPPI[i], SUPPv[i]);
+	-> hist2d("Energy vs ch", SUPP:v, SUPP:I, binsy=1000)
+- Plot multi-hit energies against channels:
+	i = 0;
+	for (j = 0; j < SUPPM; ++j) {
+		ch = SUPPMI[j];
+		end = SUPPME[j];
+		for (; i < end; ++i)
+			hist->Fill(ch, SUPPv[i]);
+	}
+	-> hist2d("Energy vs ch", MHIT:v, MHIT:I)
+- Match two sides of a single-hit detector and draw geom mean energy:
+	// Too much brain-wrangling code...
+	-> e1, e2 = match_index(SUPP_S1E, SUPP_S2E)
+	e = mean_geom(e1, e2)
+	hist2d("Energy vs ch", e:v, e:I)
+- Same with multi-hit mapping:
+	// Even more unbearable code :o
+	-> e1, e2 = match_index(MHIT_S1E, MHIT_S2E)
+	e = mean_geom(e1, e2)
+	hist2d("Energy vs ch", e:v, e:I)
+- X-vs-X of two detectors:
+	-> e11, e12 = match_index(DET1_S1E, DET1_S2E)
+	e1 = max(mean_geom(e11, e12))
+	e21, e22 = match_index(DET2_S1E, DET2_S2E)
+	e2 = max(mean_geom(e21, e22))
+	hist2d("x2 vs x1" e2:I, e1:I)
+- ToF between two detectors:
+	-> a1,a2 = match_index(START_S1T, START_S2T)
+	a = mean_arith(a1:v, a2:v)
+	b1,b2 = match_index(STOP_S1T, STOP_S2T)
+	b = mean_arith(b1:v, b2:v)
+	hist("ToF", sub_mod(b, a, 1000), logy)
+
+Note that custom mappings can replace the value array 'v' with anything. This
+program allows a few other suffixes to be used instead, eg 'E'.
+
 
 Licence
 =======

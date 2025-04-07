@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -26,16 +26,16 @@
 
 Value::Value():
   m_type(Input::kNone),
-  m_mi(),
-  m_me(),
+  m_id(),
+  m_end(),
   m_v()
 {
 }
 
 void Value::Clear()
 {
-  m_mi.clear();
-  m_me.clear();
+  m_id.clear();
+  m_end.clear();
   m_v.clear();
 }
 
@@ -65,14 +65,14 @@ Input::Type Value::GetType() const
   return m_type;
 }
 
-Vector<uint32_t> const &Value::GetMI() const
+Vector<uint32_t> const &Value::GetID() const
 {
-  return m_mi;
+  return m_id;
 }
 
-Vector<uint32_t> const &Value::GetME() const
+Vector<uint32_t> const &Value::GetEnd() const
 {
-  return m_me;
+  return m_end;
 }
 
 Vector<Input::Scalar> const &Value::GetV() const
@@ -106,12 +106,12 @@ double Value::GetV(uint32_t a_i, bool a_do_signed) const
 
 void Value::Push(uint32_t a_i, Input::Scalar const &a_v)
 {
-  if (m_mi.empty() || m_mi.back() != a_i) {
-    m_mi.push_back(a_i);
-    auto me_prev = m_me.empty() ? 0 : m_me.back();
-    m_me.push_back(me_prev + 1);
+  if (m_id.empty() || m_id.back() != a_i) {
+    m_id.push_back(a_i);
+    auto end_prev = m_end.empty() ? 0 : m_end.back();
+    m_end.push_back(end_prev + 1);
   } else {
-    ++m_me.back();
+    ++m_end.back();
   }
   m_v.push_back(a_v);
 }

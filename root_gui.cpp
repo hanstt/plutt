@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -123,6 +123,7 @@ RootGui::RootGui(uint16_t a_port):
 
 RootGui::~RootGui()
 {
+  m_server->SetTerminate();
   for (auto it = m_page_vec.begin(); m_page_vec.end() != it; ++it) {
     auto page = *it;
     auto &vec = page->plot_wrap_vec;

@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,17 +57,17 @@ void NodeCoarseFine::Process(uint64_t a_evid)
   auto const &val_f = m_fine->GetValue();
   NODE_ASSERT(Input::kUint64, ==, val_c.GetType());
   NODE_ASSERT(Input::kUint64, ==, val_f.GetType());
-  NODE_ASSERT(val_c.GetMI().size(), ==, val_f.GetMI().size());
+  NODE_ASSERT(val_c.GetID().size(), ==, val_f.GetID().size());
   NODE_ASSERT(val_c.GetV().size(), ==, val_f.GetV().size());
 
   m_value.SetType(Input::kDouble);
 
   uint32_t vi = 0;
-  for (uint32_t i = 0; i < val_c.GetMI().size(); ++i) {
-    auto mi = val_c.GetMI()[i];
-    NODE_ASSERT(mi, ==, val_f.GetMI()[i]);
-    auto me = val_c.GetME()[i];
-    NODE_ASSERT(me, ==, val_f.GetME()[i]);
+  for (uint32_t i = 0; i < val_c.GetID().size(); ++i) {
+    auto mi = val_c.GetID()[i];
+    NODE_ASSERT(mi, ==, val_f.GetID()[i]);
+    auto me = val_c.GetEnd()[i];
+    NODE_ASSERT(me, ==, val_f.GetEnd()[i]);
     for (; vi < me; ++vi) {
       auto c = (uint32_t)val_c.GetV().at(vi).u64;
       auto f = (uint32_t)val_f.GetV().at(vi).u64;

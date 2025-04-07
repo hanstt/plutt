@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,11 +61,11 @@ void NodeTot::Process(uint64_t a_evid)
   uint32_t i_t = 0;
   uint32_t vi_l = 0;
   uint32_t vi_t = 0;
-  while (i_l < val_l.GetMI().size() && i_t < val_t.GetMI().size()) {
-    auto mi_l = val_l.GetMI()[i_l];
-    auto mi_t = val_t.GetMI()[i_t];
-    auto me_l = val_l.GetME()[i_l];
-    auto me_t = val_t.GetME()[i_t];
+  while (i_l < val_l.GetID().size() && i_t < val_t.GetID().size()) {
+    auto mi_l = val_l.GetID()[i_l];
+    auto mi_t = val_t.GetID()[i_t];
+    auto me_l = val_l.GetEnd()[i_l];
+    auto me_t = val_t.GetEnd()[i_t];
     if (mi_l < mi_t) {
       ++i_l;
       vi_l = me_l;

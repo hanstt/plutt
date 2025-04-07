@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,7 +62,7 @@ void NodeMExpr::Process(uint64_t a_evid)
     NODE_PROCESS(m_l, a_evid);
     val_l = &m_l->GetValue();
     if (Input::kNone == val_l->GetType() ||
-        val_l->GetMI().empty()) {
+        val_l->GetID().empty()) {
       return;
     }
   }
@@ -69,7 +70,7 @@ void NodeMExpr::Process(uint64_t a_evid)
     NODE_PROCESS(m_r, a_evid);
     val_r = &m_r->GetValue();
     if (Input::kNone == val_r->GetType() ||
-        val_r->GetMI().empty()) {
+        val_r->GetID().empty()) {
       return;
     }
   }
@@ -84,8 +85,8 @@ void NodeMExpr::Process(uint64_t a_evid)
     uint32_t me_l = 1;
     uint32_t me_r = 1;
     if (0 == m_mix) {
-      auto done_l = i == val_l->GetMI().size();
-      auto done_r = i == val_r->GetMI().size();
+      auto done_l = i == val_l->GetID().size();
+      auto done_r = i == val_r->GetID().size();
       if (done_l && done_r) {
         break;
       }
@@ -93,27 +94,27 @@ void NodeMExpr::Process(uint64_t a_evid)
         std::cerr << GetLocStr() << ": Data operands not index-matched!\n";
         throw std::runtime_error(__func__);
       }
-      auto mi_l = val_l->GetMI().at(i);
-      auto mi_r = val_r->GetMI().at(i);
+      auto mi_l = val_l->GetID().at(i);
+      auto mi_r = val_r->GetID().at(i);
       if (mi_l != mi_r) {
         std::cerr << GetLocStr() << ": Data operands not index-matched!\n";
         throw std::runtime_error(__func__);
       }
       mi = mi_l;
-      me_l = val_l->GetME().at(i);
-      me_r = val_r->GetME().at(i);
+      me_l = val_l->GetEnd().at(i);
+      me_r = val_r->GetEnd().at(i);
     } else if (1 == m_mix) {
-      if (i == val_l->GetMI().size()) {
+      if (i == val_l->GetID().size()) {
         break;
       }
-      mi = val_l->GetMI().at(i);
-      me_l = val_l->GetME().at(i);
+      mi = val_l->GetID().at(i);
+      me_l = val_l->GetEnd().at(i);
     } else {
-      if (i == val_r->GetMI().size()) {
+      if (i == val_r->GetID().size()) {
         break;
       }
-      mi = val_r->GetMI().at(i);
-      me_r = val_r->GetME().at(i);
+      mi = val_r->GetID().at(i);
+      me_r = val_r->GetEnd().at(i);
     }
     for (;;) {
       double v, l = 0.0, r = 0.0;

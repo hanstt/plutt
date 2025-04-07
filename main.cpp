@@ -87,8 +87,7 @@ namespace {
   char const *g_conf_path;
   long g_jobs;
   Input *g_input;
-  bool g_data_running;
-  bool g_event_running = true;
+  bool g_main_running = true;
 
   void help(char const *a_msg)
   {
@@ -116,10 +115,21 @@ namespace {
     exit(a_msg ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
-  uint64_t g_input_i, g_event_i;
-  std::mutex g_input_event_mutex;
-  std::condition_variable g_input_cv;
-  std::condition_variable g_event_cv;
+  struct Blupp {
+    Blupp():
+      mutex(),
+      input_i(),
+      event_i(),
+      running(),
+      input_cv(),
+      event_cv() {}
+    std::mutex mutex;
+    uint64_t input_i;
+    uint64_t event_i;
+    bool running;
+    std::condition_variable input_cv;
+    std::condition_variable event_cv;
+  } g_inp;
 
   void main_input(int argc, char **argv)
   {
@@ -127,24 +137,25 @@ namespace {
     for (;;) {
       // Fetch event and wait until buffered event is done.
       if (!g_input->Fetch()) {
-        g_data_running = false;
+        std::unique_lock<std::mutex> lock(g_inp.mutex);
+        g_inp.running = false;
       }
-      std::unique_lock<std::mutex> lock(g_input_event_mutex);
-      g_input_cv.wait(lock, []{
-          return g_input_i == g_event_i || !g_data_running;
+      std::unique_lock<std::mutex> lock(g_inp.mutex);
+      g_inp.input_cv.wait(lock, []{
+          return g_inp.input_i == g_inp.event_i || !g_inp.running;
       });
-      if (!g_data_running) {
+      if (!g_inp.running) {
         lock.unlock();
         break;
       }
 
       // Buffer fetched data and wake up the event thread.
       g_input->Buffer();
-      ++g_input_i;
+      ++g_inp.input_i;
       lock.unlock();
-      g_event_cv.notify_one();
+      g_inp.event_cv.notify_one();
     }
-    g_event_cv.notify_one();
+    g_inp.event_cv.notify_one();
     std::cout << "Exited input loop.\n";
   }
 
@@ -153,27 +164,32 @@ namespace {
     std::cout << "Starting event loop.\n";
     for (;;) {
       // Wait until there's a new buffered event.
-      std::unique_lock<std::mutex> lock(g_input_event_mutex);
-      g_event_cv.wait(lock, []{
-          return g_input_i > g_event_i || !g_data_running;
+      std::unique_lock<std::mutex> lock(g_inp.mutex);
+      g_inp.event_cv.wait(lock, []{
+          return g_inp.input_i > g_inp.event_i || !g_inp.running;
       });
-      if (!g_data_running) {
+      if (!g_inp.running) {
         lock.unlock();
         break;
       }
 
       // Process buffered event, then wake up the input thread.
       g_config->DoEvent(g_input);
-      ++g_event_i;
+      ++g_inp.event_i;
       lock.unlock();
-      g_input_cv.notify_one();
+      g_inp.input_cv.notify_one();
     }
     std::cout << "Exited event loop.\n";
   }
 
+  static int ctr = 0;
   void sighandler(int a_signum)
   {
-    g_event_running &= SIGINT != a_signum;
+    if (3 == ctr) {
+      abort();
+    }
+    ++ctr;
+    g_main_running &= SIGINT != a_signum;
   }
 
 }
@@ -347,7 +363,7 @@ int main(int argc, char **argv)
   Status_set("Started.");
 
   // Start data thread.
-  g_data_running = true;
+  g_inp.running = true;
   std::thread thread_input(main_input, argc, argv);
   std::thread thread_event(main_event, argc, argv);
 
@@ -356,7 +372,7 @@ int main(int argc, char **argv)
   double event_rate = 0.0;
 
   std::cout << "Entering main loop...\n";
-  while (g_event_running) {
+  while (g_main_running) {
     bool allow_auto_quit = true;
     bool is_throttled = false;
     (void)is_throttled;
@@ -392,26 +408,35 @@ int main(int argc, char **argv)
     }
 #endif
 
-    if (allow_auto_quit && !g_data_running) {
-      // If no data is coming in and the GUI is not interactive, break out.
-      break;
+    {
+      std::unique_lock<std::mutex> lock(g_inp.mutex);
+      if (allow_auto_quit && !g_inp.running) {
+        // If no data is coming in and the GUI is not interactive, break out.
+        break;
+      }
     }
 
-    g_event_running &= g_gui.Draw(event_rate);
+    g_main_running &= g_gui.Draw(event_rate);
 
     ++loop_n;
 #define RATE_PER_SECOND 2
-    if (g_config->UIRateGet() / RATE_PER_SECOND == loop_n) {
-      auto event_i1 = g_event_i;
-      event_rate = (double)(event_i1 - event_i0) * RATE_PER_SECOND;
-      event_i0 = event_i1;
-      loop_n = 0;
+    {
+      std::unique_lock<std::mutex> lock(g_inp.mutex);
+      if (g_config->UIRateGet() / RATE_PER_SECOND == loop_n) {
+        auto event_i1 = g_inp.event_i;
+        event_rate = (double)(event_i1 - event_i0) * RATE_PER_SECOND;
+        event_i0 = event_i1;
+        loop_n = 0;
+      }
     }
   }
   std::cout << "Exiting main loop...\n";
-  g_data_running = false;
-  g_input_cv.notify_one();
-  g_event_cv.notify_one();
+  {
+    std::unique_lock<std::mutex> lock(g_inp.mutex);
+    g_inp.running = false;
+  }
+  g_inp.input_cv.notify_one();
+  g_inp.event_cv.notify_one();
   thread_input.join();
   thread_event.join();
 

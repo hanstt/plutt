@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Bastian Loeher <b.loeher@gsi.de>
  * Håkan T Johansson <f96hajo@chalmers.se>
@@ -1359,7 +1359,7 @@ namespace ImPlutt {
     auto min = a_min;
     auto max = min + size * (a_max - a_min) / a_size;
     auto d = max - min;
-    auto l = log10(d) - 0.1;
+    auto l = d < 1e-15 ? 1.0 : log10(d) - 0.1;
     auto l_i = floor(l);
     auto l_f = l - l_i;
     double i, e;
@@ -1382,6 +1382,22 @@ namespace ImPlutt {
     ticks.max_val = ceil(max / step) * step;
     ticks.max_pos = (int)(size * (ticks.max_val - min) * f);
     ticks.num = (int)((ticks.max_val - ticks.min_val) / step);
+    if (
+        isnan(ticks.min_val) ||
+        isnan(ticks.min_pos) ||
+        isnan(ticks.max_val) ||
+        isnan(ticks.max_pos) ||
+        isnan(ticks.num)) {
+      std::cout << a_size << ' ' << a_tip << ' ' << a_min << ' ' << a_max <<
+          std::endl;
+      std::cout << 
+        ticks.min_val << ' ' <<
+        ticks.min_pos << ' ' <<
+        ticks.max_val << ' ' <<
+        ticks.max_pos << ' ' <<
+        ticks.num << std::endl;
+      abort();
+    }
     return ticks;
   }
 

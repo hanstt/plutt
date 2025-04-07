@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -62,8 +62,8 @@ void NodeFilterRange::Process(uint64_t a_evid)
   }
 
   auto const &val0 = m_cond_vec.begin()->node->GetValue();
-  auto const &miv0 = val0.GetMI();
-  auto const &mev0 = val0.GetME();
+  auto const &miv0 = val0.GetID();
+  auto const &mev0 = val0.GetEnd();
   uint32_t vi = 0;
   for (uint32_t i = 0; i < miv0.size(); ++i) {
     auto mi0 = miv0[i];
@@ -72,8 +72,8 @@ void NodeFilterRange::Process(uint64_t a_evid)
       bool ok = true;
       for (auto it = m_cond_vec.begin(); m_cond_vec.end() != it; ++it) {
         auto const &val = it->node->GetValue();
-        auto const &miv = val.GetMI();
-        auto const &mev = val.GetME();
+        auto const &miv = val.GetID();
+        auto const &mev = val.GetEnd();
         auto mi = miv.at(i);
         auto me = mev.at(i);
         NODE_ASSERT(mi, ==, mi0);
@@ -87,7 +87,7 @@ void NodeFilterRange::Process(uint64_t a_evid)
       if (ok) {
         for (auto it = m_arg_vec.begin(); m_arg_vec.end() != it; ++it) {
           auto const &val = it->node->GetValue();
-	  auto const &miv = val.GetMI();
+	  auto const &miv = val.GetID();
 	  // We _should_ have equal layout, but don't crash if we don't...
 	  if (i < miv.size()) {
             auto mi = miv.at(i);

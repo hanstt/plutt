@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #ifndef UNPACKER_HPP
 #define UNPACKER_HPP
 
+#include <set>
 #include <input.hpp>
 
 class Config;
@@ -46,36 +47,41 @@ class Unpacker: public Input {
     std::pair<Input::Scalar const *, size_t> GetData(size_t);
 
   private:
-    Unpacker(Unpacker const &);
-    Unpacker &operator=(Unpacker const &);
-    void BindSignal(Config &, std::vector<char> const &, std::string const &,
-        char const *, char const *, size_t &, std::map<std::string, uint32_t>
-        &, bool);
-    std::vector<char> ExtractRange(std::vector<char> const &, char const *,
-        char const *);
-    char const *RewindNewline(std::vector<char> const &, char const *);
-
-    std::string m_path;
-    bool m_is_struct_writer;
-    ext_data_clnt *m_clnt;
-    FILE *m_pip;
-    ext_data_struct_info m_struct_info;
     struct Entry {
       Entry(std::string const &a_name, int a_ext_type, size_t a_in_ofs, size_t
-          a_out_ofs, size_t a_len):
+          a_out_ofs, size_t a_arr_n, size_t a_len_ofs):
         name(a_name),
         ext_type(a_ext_type),
         in_ofs(a_in_ofs),
         out_ofs(a_out_ofs),
-        len(a_len)
+        arr_n(a_arr_n),
+        len_ofs(a_len_ofs)
       {
       }
       std::string name;
       int ext_type;
       size_t in_ofs;
       size_t out_ofs;
-      size_t len;
+      size_t arr_n;
+      size_t len_ofs;
     };
+
+    Unpacker(Unpacker const &);
+    Unpacker &operator=(Unpacker const &);
+    void BindSignal(Config *, std::vector<char> const &, std::string const &,
+        std::string const &, NodeSignal::MemberType, size_t &,
+        std::set<std::string> &);
+    bool FindSignal(std::vector<char> const &, std::string const &,
+        std::set<std::string> &);
+    std::vector<char> ExtractRange(std::vector<char> const &, char const *,
+        char const *);
+    size_t GetLen(Entry const &);
+
+    std::string m_path;
+    bool m_is_struct_writer;
+    ext_data_clnt *m_clnt;
+    FILE *m_pip;
+    ext_data_struct_info m_struct_info;
     std::vector<Entry> m_map;
     std::vector<uint8_t> m_event_buf;
     size_t m_out_size;

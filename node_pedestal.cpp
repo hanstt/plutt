@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -106,8 +107,8 @@ void NodePedestal::Process(uint64_t a_evid)
   m_sigma.Clear();
 
   auto const &val = m_child->GetValue();
-  auto const &vmi = val.GetMI();
-  auto const &vme = val.GetME();
+  auto const &vmi = val.GetID();
+  auto const &vme = val.GetEnd();
 
   if (!vmi.empty()) {
     // Try to size stats by looking at the last index.

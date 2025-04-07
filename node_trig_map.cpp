@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,7 +57,7 @@ void NodeTrigMap::Process(uint64_t a_evid)
   // Build trigger lookup vector.
   std::vector<double> trig_vec;
   auto const &val_trig = m_trig->GetValue();
-  auto const &vmi_trig = val_trig.GetMI();
+  auto const &vmi_trig = val_trig.GetID();
   uint32_t vi = 0;
   for (uint32_t i = 0; i < vmi_trig.size(); ++i) {
     uint32_t mi = vmi_trig.at(i);
@@ -64,16 +65,16 @@ void NodeTrigMap::Process(uint64_t a_evid)
       trig_vec.resize(mi + 1);
     }
     trig_vec.at(mi) = val_trig.GetV(vi, false);
-    vi = val_trig.GetME().at(i);
+    vi = val_trig.GetEnd().at(i);
   }
 
   auto const &val_sig = m_sig->GetValue();
-  auto const &vmi_sig = val_sig.GetMI();
+  auto const &vmi_sig = val_sig.GetID();
 
   vi = 0;
   for (uint32_t i = 0; i < vmi_sig.size(); ++i) {
     auto mi = vmi_sig[i];
-    auto me_sig = val_sig.GetME().at(i);
+    auto me_sig = val_sig.GetEnd().at(i);
     for (; vi < me_sig; ++vi) {
       double sig = val_sig.GetV(vi, false);
       uint32_t trig_i;

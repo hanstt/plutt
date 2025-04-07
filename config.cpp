@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 #include <node_hist1.hpp>
 #include <node_hist2.hpp>
 #include <node_length.hpp>
-#include <node_match_index.hpp>
+#include <node_match_id.hpp>
 #include <node_match_value.hpp>
 #include <node_max.hpp>
 #include <node_mean_arith.hpp>
@@ -57,7 +57,7 @@
 #include <node_member.hpp>
 #include <node_mexpr.hpp>
 #include <node_pedestal.hpp>
-#include <node_select_index.hpp>
+#include <node_select_id.hpp>
 #include <node_signal.hpp>
 #include <node_sub_mod.hpp>
 #include <node_tot.hpp>
@@ -80,6 +80,12 @@ extern int yycplex_destroy();
 
 extern char const *yycppath;
 
+Config::Signal::Signal(std::string const &a_loc, std::string const &a_name,
+    std::string const &a_id, std::string const &a_end, std::string const
+    &a_v):
+  loc(a_loc), name(a_name), id(a_id), end(a_end), v(a_v)
+{}
+
 Config::Config(char const *a_path):
   m_path(a_path),
   m_line(),
@@ -87,6 +93,7 @@ Config::Config(char const *a_path):
   m_trig_map(),
   m_node_value_map(),
   m_alias_map(),
+  m_signal_descr_map(),
   m_signal_map(),
   m_cut_node_list(),
   m_cuttable_map(),
@@ -121,15 +128,31 @@ Config::Config(char const *a_path):
   yycplex_destroy();
   std::cout << a_path << ": Done!\n";
 
-  // Link unassigned aliases to signal-map, should be ucesb signals.
+  // Copy unassigned aliases to signal-description map, should come from
+  // Input.
   for (auto it = m_alias_map.begin(); m_alias_map.end() != it; ++it) {
     auto alias = it->second;
     if (!alias->GetSource()) {
-      auto signal = new NodeSignal(*this, it->first.c_str());
-      signal->SetLocStr(alias->GetLocStr());
-      alias->SetSource(GetLocStr(), signal);
-      m_signal_map.insert(std::make_pair(it->first, signal));
+      auto const &name = it->first;
+      auto it2 = m_signal_descr_map.find(name);
+      if (m_signal_descr_map.end() == it2) {
+        m_signal_descr_map.insert(std::make_pair(name,
+            Signal(alias->GetLocStr(), name, "", "", "")));
+      }
     }
+  }
+  // Create signals from description map.
+  for (auto it = m_signal_descr_map.begin(); m_signal_descr_map.end() != it;
+      ++it) {
+    auto const &name = it->first;
+    auto signal = new NodeSignal(*this, name);
+    signal->SetLocStr(it->second.loc);
+    auto it2 = m_alias_map.find(name);
+    if (m_alias_map.end() != it2) {
+      auto alias = it2->second;
+      alias->SetSource(GetLocStr(), signal);
+    }
+    m_signal_map.insert(std::make_pair(it->first, signal));
   }
   for (auto it = m_signal_map.begin(); m_signal_map.end() != it; ++it) {
     std::cout << "Signal=" << it->first << '\n';
@@ -385,14 +408,14 @@ NodeValue *Config::AddLength(NodeValue *a_value)
   return node;
 }
 
-NodeValue *Config::AddMatchIndex(NodeValue *a_l, NodeValue *a_r)
+NodeValue *Config::AddMatchId(NodeValue *a_l, NodeValue *a_r)
 {
   std::ostringstream oss;
   oss << __LINE__ << ',' << a_l << ',' << a_r;
   auto key = oss.str();
   auto node = NodeValueGet(key);
   if (!node) {
-    NodeValueAdd(key, node = new NodeMatchIndex(GetLocStr(), a_l, a_r));
+    NodeValueAdd(key, node = new NodeMatchId(GetLocStr(), a_l, a_r));
   }
   return node;
 }
@@ -486,7 +509,7 @@ NodeValue *Config::AddPedestal(NodeValue *a_value, double a_cutoff, NodeValue
   return node;
 }
 
-NodeValue *Config::AddSelectIndex(NodeValue *a_child, uint32_t a_first,
+NodeValue *Config::AddSelectId(NodeValue *a_child, uint32_t a_first,
     uint32_t a_last)
 {
   std::ostringstream oss;
@@ -495,9 +518,17 @@ NodeValue *Config::AddSelectIndex(NodeValue *a_child, uint32_t a_first,
   auto node = NodeValueGet(key);
   if (!node) {
     NodeValueAdd(key,
-        node = new NodeSelectIndex(GetLocStr(), a_child, a_first, a_last));
+        node = new NodeSelectId(GetLocStr(), a_child, a_first, a_last));
   }
   return node;
+}
+
+void Config::AddSignal(char const *a_name, char const *a_id, char const
+    *a_end, char const *a_v)
+{
+  m_signal_descr_map.insert(
+      std::make_pair(a_name, Signal(GetLocStr(), a_name, a_id, a_end ? a_end :
+      "", a_v)));
 }
 
 NodeValue *Config::AddSubMod(NodeValue *a_left, NodeValue *a_right, double
@@ -569,8 +600,8 @@ NodeValue *Config::AddZeroSuppress(NodeValue *a_value, double a_cutoff)
   return node;
 }
 
-void Config::BindSignal(std::string const &a_name, char const *a_suffix,
-    size_t a_id, Input::Type a_type)
+void Config::BindSignal(std::string const &a_name, NodeSignal::MemberType
+    a_member_type, size_t a_id, Input::Type a_type)
 {
   auto it = m_signal_map.find(a_name);
   if (m_signal_map.end() == it) {
@@ -579,7 +610,7 @@ void Config::BindSignal(std::string const &a_name, char const *a_suffix,
     throw std::runtime_error(__func__);
   }
   auto signal = it->second;
-  signal->BindSignal(a_suffix ? a_suffix : "", a_id, a_type);
+  signal->BindSignal(a_name, a_member_type, a_id, a_type);
 }
 
 void Config::UnbindSignals()
@@ -750,11 +781,12 @@ std::string Config::GetLocStr() const
   return oss.str();
 }
 
-std::list<std::string> Config::GetSignalList() const
+std::list<Config::Signal const *> Config::GetSignalList() const
 {
-  std::list<std::string> list;
-  for (auto it = m_signal_map.begin(); m_signal_map.end() != it; ++it) {
-    list.push_back(it->first);
+  std::list<Signal const *> list;
+  for (auto it = m_signal_descr_map.begin(); m_signal_descr_map.end() != it;
+      ++it) {
+    list.push_back(&it->second);
   }
   return list;
 }

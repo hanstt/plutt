@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,8 +65,8 @@ void NodeCluster::Process(uint64_t a_evid)
   m_eta.Clear();
 
   auto const &val = m_child->GetValue();
-  auto const &miv = val.GetMI();
-  auto const &mev = val.GetME();
+  auto const &miv = val.GetID();
+  auto const &mev = val.GetEnd();
   auto const &v = val.GetV();
   if (miv.empty()) {
     return;

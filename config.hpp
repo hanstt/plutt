@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #define CONFIG_HPP
 
 #include <node_mexpr.hpp>
+#include <node_signal.hpp>
 #include <trig_map.hpp>
 
 struct BitfieldArg;
@@ -42,6 +43,16 @@ class NodeValue;
  */
 class Config {
   public:
+    struct Signal {
+      Signal(std::string const &, std::string const &, std::string const &,
+          std::string const &, std::string const &);
+      std::string loc;
+      std::string name;
+      std::string id;
+      std::string end;
+      std::string v;
+    };
+
     Config(char const *);
     ~Config();
 
@@ -59,7 +70,7 @@ class Config {
         char const *, char const *, char const *, bool, double, unsigned,
         double);
     NodeValue *AddLength(NodeValue *);
-    NodeValue *AddMatchIndex(NodeValue *, NodeValue *);
+    NodeValue *AddMatchId(NodeValue *, NodeValue *);
     NodeValue *AddMatchValue(NodeValue *, NodeValue *, double);
     NodeValue *AddMax(NodeValue *);
     NodeValue *AddMeanArith(NodeValue *, NodeValue *);
@@ -68,7 +79,8 @@ class Config {
     NodeValue *AddMExpr(NodeValue *, NodeValue *, double,
         NodeMExpr::Operation);
     NodeValue *AddPedestal(NodeValue *, double, NodeValue *);
-    NodeValue *AddSelectIndex(NodeValue *, uint32_t, uint32_t);
+    NodeValue *AddSelectId(NodeValue *, uint32_t, uint32_t);
+    void AddSignal(char const *, char const *, char const *, char const *);
     NodeValue *AddSubMod(NodeValue *, NodeValue *, double);
     NodeValue *AddTot(NodeValue *, NodeValue *, double);
     NodeValue *AddTpat(NodeValue *, uint32_t);
@@ -86,11 +98,12 @@ class Config {
     std::string GetLocStr() const;
     void SetLoc(int, int);
 
-    void BindSignal(std::string const &, char const *, size_t, Input::Type);
+    void BindSignal(std::string const &, NodeSignal::MemberType, size_t,
+        Input::Type);
     void DoEvent(Input *);
     Input const *GetInput() const;
     Input *GetInput();
-    std::list<std::string> GetSignalList() const;
+    std::list<Signal const *> GetSignalList() const;
     void UnbindSignals();
 
   private:
@@ -116,7 +129,9 @@ class Config {
     // assigned by assignment operations, and unassigned ones at the end are
     // considered signals that an Input must provide.
     std::map<std::string, NodeAlias *> m_alias_map;
-    // Unassigned aliases are moved here.
+    // Explicit signal descriptors.
+    std::map<std::string, Signal> m_signal_descr_map;
+    // Unassigned aliases and signal descriptors are moved here.
     std::map<std::string, NodeSignal *> m_signal_map;
     // Cutting is special due to "soft" name-based dependencies.
     std::list<NodeCut *> m_cut_node_list;

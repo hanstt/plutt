@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -93,6 +93,7 @@ pedestal               return TK_PEDESTAL;
 pow                    return TK_POW;
 s                      return TK_S;
 select_index           return TK_SELECT_INDEX;
+signal                 return TK_SIGNAL;
 sin                    return TK_SIN;
 sqrt                   return TK_SQRT;
 sub_mod                return TK_SUB_MOD;
@@ -145,7 +146,7 @@ zero_suppress          return TK_ZERO_SUPPRESS;
 	}
 	return TK_INTEGER;
 }
-[_A-Za-z][_A-Za-z0-9]* {
+[_A-Za-z][\._A-Za-z0-9]* {
 	yycplval.str = strdup(yycptext);
 	return TK_IDENT;
 }

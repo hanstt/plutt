@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,9 +53,9 @@ void NodeMax::Process(uint64_t a_evid)
   int max_i = -1;
   Input::Scalar max;
   uint32_t v_i = 0;
-  for (uint32_t i = 0; i < val.GetMI().size(); ++i) {
-    auto mi = val.GetMI()[i];
-    auto me = val.GetME()[i];
+  for (uint32_t i = 0; i < val.GetID().size(); ++i) {
+    auto mi = val.GetID()[i];
+    auto me = val.GetEnd()[i];
     for (; v_i < me; ++v_i) {
       auto const &v = val.GetV()[v_i];
       if (-1 == max_i || val.Cmp(v, max) > 0) {

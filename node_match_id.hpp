@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,28 +20,28 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_SELECT_INDEX_HPP
-#define NODE_SELECT_INDEX_HPP
+#ifndef NODE_MATCH_ID_HPP
+#define NODE_MATCH_ID_HPP
 
 #include <node.hpp>
 
 /*
- * Passes through 'v' entries with a given index.
+ * Matches the ID of both nodes into two new values.
  */
-class NodeSelectIndex: public NodeValue {
+class NodeMatchId: public NodeValue {
   public:
-    NodeSelectIndex(std::string const &, NodeValue *, uint32_t, uint32_t);
+    NodeMatchId(std::string const &, NodeValue *, NodeValue *);
     Value const &GetValue(uint32_t);
     void Process(uint64_t);
 
   private:
-    NodeSelectIndex(NodeSelectIndex const &);
-    NodeSelectIndex &operator=(NodeSelectIndex const &);
+    NodeMatchId(NodeMatchId const &);
+    NodeMatchId &operator=(NodeMatchId const &);
 
-    NodeValue *m_child;
-    uint32_t m_first;
-    uint32_t m_last;
-    Value m_value;
+    NodeValue *m_node_l;
+    NodeValue *m_node_r;
+    Value m_val_l;
+    Value m_val_r;
 };
 
 #endif

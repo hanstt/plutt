@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <wordexp.h>
 
+#include <cassert>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -45,6 +46,44 @@
 
 #define MATCH_WORD(p, str) (0 == strncmp(p, str, sizeof str - 1) && \
     !isalnum(p[sizeof str - 1]) && '_' != p[sizeof str - 1])
+
+#if 0
+typedef struct EXT_STR_h101_t
+{
+  /* RAW */
+  uint32_t CALIFA_ENE /* [0,512] */;
+  uint32_t CALIFA_ENEI[512 EXT_STRUCT_CTRL(CALIFA_ENE)] /* [1,512] */;
+  uint32_t CALIFA_ENEv[512 EXT_STRUCT_CTRL(CALIFA_ENE)] /* [0,65535] */;
+  uint32_t CALIFA_TSLSB /* [0,512] */;
+  uint32_t CALIFA_TSLSBI[512 EXT_STRUCT_CTRL(CALIFA_TSLSB)] /* [1,512] */;
+  uint32_t CALIFA_TSLSBv[512 EXT_STRUCT_CTRL(CALIFA_TSLSB)] /* [-1,-1] */;
+  uint32_t CALIFA_TSMSB /* [0,512] */;
+  uint32_t CALIFA_TSMSBI[512 EXT_STRUCT_CTRL(CALIFA_TSMSB)] /* [1,512] */;
+  uint32_t CALIFA_TSMSBv[512 EXT_STRUCT_CTRL(CALIFA_TSMSB)] /* [-1,-1] */;
+  uint32_t CALIFA_NF /* [0,512] */;
+  uint32_t CALIFA_NFI[512 EXT_STRUCT_CTRL(CALIFA_NF)] /* [1,512] */;
+  uint32_t CALIFA_NFv[512 EXT_STRUCT_CTRL(CALIFA_NF)] /* [0,65535] */;
+  uint32_t CALIFA_NS /* [0,512] */;
+  uint32_t CALIFA_NSI[512 EXT_STRUCT_CTRL(CALIFA_NS)] /* [1,512] */;
+  uint32_t CALIFA_NSv[512 EXT_STRUCT_CTRL(CALIFA_NS)] /* [0,65535] */;
+
+} EXT_STR_h101;
+typedef struct EXT_STR_h101_t
+{
+  /* DEF */
+  ...
+  uint32_t caen_n /* [0,1023] */;
+  uint32_t caen_id[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  uint32_t caen_ts_h[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  uint32_t caen_ts_l[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  uint32_t caen_adc_a[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  uint32_t caen_adc_b[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  uint32_t caen_adc_c[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  uint32_t caen_adc_d[1024 EXT_STRUCT_CTRL(caen_n)] /* [-1,-1] */;
+  ...
+
+} EXT_STR_h101;
+#endif
 
 Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   m_path(),
@@ -78,8 +117,17 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   std::string signals_str;
   auto signal_list = a_config.GetSignalList();
   for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-    signals_str += *it;
-    signals_str += ',';
+    auto sig = *it;
+    signals_str += sig->name + ',';
+    if (!sig->id.empty()) {
+      signals_str += sig->id + ',';
+    }
+    if (!sig->end.empty()) {
+      signals_str += sig->end + ',';
+    }
+    if (!sig->v.empty()) {
+      signals_str += sig->v + ',';
+    }
   }
 
   // Generate struct file.
@@ -141,26 +189,48 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   ifile.close();
   remove(temp_path.c_str());
 
-  auto buf_macro = ExtractRange(buf_file, "_ITEMS_INFO", " while (0)");
+  auto buf_struct = ExtractRange(buf_file,
+      "typedef struct EXT_STR_h101_t",
+      "} EXT_STR_h101;");
 
   // Find signals in struct and allocate scalars/vectors.
-  std::map<std::string, uint32_t> signal_map;
+  std::set<std::string> signal_set;
   size_t event_buf_i = 0;
   for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-    BindSignal(a_config, buf_macro, *it, nullptr, nullptr, event_buf_i,
-        signal_map, false);
-    BindSignal(a_config, buf_macro, *it,  "M",  "M", event_buf_i, signal_map,
-        true);
-    BindSignal(a_config, buf_macro, *it,  "I",  "I", event_buf_i, signal_map,
-        true);
-    BindSignal(a_config, buf_macro, *it, "MI", "MI", event_buf_i, signal_map,
-        true);
-    BindSignal(a_config, buf_macro, *it, "ME", "ME", event_buf_i, signal_map,
-        true);
-    BindSignal(a_config, buf_macro, *it,  "v",  "v", event_buf_i, signal_map,
-        true);
-    BindSignal(a_config, buf_macro, *it,  "E",  "v", event_buf_i, signal_map,
-        true);
+    auto sig = *it;
+    if (!sig->id.empty() && !sig->v.empty()) {
+      BindSignal(&a_config, buf_struct, sig->name, sig->id, NodeSignal::kId,
+          event_buf_i, signal_set);
+      if (!sig->end.empty()) {
+        BindSignal(&a_config, buf_struct, sig->name, sig->end,
+            NodeSignal::kEnd, event_buf_i, signal_set);
+      }
+      BindSignal(&a_config, buf_struct, sig->name, sig->v, NodeSignal::kV,
+          event_buf_i, signal_set);
+      continue;
+    }
+    auto has_MI = FindSignal(buf_struct, sig->name + "MI", signal_set);
+    auto has_ME = FindSignal(buf_struct, sig->name + "ME", signal_set);
+    auto has_v = FindSignal(buf_struct, sig->name + "v", signal_set);
+    if (has_MI && has_ME && has_v) {
+      BindSignal(&a_config, buf_struct, sig->name, sig->name + "MI",
+          NodeSignal::kId, event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, sig->name, sig->name + "ME",
+          NodeSignal::kEnd, event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
+          NodeSignal::kV, event_buf_i, signal_set);
+      continue;
+    }
+    auto has_I = FindSignal(buf_struct, sig->name + "I", signal_set);
+    if (has_I && has_v) {
+      BindSignal(&a_config, buf_struct, sig->name, sig->name + "I",
+          NodeSignal::kId, event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
+          NodeSignal::kV, event_buf_i, signal_set);
+      continue;
+    }
+    BindSignal(&a_config, buf_struct, sig->name, sig->name, NodeSignal::kV,
+        event_buf_i, signal_set);
   }
   m_event_buf.resize(event_buf_i);
   m_out_buf.resize(m_out_size);
@@ -217,110 +287,122 @@ Unpacker::~Unpacker()
   }
 }
 
-void Unpacker::BindSignal(Config &a_config, std::vector<char> const
-    &a_buf_macro, std::string const &a_name, char const *a_suffix, char const
-    *a_config_suffix, size_t &a_event_buf_i, std::map<std::string, uint32_t>
-    &a_signal_map, bool a_optional)
+void Unpacker::BindSignal(Config *a_config, std::vector<char> const
+    &a_buf_struct, std::string const &a_base_name, std::string const &a_name,
+    NodeSignal::MemberType a_member_type, size_t &a_event_buf_i,
+    std::set<std::string> &a_signal_set)
 {
-  // Find signal in macro.
-  std::string full_name = a_name + (a_suffix ? a_suffix : "");
-  auto it = a_signal_map.find(full_name);
-  if (a_signal_map.end() != it) {
+  auto it = a_signal_set.find(a_name);
+  if (a_signal_set.end() != it) {
+    // Already bound.
     return;
   }
-  auto ret = a_signal_map.insert(std::make_pair(full_name, 0));
-  char const *p = &a_buf_macro.at(0);
-  for (;; ++p) {
-    p = strstr(p, full_name.c_str());
-    if (!p) {
-      if (a_optional) {
-        return;
-      }
-      std::cerr << full_name << ": mandatory signal not mapped.\n";
-      throw std::runtime_error(__func__);
-    }
-    if (',' == p[full_name.size()]) {
-      break;
-    }
+  a_signal_set.insert(a_name);
+  auto p0 = &a_buf_struct.at(0);
+  auto p = p0;
+  auto name_space = a_name + ' ';
+  auto name_brack = a_name + '[';
+  auto p_name = strstr(p, name_space.c_str());
+  if (!p_name) {
+    p_name = strstr(p, name_brack.c_str());
   }
-
-  // Find macro name.
-  auto macro = RewindNewline(a_buf_macro, p);
-  macro = RewindNewline(a_buf_macro, macro - 1);
-  macro = strstr(macro, "EXT_STR_ITEM_INFO");
-  if (!macro || macro > p) {
-    std::cerr << full_name << ": missing struct-info macro name.\n";
+  if (!p_name) {
+    std::cerr << a_name << ": mandatory signal not mapped.\n";
     throw std::runtime_error(__func__);
   }
+  p = p_name;
 
   // Find type.
-  p += full_name.size() + 1;
-  for (; isblank(*p); ++p)
-    ;
   int struct_info_type;
   Type output_type;
   size_t in_type_bytes;
-  size_t arr_n;
-  if (MATCH_WORD(p, "UINT32,")) {
+  auto q = p;
+  for (; '\n' != *q; --q) {
+    if (p0 == q) {
+      std::cerr << a_name << ": could not find type.\n";
+      throw std::runtime_error(__func__);
+    }
+  }
+  for (++q; isblank(*q); ++q)
+    ;
+  if (MATCH_WORD(q, "uint32_t")) {
     struct_info_type = EXT_DATA_ITEM_TYPE_UINT32;
     output_type = kUint64;
     in_type_bytes = sizeof(uint32_t);
   } else {
-    auto q = p;
-    for (; isalnum(*p); ++p)
-      ;
-    std::string str(q, static_cast<size_t>(p - q));
-    std::cerr << full_name << ": unsupported type '" << str << "'.\n";
-    throw std::runtime_error(__func__);
-  }
-  std::string full_name_ptn = "\"";
-  full_name_ptn += full_name + "\"";
-  p = strstr(p, full_name_ptn.c_str());
-  if (!p) {
-    std::cerr << full_name << ": could not find max value/reference.\n";
+    auto str = std::string(q, static_cast<size_t>(p - q));
+    std::cerr << a_name << ": unsupported type '" << str << "'.\n";
     throw std::runtime_error(__func__);
   }
 
-  // Find array size.
-  p += full_name_ptn.size() + 1;
-  std::string ctrl;
-  if (!a_suffix || 0 == strcmp("M", a_suffix)) {
-    // If no suffix = "" or "M", find max value, possibly future array limit.
-    char *end;
-    // Can be unlimited scalar, limit = 0.
-    ret.first->second = static_cast<uint32_t>(strtol(p, &end, 10));
+  // Find array size and max value.
+  size_t arr_n; // Max size.
+  std::string ctrl; // ctrl-variable, holds runtime array size.
+  size_t len_ofs; // Offset in output buffer to runtime array size.
+  uint32_t max;
+  p += a_name.length();
+  if (' ' == *p) {
     arr_n = 1;
-  } else {
-    // Otherwise find reference limit.
-    for (; isblank(*p); ++p)
+    len_ofs = -1;
+    // Get max.
+    p = strchr(p, ',');
+    if (!p) {
+      std::cerr << a_name << ": could not find max value.\n";
+      throw std::runtime_error(__func__);
+    }
+    char *end;
+    max = (uint32_t)strtol(p + 1, &end, 0);
+  } else if ('[' == *p) {
+    // Get array size.
+    char *end;
+    arr_n = strtol(p + 1, &end, 0);
+    if (' ' != *end) {
+      std::cerr << a_name << ": could not extract array size.\n";
+      throw std::runtime_error(__func__);
+    }
+    // Find limit reference.
+    p = end + 1;
+    if (!strcmp(p, "EXT_STRUCT_CTRL(")) {
+      std::cerr << a_name << ": could not find ctrl name.\n";
+      throw std::runtime_error(__func__);
+    }
+    p += 16;
+    auto p_ctrl = p;
+    for (; isalnum(*p) || '_' == *p; ++p)
       ;
-    auto q = p + 1;
-    if ('"' == *p) {
-      for (++p; isalnum(*p) || '_' == *p; ++p)
-        ;
-    }
-    if ('"' != *p) {
-      std::cerr << full_name << ": could not find reference.\n";
+    if (')' != *p) {
+      std::cerr << a_name << ": could not extract ctrl name.\n";
       throw std::runtime_error(__func__);
     }
-    ctrl = std::string(q, static_cast<size_t>(p - q));
-    auto it2 = a_signal_map.find(ctrl);
-    if (a_signal_map.end() == it2) {
-      std::cerr << full_name << ": reference '" << ctrl << "' not seen.\n";
-      throw std::runtime_error(__func__);
+    ctrl = std::string(p_ctrl, static_cast<size_t>(p - p_ctrl));
+    auto it_ctrl = a_signal_set.find(ctrl);
+    if (a_signal_set.end() == it_ctrl) {
+      len_ofs = m_out_size;
+      BindSignal(nullptr, a_buf_struct, a_base_name, ctrl, NodeSignal::kV,
+          a_event_buf_i, a_signal_set);
+      it_ctrl = a_signal_set.find(ctrl);
+      assert(a_signal_set.end() != it_ctrl);
+    } else {
+      // Find entry for ctrl to get offset.
+      for (auto it2 = m_map.begin();; ++it2) {
+        assert(m_map.end() != it2);
+        if (0 == it2->name.compare(ctrl)) {
+          len_ofs = it2->out_ofs;
+          break;
+        }
+      }
     }
-    arr_n = it2->second;
-  }
-  if (0 == arr_n) {
-    std::cerr << full_name << ": 0 array limit.\n";
+  } else {
+    std::cerr << a_name << ": struct syntax error.\n";
     throw std::runtime_error(__func__);
   }
   auto in_bytes = in_type_bytes * arr_n;
-  // 32-bit align.
-  a_event_buf_i = (a_event_buf_i + 3U) & ~3U;
-  a_config.BindSignal(a_name, a_config_suffix, m_map.size(), output_type);
+  if (a_config) {
+    a_config->BindSignal(a_base_name, a_member_type, m_map.size(),
+        output_type);
+  }
 
-  // std::cout << full_name << ": " << a_event_buf_i << ' ' << in_type_bytes <<
+  // std::cout << a_name << ": " << a_event_buf_i << ' ' << in_type_bytes <<
   //     '*' << arr_n << '\n';
 
 #if EXT_DATA_ITEM_FLAGS_OPTIONAL
@@ -331,43 +413,31 @@ void Unpacker::BindSignal(Config &a_config, std::vector<char> const
 
   // Setup links.
   int ok = 1;
-  if (MATCH_WORD(macro, "EXT_STR_ITEM_INFO") ||
-      MATCH_WORD(macro, "EXT_STR_ITEM_INFO2")) {
-    // Unlimited scalar.
+  if ((size_t)-1 == len_ofs) {
+    // Unlimited (max=-1) or limited scalar.
 // std::cout << "0: " << a_event_buf_i << ' ' << in_bytes << ' ' <<
-// struct_info_type << ' ' << full_name << '\n';
+// struct_info_type << ' ' << a_name << ' ' << max << '\n';
     ok &= 0 == ext_data_struct_info_item(m_struct_info, a_event_buf_i,
-        in_bytes, struct_info_type, "", -1, full_name.c_str(), "", -1
-        FLAG_OPT);
-  } else if (MATCH_WORD(macro, "EXT_STR_ITEM_INFO_LIM") ||
-      MATCH_WORD(macro, "EXT_STR_ITEM_INFO2_LIM")) {
-    // Limited scalar.
-// std::cout << "1: " << a_event_buf_i << ' ' << in_bytes << ' ' <<
-// struct_info_type << ' ' << full_name << ' ' << ret.first->second << '\n';
-    ok &= 0 == ext_data_struct_info_item(m_struct_info, a_event_buf_i,
-        in_bytes, struct_info_type, "", -1, full_name.c_str(), "",
-        static_cast<int>(ret.first->second) FLAG_OPT);
-  } else if (MATCH_WORD(macro, "EXT_STR_ITEM_INFO_ZZP") ||
-      MATCH_WORD(macro, "EXT_STR_ITEM_INFO2_ZZP")) {
-// std::cout << "2: " << a_event_buf_i << ' ' << in_bytes << ' ' <<
-// struct_info_type << ' ' << full_name << ' ' << ctrl << '\n';
-    ok &= 0 == ext_data_struct_info_item(m_struct_info, a_event_buf_i,
-        in_bytes, struct_info_type, "", -1, full_name.c_str(), ctrl.c_str(),
-        -1 FLAG_OPT);
+        in_bytes, struct_info_type, "", -1, a_name.c_str(), "", max FLAG_OPT);
   } else {
-    std::cerr << full_name << ": unknown struct-info macro.\n";
-    throw std::runtime_error(__func__);
+// std::cout << "1: " << a_event_buf_i << ' ' << in_bytes << ' ' <<
+// struct_info_type << ' ' << a_name << ' ' << ctrl << '\n';
+    ok &= 0 == ext_data_struct_info_item(m_struct_info, a_event_buf_i,
+        in_bytes, struct_info_type, "", -1, a_name.c_str(), ctrl.c_str(), -1
+        FLAG_OPT);
   }
   if (!ok) {
     perror("ext_data_struct_info_item");
-    std::cerr << full_name << ": failed to set struct-info.\n";
+    std::cerr << a_name << ": failed to set struct-info.\n";
     throw std::runtime_error(__func__);
   }
 
-  m_map.push_back(
-      Entry(full_name, struct_info_type, a_event_buf_i, m_out_size, arr_n));
+  m_map.push_back(Entry(a_name, struct_info_type, a_event_buf_i, m_out_size,
+      arr_n, len_ofs));
 
   a_event_buf_i += in_bytes;
+  // 32-bit align.
+  a_event_buf_i = (a_event_buf_i + 3U) & ~3U;
   m_out_size += arr_n;
 }
 
@@ -379,7 +449,8 @@ void Unpacker::Buffer()
     if (EXT_DATA_ITEM_TYPE_##TYPE == it->ext_type) { \
       auto pin = (in_type const *)&m_event_buf[it->in_ofs]; \
       auto pout = &m_out_buf[it->out_ofs]; \
-      for (size_t i = 0; i < it->len; ++i) { \
+      auto len_ = GetLen(*it); \
+      for (size_t i = 0; i < len_; ++i) { \
         pout->out_member = *pin++; \
         ++pout; \
       } \
@@ -423,24 +494,35 @@ bool Unpacker::Fetch()
   return true;
 }
 
+bool Unpacker::FindSignal(std::vector<char> const &a_buf_struct, std::string
+    const &a_name, std::set<std::string> &a_signal_set)
+{
+  auto it = a_signal_set.find(a_name);
+  if (a_signal_set.end() != it) {
+    // Signal already bound.
+    return true;
+  }
+  // Find signal in struct.
+  auto p = &a_buf_struct.at(0);
+  auto name_space = a_name + ' ';
+  if (strstr(p, name_space.c_str())) {
+    return true;
+  }
+  auto name_brack = a_name + '[';
+  return !!strstr(p, name_brack.c_str());
+}
+
 std::pair<Input::Scalar const *, size_t> Unpacker::GetData(size_t a_id)
 {
   auto &entry = m_map.at(a_id);
-  return std::make_pair(&m_out_buf.at(entry.out_ofs), entry.len);
+  return std::make_pair(&m_out_buf.at(entry.out_ofs), GetLen(entry));
 }
 
-
-char const *Unpacker::RewindNewline(std::vector<char> const &a_buf, char const
-    *a_p)
+size_t Unpacker::GetLen(Entry const &a_entry)
 {
-  auto p = a_p;
-  for (; '\n' != *p; --p) {
-    if (&a_buf.at(0) >= p) {
-      std::cerr << "No newline found.\n";
-      throw std::runtime_error(__func__);
-    }
-  }
-  return p;
+  return (size_t)-1 == a_entry.len_ofs
+      ? a_entry.arr_n
+      : *(uint32_t const *)&m_out_buf.at(a_entry.len_ofs);
 }
 
 #endif

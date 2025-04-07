@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,8 +36,8 @@ class Value {
     // Compares two scalars assumed to be of the same type as current object.
     int Cmp(Input::Scalar const &, Input::Scalar const &) const;
     Input::Type GetType() const;
-    Vector<uint32_t> const &GetMI() const;
-    Vector<uint32_t> const &GetME() const;
+    Vector<uint32_t> const &GetID() const;
+    Vector<uint32_t> const &GetEnd() const;
     Vector<Input::Scalar> const &GetV() const;
     // Converts whatever v-type to double. This is online, not paper plots,
     // but developers need to be careful still!
@@ -47,8 +48,8 @@ class Value {
 
   private:
     Input::Type m_type;
-    Vector<uint32_t> m_mi;
-    Vector<uint32_t> m_me;
+    Vector<uint32_t> m_id;
+    Vector<uint32_t> m_end;
     Vector<Input::Scalar> m_v;
 };
 

@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -99,7 +100,7 @@ void NodeBitfield::Process(uint64_t a_evid)
     uint32_t min_i = UINT32_MAX;
     for (auto it = m_source_vec.begin(); m_source_vec.end() != it; ++it) {
       // Get min channel.
-      auto const &vmi = it->value->GetMI();
+      auto const &vmi = it->value->GetID();
       if (it->i < vmi.size()) {
         auto mi = vmi[it->i];
         min_i = std::min(min_i, mi);
@@ -112,7 +113,7 @@ void NodeBitfield::Process(uint64_t a_evid)
     uint32_t ofs = 0;
     for (auto it = m_source_vec.begin(); m_source_vec.end() != it; ++it,
         ofs += it->bits) {
-      auto const &vmi = it->value->GetMI();
+      auto const &vmi = it->value->GetID();
       if (it->i >= vmi.size()) {
         continue;
       }
@@ -120,7 +121,7 @@ void NodeBitfield::Process(uint64_t a_evid)
       if (mi != min_i) {
         continue;
       }
-      auto me = it->value->GetME()[it->i];
+      auto me = it->value->GetEnd()[it->i];
       if (it->vi >= me) {
         continue;
       }
