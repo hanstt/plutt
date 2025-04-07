@@ -21,6 +21,7 @@
  */
 
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <map>

@@ -20,6 +20,7 @@
  * MA  02110-1301  USA
  */
 
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <vector>

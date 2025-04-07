@@ -21,6 +21,7 @@
  */
 
 #include <cassert>
+#include <cstdint>
 #include <cmath>
 #include <set>
 #include <iostream>
