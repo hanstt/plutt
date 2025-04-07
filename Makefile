@@ -142,7 +142,7 @@ TEST:=$(BUILD_DIR)/tests
 all: $(PLUTT)
 
 .PHONY: test
-test: $(TEST) $(ROOT_DICT_PCM)
+test: $(TEST)
 	$(QUIET)./$<
 
 $(PLUTT): $(OBJ) $(TEST_OK)
@@ -152,9 +152,9 @@ $(PLUTT): $(OBJ) $(TEST_OK)
 $(TEST_OK): $(TEST)
 	$(QUIET)./$< && touch $@
 
-$(TEST): $(TEST_OBJ) $(filter-out %main.o,$(OBJ))
+$(TEST): $(TEST_OBJ) $(filter-out %main.o,$(OBJ)) $(ROOT_DICT_PCM)
 	@echo LD $@
-	$(QUIET)$(CXX) -o $@ $^ $(LDFLAGS) $(LIBS)
+	$(QUIET)$(CXX) -o $@ $(filter %.o,$^) $(LDFLAGS) $(LIBS)
 
 $(BUILD_DIR)/%.o: %.cpp Makefile
 	@echo O $@
