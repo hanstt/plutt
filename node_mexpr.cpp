@@ -150,6 +150,7 @@ void NodeMExpr::Process(uint64_t a_evid)
         case LOG:  v = (1 == m_mix) ? log(l) : log(r) / log(m_d); break;
         case ABS:  v = std::abs(l); break;
         case POW:  v = pow(l, r); break;
+        default: abort();
       }
       if (!std::isnan(v) && !std::isinf(v)) {
         Input::Scalar s;
