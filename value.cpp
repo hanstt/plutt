@@ -20,6 +20,7 @@
  * MA  02110-1301  USA
  */
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>

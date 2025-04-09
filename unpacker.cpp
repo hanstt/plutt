@@ -157,7 +157,7 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
       execl(m_path.c_str(), m_path.c_str(), host.c_str(), oss.str().c_str(),
           nullptr);
     } else {
-      oss << "--ntuple=STRUCT_HH," << signals_str << "id=plutt," << temp_path;
+      oss << "--ntuple=STRUCT_HH," << signals_str << temp_path;
       std::cout << "Struct call: " << m_path << ' ' << m_path << ' ' <<
           oss.str() << '\n';
       execl(m_path.c_str(), m_path.c_str(), oss.str().c_str(), nullptr);
@@ -210,10 +210,11 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
           event_buf_i, signal_set);
       continue;
     }
+    auto has_ = FindSignal(buf_struct, sig->name, signal_set);
     auto has_MI = FindSignal(buf_struct, sig->name + "MI", signal_set);
     auto has_ME = FindSignal(buf_struct, sig->name + "ME", signal_set);
     auto has_v = FindSignal(buf_struct, sig->name + "v", signal_set);
-    if (has_MI && has_ME && has_v) {
+    if (has_ && has_MI && has_ME && has_v) {
       BindSignal(&a_config, buf_struct, sig->name, sig->name + "MI",
           NodeSignal::kId, event_buf_i, signal_set);
       BindSignal(&a_config, buf_struct, sig->name, sig->name + "ME",
@@ -223,11 +224,27 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
       continue;
     }
     auto has_I = FindSignal(buf_struct, sig->name + "I", signal_set);
-    if (has_I && has_v) {
+    auto has_E = FindSignal(buf_struct, sig->name + "E", signal_set);
+    if (has_ && has_I && (has_v || has_E)) {
       BindSignal(&a_config, buf_struct, sig->name, sig->name + "I",
           NodeSignal::kId, event_buf_i, signal_set);
-      BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
-          NodeSignal::kV, event_buf_i, signal_set);
+      if (has_v) {
+        BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
+            NodeSignal::kV, event_buf_i, signal_set);
+      } else {
+        BindSignal(&a_config, buf_struct, sig->name, sig->name + "E",
+            NodeSignal::kV, event_buf_i, signal_set);
+      }
+      continue;
+    }
+    if (has_ && (has_v || has_E)) {
+      if (has_v) {
+        BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
+            NodeSignal::kV, event_buf_i, signal_set);
+      } else {
+        BindSignal(&a_config, buf_struct, sig->name, sig->name + "E",
+            NodeSignal::kV, event_buf_i, signal_set);
+      }
       continue;
     }
     BindSignal(&a_config, buf_struct, sig->name, sig->name, NodeSignal::kV,
@@ -340,11 +357,11 @@ void Unpacker::BindSignal(Config *a_config, std::vector<char> const
   size_t arr_n; // Max size.
   std::string ctrl; // ctrl-variable, holds runtime array size.
   size_t len_ofs; // Offset in output buffer to runtime array size.
-  uint32_t max;
+  int max;
   p += a_name.length();
   if (' ' == *p) {
     arr_n = 1;
-    len_ofs = -1;
+    len_ofs = (size_t)-1;
     // Get max.
     p = strchr(p, ',');
     if (!p) {
@@ -352,13 +369,17 @@ void Unpacker::BindSignal(Config *a_config, std::vector<char> const
       throw std::runtime_error(__func__);
     }
     char *end;
-    max = (uint32_t)strtol(p + 1, &end, 0);
+    max = (int)strtol(p + 1, &end, 0);
   } else if ('[' == *p) {
     // Get array size.
     char *end;
-    arr_n = strtol(p + 1, &end, 0);
+    arr_n = (size_t)strtol(p + 1, &end, 0);
     if (' ' != *end) {
       std::cerr << a_name << ": could not extract array size.\n";
+      throw std::runtime_error(__func__);
+    }
+    if (arr_n > 10000) {
+      std::cerr << a_name << ": crazy array size = " << arr_n << ".\n";
       throw std::runtime_error(__func__);
     }
     // Find limit reference.

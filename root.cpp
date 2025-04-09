@@ -205,7 +205,7 @@ RootChain::RootChain(Config &a_config, Root *a_root, int a_argc, char
   m_ev_n = m_chain.GetEntries();
 
   // Make sure we have a working tree if weird files were added.
-  if (m_chain.GetTree()) {
+  if (m_chain.GetNtrees() > 0) {
     // Look for branches for each signal.
     for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
       auto sig = *it;
@@ -217,19 +217,33 @@ RootChain::RootChain(Config &a_config, Root *a_root, int a_argc, char
         BindBranch(a_config, sig->name, sig->v, NodeSignal::kV);
         continue;
       }
+      auto has_ = FindBranch(sig->name);
       auto has_MI = FindBranch(sig->name + "MI");
       auto has_ME = FindBranch(sig->name + "ME");
       auto has_v = FindBranch(sig->name + "v");
-      if (has_MI && has_ME && has_v) {
+      if (has_ && has_MI && has_ME && has_v) {
         BindBranch(a_config, sig->name, sig->name + "MI", NodeSignal::kId);
         BindBranch(a_config, sig->name, sig->name + "ME", NodeSignal::kEnd);
         BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
         continue;
       }
       auto has_I = FindBranch(sig->name + "I");
-      if (has_I && has_v) {
+      auto has_E = FindBranch(sig->name + "E");
+      if (has_ && has_I && (has_v || has_E)) {
         BindBranch(a_config, sig->name, sig->name + "I", NodeSignal::kId);
-        BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+        if (has_v) {
+          BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+        } else {
+          BindBranch(a_config, sig->name, sig->name + "E", NodeSignal::kV);
+        }
+        continue;
+      }
+      if (has_ && (has_v || has_E)) {
+        if (has_v) {
+          BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+        } else {
+          BindBranch(a_config, sig->name, sig->name + "E", NodeSignal::kV);
+        }
         continue;
       }
       BindBranch(a_config, sig->name, sig->name, NodeSignal::kV);
