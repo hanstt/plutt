@@ -186,9 +186,6 @@ void NodeSignal::Process(uint64_t a_evid)
       default:
         throw std::runtime_error(__func__);
     }
-  } else {
-    std::cerr << m_name << ": Has no value member!" << std::endl;
-    throw std::runtime_error(__func__);
   }
 }
 
