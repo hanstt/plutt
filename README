@@ -226,10 +226,7 @@ user input. For example, given "MYDET" and other existing inputs:
 		-> No ID,
 		   MYDET used as value
 
-So to be clear about the 'signal' syntax:
-
-	alias = signal(id-name, value-name)
-	alias = signal(id-name, end-name, value-name)
+See below for the "official" definition of the 'signal' syntax.
 
 
 What's the grammar/syntax?
@@ -245,6 +242,20 @@ signal:v
 		id = [-1]
 		end = [length(signal.id)]
 		v = signal.v
+
+a = signal(id-name, value-name)
+	Creates a signal where the ID's are given by one source and the values
+	by another. Note that the sources must have the same lengths!
+	Example:
+		my_id    = [3, 5]        a:id  = [3, 5]
+		my_value = [100, 123] => a:end = [1, 2]
+		                         a:v   = [100, 123]
+a = signal(id-name, end-name, value-name)
+	Creates a signal like above, but also with end offsets into the value
+	array. Example:
+		my_id    = [2, 4]       => a:id  = [3, 4]
+		my_end   = [2, 4]          a:end = [2, 4]
+		my_value = [1, 2, 3, 4]    a:v   = [1, 2, 3, 4]
 
 y = f(x)
 	Chainable mathematical operations are available with signals and
@@ -282,6 +293,14 @@ cut(histogram-name, (x,y)...)
 	would look like:
 		cut("My histo", (0,0), (10,0), (0,10), (10,10))
 
+a = fit(b[, ...])
+	This is a 'static' linear fit y=Ax+B of 2D points. The list of
+	arguments consists of pairs (y, x), and 'a' will refer to this linear
+	fit. Example:
+		my_calib = fit((1, 1), (2, 2), (4, 3))
+	This will fit a linear function through the three points, which can be
+	used to scale histogram axes.
+
 hist(title, x [, args])
 	Draws a histogram of the values in x:v, with the given title.
 	The optional arguments can be:
@@ -289,6 +308,13 @@ hist(title, x [, args])
 			Logarithmic counts.
 		binsx=n
 			# horizontal bins.
+		contoured/filled
+			Bin drawing style.
+		transformx=name
+			Reference to a static fit, see 'fit' above. This will
+			scale the X axis, i.e. 'x' will be transformed by the
+			linear fit y=Ax+B and the histogram is filled with the
+			'y' values.
 		fit="method"
 			'method' can be any of:
 				gauss
@@ -329,6 +355,8 @@ hist2d(title, y, x [, args])
 			Logarithmic count coloring.
 		binsy=n
 			# vertical bins.
+		transformy=name
+			Transforms the 'y' entries.
 		fit
 			Does not exist.
 
@@ -336,29 +364,29 @@ b = bitfield(a1, n1, ..., aN, nN)
 	Combines signals of given bit-widths into one value. The (ai,ni) pairs
 	are combined in ascending order, ie the first pair becomes the least
 	significant bits. Non-existant values are treated as 0.
-		a1:I = [1, 2]
-		a1:E = [1, 2]
-		a1:v = [1, 2]       b:I = [1, 2, 3]
-		n1 = 8           => b:E = [2, 3, 4]
-		a2:I = [1, 3]       b:v = [0x301, 0x400, 0x002, 0x500]
-		a2:E = [2, 3]
-		a2:v = [3, 4, 5]
+		a1:id  = [1, 2]
+		a1:end = [1, 2]
+		a1:v   = [1, 2]     b:id  = [1, 2, 3]
+		n1 = 8           => b:end = [2, 3, 4]
+		a2:id  = [1, 3]     b:v   = [0x301, 0x400, 0x002, 0x500]
+		a2:end = [2, 3]
+		a2:v   = [3, 4, 5]
 		n2 = 8
 
 b, c = cluster(a)
 b, c, d = cluster(a)
-	Makes clusters of 'a', ie large neighbouring entries wrt to a:I are
-	grouped. 'b:v' = weighted a:I:s ie "x", 'c:v' = sum, and the optional
+	Makes clusters of 'a', ie large neighbouring entries wrt to a:id are
+	grouped. 'b:v' = weighted a:id:s ie "x", 'c:v' = sum, and the optional
 	'd:v' is the eta function, ie the centroid within the cluster.
-		                      b:I = [0, 0]
-		                      b:E = [1, 2]
-		                      b:v = [2, 5]
-		a:I = [1, 2, 3, 5]    c:I = [0, 0]
-		a:E = [1, 2, 3, 4] => c:E = [1, 2]
-		a:v = [4, 5, 6, 7]    c:v = [15, 7]
-		                      d:I = [0, 0]
-		                      d:E = [1, 2]
-		                      d:v = [0, 0.45]
+		                        b:id  = [0, 0]
+		                        b:end = [1, 2]
+		                        b:v   = [2, 5]
+		a:id  = [1, 2, 3, 5]    c:id  = [0, 0]
+		a:end = [1, 2, 3, 4] => c:end = [1, 2]
+		a:v   = [4, 5, 6, 7]    c:v   = [15, 7]
+		                        d:id  = [0, 0]
+		                        d:end = [1, 2]
+		                        d:v   = [0, 0.45]
 
 d = coarse_fine(a, b, c)
 	Does on-the-fly fine-time calibration. 'a' = coarse times, 'b' = fine
@@ -367,12 +395,12 @@ d = coarse_fine(a, b, c)
 	would be interpreted as each clock cycle taking 10 ns.
 	This example relies on previous data for the calibration, let's assume
 	a uniform fine-time distribution between 100 and 600 ch:
-		a:I = [1, 2]
-		a:E = [1, 2]
-		a:v = [10, 20]      d:I = [1, 2]
-		b:I = [1, 2]     => d:E = [1, 2]
-		b:E = [1, 2]        d:v = [5001, 10003]
-		b:v = [200, 400]
+		a:id  = [1, 2]
+		a:end = [1, 2]
+		a:v   = [10, 20]      d:id  = [1, 2]
+		b:id  = [1, 2]     => d:end = [1, 2]
+		b:end = [1, 2]        d:v   = [5001, 10003]
+		b:v   = [200, 400]
 		c = 'vftx2'
 
 a = cut(cut-args)
@@ -384,61 +412,61 @@ a, b = cut(cut-args)
 filter_range(a <= b < c..., (d = e)...)
 	For each entry where the conditions in the initial list of conditions
 	are met, all the assignments are performed. Note that 'b' and 'e' must
-	have the exact same layout, ie b:I === e:I and b:E === e:E!
+	have the exact same layout, ie b:id  === e:id and b:end === e:end!
 		a = 1
-		b:I = [1, 3]
-		b:E = [1, 3]       d:I = [1, 3]
-		b:v = [1, 2, 3] => d:E = [1, 2]
-		c = 3              d:v = [4, 5]
-		e:I = [1, 3]
-		e:E = [1, 3]
-		e:v = [4, 5, 6]
+		b:id  = [1, 3]
+		b:end = [1, 3]       d:id  = [1, 3]
+		b:v   = [1, 2, 3] => d:end = [1, 2]
+		c = 3                d:v   = [4, 5]
+		e:id  = [1, 3]
+		e:end = [1, 3]
+		e:v   = [4, 5, 6]
 
 b = length(a)
 	Returns length of 'a:v':
-		a:I = [1, 2, 3]       b:I = [0]
-		a:E = [1, 2, 4]    => b:E = [1]
-		a:v = [1, 2, 3, 4]    b:v = [4]
+		a:id  = [1, 2, 3]       b:id  = [0]
+		a:end = [1, 2, 4]    => b:end = [1]
+		a:v   = [1, 2, 3, 4]    b:v   = [4]
 
 c, d = match_index(a, b)
-	Cuts un-matched entries between 'a:I' and 'b:I':
-		a:I = [1, 2, 3]    c:I = [2]
-		a:E = [1, 2, 3]    c:E = [1]
-		a:v = [1, 2, 3] => c:v = [2]
-		b:I = [2, 4]       d:I = [2]
-		b:E = [1, 2]       d:E = [1]
-		b:v = [4, 5]       d:v = [4]
+	Cuts un-matched entries between 'a:id' and 'b:id':
+		a:id  = [1, 2, 3]    c:id  = [2]
+		a:end = [1, 2, 3]    c:end = [1]
+		a:v   = [1, 2, 3] => c:v   = [2]
+		b:id  = [2, 4]       d:id  = [2]
+		b:end = [1, 2]       d:end = [1]
+		b:v   = [4, 5]       d:v   = [4]
 c, d = match_value(a, b, c)
 	Cuts un-matched entries between 'a:v' and 'b:v' for each matched
-	channel. A match means a:I[mi]==b:I[mj] && fabs(a:v[vi]-b:v[vj])<c.
-		a:I = [1, 2, 3]       c:I = [2]
-		a:E = [1, 2, 3]       c:E = [1]
-		a:v = [10, 20, 30] => c:v = [20]
-		b:I = [2, 3]          d:I = [2]
-		b:E = [1, 2]          d:E = [1]
-		b:v = [21, 32]        d:v = [21]
+	channel. A match means a:id[mi]==b:id[mj] && fabs(a:v[vi]-b:v[vj])<c.
+		a:id  = [1, 2, 3]       c:id  = [2]
+		a:end = [1, 2, 3]       c:end = [1]
+		a:v   = [10, 20, 30] => c:v   = [20]
+		b:id  = [2, 3]          d:id  = [2]
+		b:end = [1, 2]          d:end = [1]
+		b:v   = [21, 32]        d:v   = [21]
 		c = 2
 
 b = max(a)
 	Returns the single largest entry in 'a:v':
-		a:I = [1, 2, 3]    b:I = [2]
-		a:E = [1, 2, 3] => b:E = [1]
-		a:v = [1, 3, 2]    b:v = [3]
+		a:id  = [1, 2, 3]    b:id  = [2]
+		a:end = [1, 2, 3] => b:end = [1]
+		a:v   = [1, 3, 2]    b:v   = [3]
 
 b = mean_arith(a)
-	Calcs arithmetic mean over all 'a:I' for each entry in 'a:v':
-		a:I = [1, 2, 3]          b:I = [0]
-		a:E = [2, 4, 5]       => b:E = [2]
-		a:v = [1, 2, 3, 4, 5]    b:v = [(1+3+5)/3, (2+4)/2]
+	Calcs arithmetic mean over all 'a:id' for each entry in 'a:v':
+		a:id  = [1, 2, 3]          b:id  = [0]
+		a:end = [2, 4, 5]       => b:end = [2]
+		a:v   = [1, 2, 3, 4, 5]    b:v   = [(1+3+5)/3, (2+4)/2]
 c = mean_arith(a, b)
-	Calcs aritmetic mean between the two signals for every '*:I' and
+	Calcs aritmetic mean between the two signals for every '*:id' and
 	'*:v', expects 'a' and 'b' to be of equal lengths:
-		a:I = [1, 2]
-		a:E = [1, 3]       c:I = [1, 2, 3]
-		a:v = [1, 2, 3] => c:E = [1, 2, 4]
-		b:I = [2, 3]       c:v = [1/1, (2+4)/2, 3/1, 5/1]
-		b:E = [1, 2]
-		b:v = [4, 5]
+		a:id  = [1, 2]
+		a:end = [1, 3]       c:id  = [1, 2, 3]
+		a:v   = [1, 2, 3] => c:end = [1, 2, 4]
+		b:id  = [2, 3]       c:v   = [1/1, (2+4)/2, 3/1, 5/1]
+		b:end = [1, 2]
+		b:v   = [4, 5]
 
 b = mean_geom(a)
 c = mean_geom(a, b)
@@ -453,20 +481,20 @@ c, d = pedestal(a, b [, args])
 	'c' will contain the cut values, and 'd' the standard deviations.
 
 c = select_index(a, b)
-	Selects only 'a:I == b':
-		a:I = [1, 2]          c:I = [0]
-		a:E = [2, 4]       => c:E = [2]
-		a:v = [1, 2, 3, 4]    c:v = [3, 4]
+	Selects only 'a:id  == b':
+		a:id  = [1, 2]          c:id  = [0]
+		a:end = [2, 4]       => c:end = [2]
+		a:v   = [1, 2, 3, 4]    c:v   = [3, 4]
 		b = 2
 
 d = sub_mod(a, b, c)
 	Does a zero-centered modulo-subtraction like '(a-b+n*c+c/2)%c-c/2':
-		a:I = [1, 2]
-		a:E = [1, 2]
-		a:v = [1, 2]    d:I = [1, 2, 3]
-		b:I = [2, 3] => d:E = [1, 2, 3]
-		b:E = [1, 2]    d:v = [1/1, (2+3)/2, 4/1]
-		b:v = [3, 4]
+		a:id  = [1, 2]
+		a:end = [1, 2]
+		a:v   = [1, 2]    d:id  = [1, 2, 3]
+		b:id  = [2, 3] => d:end = [1, 2, 3]
+		b:end = [1, 2]    d:v   = [1/1, (2+3)/2, 4/1]
+		b:v   = [3, 4]
 		c = 10
 d = tot(a, b, c)
 	Does time-over-threshold, 'a' = leading, 'b' = trailing, does matching
@@ -474,9 +502,9 @@ d = tot(a, b, c)
 
 b = tpat(a, bitmask)
 	Lets values in 'a:v' with any bits marked by the bitmask pass.
-		a:I = [0]         b:I = [0]
-		a:E = [1]      => b:E = [1]
-		a:v = [0x101]     b:v = [0x1]
+		a:id  = [0]         b:id  = [0]
+		a:end = [1]      => b:end = [1]
+		a:v   = [0x101]     b:v   = [0x1]
 		bitmask = 0x83
 
 f = trig_map(a, b, c, d, e)
@@ -489,20 +517,20 @@ f = trig_map(a, b, c, d, e)
 			Det1:3 = 2
 			Det2:1 = 1
 		b = "Det1"
-		c:I = [1, 2, 3]
-		c:E = [1, 2, 3]    f:I = [1, 2, 3]
-		c:v = [1, 2, 3] => f:E = [1, 2, 3]
-		d:I = [1, 2]       f:v = [1-1, 2-1, 3-3]
-		d:E = [1, 2]
-		d:v = [1, 3]
+		c:id  = [1, 2, 3]
+		c:end = [1, 2, 3]    f:id  = [1, 2, 3]
+		c:v   = [1, 2, 3] => f:end = [1, 2, 3]
+		d:id  = [1, 2]       f:v   = [1-1, 2-1, 3-3]
+		d:end = [1, 2]
+		d:v   = [1, 3]
 		e = 10
 
 d = zero_suppress(a [, b])
 	Zero-suppresses 'a:v'. 'b' is an optional cut-off which defaults to 0,
 	ie all entries in 'a:v' > 'b' are pass this node:
-		a:I = [1, 2]       d:I = [2]
-		a:E = [1, 3]    => d:E = [1]
-		a:v = [0, 2, 1]    d:v = [2]
+		a:id  = [1, 2]       d:id  = [2]
+		a:end = [1, 3]    => d:end = [1]
+		a:v   = [0, 2, 1]    d:v   = [2]
 		b = 1
 
 Other functions:
@@ -549,12 +577,12 @@ Examples
 	canvas->cd(0)->SetLogy();
 	for (i = 0; i < SUPP; ++i)
 		hist.Fill(SUPPI[i]);
-	-> hist("Channel map", SUPP:I, logy)
+	-> hist("Channel map", SUPP:id, logy)
 - Plot energy against channel with 1000 energy bins:
 	TH2I hist...
 	for (i = 0; i < SUPP; ++i)
 		hist.Fill(SUPPI[i], SUPPv[i]);
-	-> hist2d("Energy vs ch", SUPP:v, SUPP:I, binsy=1000)
+	-> hist2d("Energy vs ch", SUPP:v, SUPP:id, binsy=1000)
 - Plot multi-hit energies against channels:
 	i = 0;
 	for (j = 0; j < SUPPM; ++j) {
@@ -563,23 +591,23 @@ Examples
 		for (; i < end; ++i)
 			hist->Fill(ch, SUPPv[i]);
 	}
-	-> hist2d("Energy vs ch", MHIT:v, MHIT:I)
+	-> hist2d("Energy vs ch", MHIT:v, MHIT:id)
 - Match two sides of a single-hit detector and draw geom mean energy:
 	// Too much brain-wrangling code...
 	-> e1, e2 = match_index(SUPP_S1E, SUPP_S2E)
 	e = mean_geom(e1, e2)
-	hist2d("Energy vs ch", e:v, e:I)
+	hist2d("Energy vs ch", e:v, e:id)
 - Same with multi-hit mapping:
 	// Even more unbearable code :o
 	-> e1, e2 = match_index(MHIT_S1E, MHIT_S2E)
 	e = mean_geom(e1, e2)
-	hist2d("Energy vs ch", e:v, e:I)
+	hist2d("Energy vs ch", e:v, e:id)
 - X-vs-X of two detectors:
 	-> e11, e12 = match_index(DET1_S1E, DET1_S2E)
 	e1 = max(mean_geom(e11, e12))
 	e21, e22 = match_index(DET2_S1E, DET2_S2E)
 	e2 = max(mean_geom(e21, e22))
-	hist2d("x2 vs x1" e2:I, e1:I)
+	hist2d("x2 vs x1" e2:id, e1:id)
 - ToF between two detectors:
 	-> a1,a2 = match_index(START_S1T, START_S2T)
 	a = mean_arith(a1:v, a2:v)
