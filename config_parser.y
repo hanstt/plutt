@@ -521,7 +521,6 @@ value
 	| max           { $$ = $1; }
 	| mean_arith    { $$ = $1; }
 	| mean_geom     { $$ = $1; }
-	| member        { $$ = $1; }
 	| select_index  { $$ = $1; }
 	| sub_mod       { $$ = $1; }
 	| tot           { $$ = $1; }
@@ -530,7 +529,7 @@ value
 	| zero_suppress { $$ = $1; }
 
 member
-	: value ':' TK_IDENT {
+	: alias ':' TK_IDENT {
 		LOC_SAVE(@1);
 		$$ = g_config->AddMember($1, $3);
 		free($3);
@@ -545,6 +544,7 @@ assign
 
 mexpr
 	: alias { $$ = $1; }
+	| member { $$ = $1; }
 	| '(' mexpr ')' { $$ = $2; }
 	| mexpr '+' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), ADD); }
 	| const '+' mexpr { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), ADD); }
