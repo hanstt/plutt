@@ -59,7 +59,7 @@ int yylex(void);
 
 #define CONST_OP(l, op, r) do { \
 		Constant c_; \
-		if ((l).i64 && (r).i64) { \
+		if ((l).is_i64 && (r).is_i64) { \
 			c_.is_i64 = true; \
 			c_.i64 = (l).i64 op (r).i64; \
 		} else { \
