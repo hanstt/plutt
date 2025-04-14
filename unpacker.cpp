@@ -318,8 +318,9 @@ void Unpacker::BindSignal(Config *a_config, std::vector<char> const
   a_signal_set.insert(a_name);
   auto p0 = &a_buf_struct.at(0);
   auto p = p0;
-  auto name_space = a_name + ' ';
-  auto name_brack = a_name + '[';
+  // Match space before name and !
+  auto name_space = std::string(" ") + a_name + ' ';
+  auto name_brack = std::string(" ") + a_name + '[';
   auto p_name = strstr(p, name_space.c_str());
   if (!p_name) {
     p_name = strstr(p, name_brack.c_str());
@@ -328,7 +329,7 @@ void Unpacker::BindSignal(Config *a_config, std::vector<char> const
     std::cerr << a_name << ": mandatory signal not mapped.\n";
     throw std::runtime_error(__func__);
   }
-  p = p_name;
+  p = p_name + 1;
 
   // Find type.
   int struct_info_type;
