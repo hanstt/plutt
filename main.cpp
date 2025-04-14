@@ -26,6 +26,7 @@
 
 #include <condition_variable>
 #include <csignal>
+#include <cstring>
 #include <iostream>
 #include <list>
 #include <map>
