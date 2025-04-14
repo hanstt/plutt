@@ -378,7 +378,7 @@ void Unpacker::BindSignal(Config *a_config, std::vector<char> const
       std::cerr << a_name << ": could not extract array size.\n";
       throw std::runtime_error(__func__);
     }
-    if (arr_n > 10000) {
+    if (arr_n > (1 << 30)) {
       std::cerr << a_name << ": crazy array size = " << arr_n << ".\n";
       throw std::runtime_error(__func__);
     }
