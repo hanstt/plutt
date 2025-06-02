@@ -152,9 +152,6 @@ bool Inhax::Fetch()
     }
     auto v_n = *(uint32_t const *)p;
     Shift(4);
-    if (buf) {
-      buf->resize(v_n);
-    }
     for (uint32_t v_i = 0; v_i < v_n; ++v_i) {
       p = Fetch(4);
       if (!p) {
@@ -163,7 +160,9 @@ bool Inhax::Fetch()
       auto v = *(uint32_t const *)p;
       Shift(4);
       if (buf) {
-        buf->at(v_i).u64 = v;
+        buf->push_back(Input::Scalar());
+        auto &s = buf->back();
+        s.u64 = v;
       }
     }
   }
