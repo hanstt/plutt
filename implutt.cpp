@@ -1640,6 +1640,12 @@ namespace ImPlutt {
                     --m_state->proj.width;
                   }
                   break;
+                case SDLK_DELETE:
+                  if (m_window->ContainsLocal(m_rect_graph, it->pointer)) {
+                    // Clear histogram.
+                    m_state->do_clear = true;
+                  }
+                  break;
               }
               break;
             case PlotState::CUT:
