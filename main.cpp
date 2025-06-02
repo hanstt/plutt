@@ -51,6 +51,7 @@
 # include <ext_data_clnt.hh>
 # include <unpacker.hpp>
 #endif
+#include <inhax.hpp>
 #include <util.hpp>
 
 extern Config *g_config;
@@ -72,6 +73,7 @@ namespace {
 #else
 #       define UCESB_ARGOPT
 #endif
+    INPUT_HAX,
     INPUT_NONE
   };
   enum GuiType {
@@ -224,7 +226,7 @@ int main(int argc, char **argv)
   unsigned gui_type = GUI_NONE;
   (void)gui_type;
   int c;
-  while ((c = getopt(argc, argv, "hf:g:j:" ROOT_ARGOPT UCESB_ARGOPT)) != -1) {
+  while ((c = getopt(argc, argv, "hf:g:j:x" ROOT_ARGOPT UCESB_ARGOPT)) != -1) {
     switch (c) {
       case 'h':
         help(nullptr);
@@ -291,6 +293,9 @@ int main(int argc, char **argv)
         input_type = INPUT_UCESB;
         break;
 #endif
+      case 'x':
+        input_type = INPUT_HAX;
+        break;
       default:
         help("Invalid argument.");
         break;
@@ -357,6 +362,9 @@ int main(int argc, char **argv)
       g_input = new Unpacker(*g_config, argc, argv);
       break;
 #endif
+    case INPUT_HAX:
+      g_input = new Inhax(*g_config, argc, argv);
+      break;
     case INPUT_NONE:
     default:
       throw std::runtime_error(__func__);
