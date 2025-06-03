@@ -24,6 +24,8 @@
 #ifndef TTF_HPP
 #define TTF_HPP
 
+#include <stdint.h>
+
 struct Font;
 struct FontSize {
   int x;
