@@ -526,6 +526,52 @@ namespace ImPlutt {
     SDL_CALL_VOID(SDL_RenderCopy, (m_renderer, a_tex, nullptr, &sdl_r));
   }
 
+#define SWAP(a, b) do { \
+  auto tmp_ = a; \
+  a = b; \
+  b = tmp_; \
+} while (0)
+
+  void Window::RenderTriangle(Pos const *a_v0, Pos const *a_v1, Pos const
+      *a_v2)
+  {
+    auto const &l = LevelGet();
+    Pos v[3];
+    v[0].x = l.cursor.x + a_v0->x;
+    v[0].y = l.cursor.y + a_v0->y;
+    v[1].x = l.cursor.x + a_v1->x;
+    v[1].y = l.cursor.y + a_v1->y;
+    v[2].x = l.cursor.x + a_v2->x;
+    v[2].y = l.cursor.y + a_v2->y;
+    if (v[0].y > v[1].y) SWAP(v[0], v[1]);
+    if (v[0].y > v[2].y) SWAP(v[0], v[2]);
+    if (v[1].y > v[2].y) SWAP(v[1], v[2]);
+    if (v[1].y - v[0].y) {
+      int x0 = v[0].x << 16;
+      int x1 = x0;
+      int x0s = ((v[1].x - v[0].x) << 16) / (v[1].y - v[0].y);
+      int x1s = ((v[2].x - v[0].x) << 16) / (v[2].y - v[0].y);
+      if (v[1].x > v[2].x) SWAP(x0s, x1s);
+      for (int y = v[0].y; y < v[1].y; ++y) {
+        DrawLineClipped(Pos(x0 >> 16, y), Pos(x1 >> 16, y));
+        x0 += x0s;
+        x1 += x1s;
+      }
+    }
+    if (v[2].y - v[1].y) {
+      int x0 = v[2].x << 16;
+      int x1 = x0;
+      int x0s = ((v[0].x - v[2].x) << 16) / (v[0].y - v[2].y);
+      int x1s = ((v[1].x - v[2].x) << 16) / (v[1].y - v[2].y);
+      if (v[0].x > v[1].x) SWAP(x0s, x1s);
+      for (int y = v[2].y; y >= v[1].y; --y) {
+        DrawLineClipped(Pos(x0 >> 16, y), Pos(x1 >> 16, y));
+        x0 -= x0s;
+        x1 -= x1s;
+      }
+    }
+  }
+
   void Window::RenderBox(Rect const &a_r, size_t a_fg, size_t a_bg)
   {
     RenderColor(g_style[g_style_i][a_fg]);
@@ -2111,6 +2157,83 @@ namespace ImPlutt {
     Status_set("Saved cut in %s.", fname.c_str());
     return true;
   }
+
+  //
+  // Annular.
+  //
+
+#define PLOT_TMPL(T) \
+  void Window::PlotAnnular(Plot *a_plot, \
+      Point const &a_min, Point const &a_max, \
+      std::vector<T> const &a_vec, size_t a_bins_r, size_t a_bins_p, double \
+      a_r_min, double a_r_max, double a_phi0)
+  template <typename T> PLOT_TMPL(T)
+  {
+    if (!a_bins_r || !a_bins_p) {
+      return;
+    }
+    assert(a_bins_p * a_bins_r <= a_vec.size());
+
+    auto const &r = a_plot->m_rect_graph;
+
+    T min_t = a_vec[0];
+    T max_t = a_vec[0];
+    for (size_t ofs = 1; ofs < a_bins_p * a_bins_r; ++ofs) {
+      auto v = a_vec[ofs];
+      min_t = std::min(min_t, v);
+      max_t = std::max(max_t, v);
+    }
+    auto min_z = a_plot->LinOrLogFromLinZ(min_t);
+    auto max_z = a_plot->LinOrLogFromLinZ(max_t);
+    auto dz = std::max(max_z - min_z, 1.0);
+
+    auto const &cmap = g_cmap_vec.at(0);
+    auto const &bg_col = g_style[g_style_i][STYLE_PLOT_BG];
+
+    RenderColor(g_style[g_style_i][STYLE_PLOT_BG]);
+    RenderRect(r, false);
+
+    size_t k = 0;
+    auto dphi = (2 * M_PI * (a_phi0 < 0.0 ? -1 : 1)) / (double)a_bins_p;
+    auto phi0 = 2 * M_PI * fabs(a_phi0) / 360;
+    auto dr = (a_r_max - a_r_min) / (double)a_bins_r;
+    for (size_t i = 0; i < a_bins_p; ++i) {
+      auto p0 = dphi * ((double)i + 0.05) + phi0;
+      auto p1 = dphi * ((double)i + 0.95) + phi0;
+      for (size_t j = 0; j < a_bins_r; ++j) {
+        auto r0 = dr * ((double)j + 0.1) + a_r_min;
+        auto r1 = dr * ((double)j + 0.9) + a_r_min;
+        Pos p[4];
+        p[0].x = a_plot->PosFromPointX(r0 * cos(p0));
+        p[1].x = a_plot->PosFromPointX(r1 * cos(p0));
+        p[2].x = a_plot->PosFromPointX(r1 * cos(p1));
+        p[3].x = a_plot->PosFromPointX(r0 * cos(p1));
+        p[0].y = a_plot->PosFromPointY(r0 * sin(p0));
+        p[1].y = a_plot->PosFromPointY(r1 * sin(p0));
+        p[2].y = a_plot->PosFromPointY(r1 * sin(p1));
+        p[3].y = a_plot->PosFromPointY(r0 * sin(p1));
+        auto v = (double)a_vec.at(k++);
+        SDL_Color col;
+        col.a = 255;
+        if (v > 0.0) {
+          v = a_plot->LinOrLogFromLinZ(v);
+          auto f = (v - min_z) / dz;
+          auto const ramp_i = (size_t)((double)(cmap.ramp.size() - 1) * f);
+          auto const &rgb = cmap.ramp.at(ramp_i);
+          col.r = rgb.r;
+          col.g = rgb.g;
+          col.b = rgb.b;
+        } else {
+          col = bg_col;
+        }
+        RenderColor(col);
+        RenderTriangle(&p[0], &p[1], &p[2]);
+        RenderTriangle(&p[0], &p[2], &p[3]);
+      }
+    }
+  }
+  PLOT_TMPL_INSTANTIATE;
+#undef PLOT_TMPL
 
   //
   // 1D histo.

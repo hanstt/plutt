@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Bastian Loeher <b.loeher@gsi.de>
  *
@@ -270,6 +270,9 @@ namespace ImPlutt {
       Pos TextMeasure(TextStyle, char const *, ...);
       enum InputStatus TextInput(TextInputState *);
 
+      template <typename T> void PlotAnnular(Plot *, Point const &,
+          Point const &, std::vector<T> const &, size_t, size_t, double,
+          double, double);
       template <typename T> void PlotHist1(Plot const *, double, double,
           std::vector<T> const &, size_t, bool);
       template <typename T> void PlotHist2(Plot  *, size_t, Point const &,
@@ -303,6 +306,7 @@ namespace ImPlutt {
       void RenderLineDashed(Pos const &, Pos const &, double, double);
       void RenderRect(Rect const &, bool);
       void RenderTexture(SDL_Texture *, Rect const &);
+      void RenderTriangle(Pos const *, Pos const *, Pos const *);
       void RenderCross(Pos const &, int);
       void RenderText(char const *, TextStyle, int, Pos const &);
       Pos RenderTextMeasure(char const *, TextStyle);

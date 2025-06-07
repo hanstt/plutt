@@ -205,8 +205,7 @@ void SdlGui::DrawAnnular(uint32_t a_id, Axis const &a_axis_r, double a_r_min,
   auto size_tot = m_window->GetSize();
   ImPlutt::Pos size(size_tot.x, size_tot.y - dy);
 
-  double min = -1.1 * a_axis_r.max;
-  double max = 2.1 * a_axis_r.max;
+  double extent = 1.1 * a_r_max;
 
   if (!plot_wrap->is_log_set) {
     plot_wrap->is_log_set = true;
@@ -214,17 +213,15 @@ void SdlGui::DrawAnnular(uint32_t a_id, Axis const &a_axis_r, double a_r_min,
   }
   ImPlutt::Plot plot(m_window, &plot_wrap->plot_state,
       plot_wrap->name.c_str(), size,
-      ImPlutt::Point(min, min),
-      ImPlutt::Point(max, max),
+      ImPlutt::Point(-extent, -extent),
+      ImPlutt::Point(extent, extent),
       a_is_log_z, true);
 
-#if 0
-  m_window->PlotHist2(&plot, /*m_colormap*/0,
-      ImPlutt::Point(minx, miny),
-      ImPlutt::Point(maxx, maxy),
-      a_v, a_axis_y.bins, a_axis_x.bins,
-      plot_wrap->pixels);
-#endif
+  m_window->PlotAnnular(&plot,
+      ImPlutt::Point(-extent, -extent),
+      ImPlutt::Point(extent, extent),
+      a_v, a_axis_r.bins, a_axis_p.bins,
+      a_r_min, a_r_max, a_phi0);
 }
 
 void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
