@@ -24,6 +24,7 @@
 include build_dir.mk
 
 ROOT_CONFIG:=root-config
+SDL2_CONFIG=sdl2-config
 ifeq ($(UCESB_DIR),)
 UCESB_DIR:=../ucesb
 endif
@@ -70,10 +71,14 @@ endif
 # SDL2?
 
 ALLOW_SDL2=Box
-ifeq ($(shell (pkg-config freetype2 sdl2 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_SDL2))
+ifeq ($(shell ($(SDL2_CONFIG) --version 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_SDL2))
 CPPFLAGS+=-DPLUTT_SDL2=1
-CXXFLAGS:=$(CXXFLAGS) $(shell pkg-config freetype2 sdl2 --cflags)
-LIBS+=$(shell pkg-config freetype2 sdl2 --libs)
+CXXFLAGS:=$(CXXFLAGS) \
+	$(shell pkg-config freetype2 --cflags) \
+	$(shell $(SDL2_CONFIG) --cflags)
+LIBS:=$(LIBS) \
+	$(shell pkg-config freetype2 --libs) \
+	$(shell $(SDL2_CONFIG) --libs)
 $(info SDL2: yes)
 else
 $(info SDL2: no)
