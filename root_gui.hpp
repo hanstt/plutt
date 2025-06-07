@@ -57,8 +57,8 @@ class RootGui: public Gui {
 
     std::string CleanName(std::string const &);
 
-    class AllClear;
     class Bind;
+    class ClearMany;
 
     struct PlotWrap {
       PlotWrap();
@@ -80,6 +80,7 @@ class RootGui: public Gui {
       std::string name;
       TCanvas *canvas;
       std::vector<PlotWrap *> plot_wrap_vec;
+      std::list<Bind *> m_bind_list;
       private:
         Page(Page const &);
         Page &operator=(Page const &);

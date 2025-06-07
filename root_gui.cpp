@@ -60,26 +60,25 @@ class RootGui::Bind: public TNamed
     PlotWrap *m_plot_wrap;
 };
 
-class RootGui::AllClear: public TNamed
+class RootGui::ClearMany: public TNamed
 {
   public:
-    AllClear(std::string const &a_name, RootGui *a_root_gui):
+    ClearMany(std::string const &a_name, std::list<Bind *> *a_list):
       TNamed(a_name.c_str(), a_name.c_str()),
-      m_root_gui(a_root_gui)
+      m_list(a_list)
     {
     }
     void Clear(Option_t *) {
-      auto &list = m_root_gui->m_bind_list;
-      for (auto it = list.begin(); list.end() != it; ++it) {
+      for (auto it = m_list->begin(); m_list->end() != it; ++it) {
         (*it)->Clear(nullptr);
       }
     }
 
   private:
-    AllClear(AllClear const &);
-    AllClear &operator=(AllClear const &);
+    ClearMany(ClearMany const &);
+    ClearMany &operator=(ClearMany const &);
 
-    RootGui *m_root_gui;
+    std::list<Bind *> *m_list;
 };
 
 RootGui::PlotWrap::PlotWrap():
@@ -112,10 +111,10 @@ RootGui::RootGui(uint16_t a_port):
   m_server = new THttpServer(oss.str().c_str());
   {
     // Add clearer for all histograms.
-    std::string bind_name = "plutt_Clear_ALL";
-    auto clearer = new AllClear(bind_name, this);
+    std::string bind_name = "plutt_BindClearALL";
+    auto clearer = new ClearMany(bind_name, &m_bind_list);
     gROOT->Append(clearer);
-    std::string cmdname = "/Clear/ALL";
+    auto cmdname = std::string("/Clear/ALL");
     m_server->RegisterCommand(cmdname.c_str(),
         (bind_name + "->Clear()").c_str());
   }
@@ -148,6 +147,15 @@ void RootGui::AddPage(std::string const &a_name)
   m_page_vec.push_back(new Page);
   auto page = m_page_vec.back();
   page->name = a_name;
+  {
+    std::string clean_name = CleanName(page->name);
+    std::string bind_name = "plutt_BindClearPage_" + clean_name;
+    auto clearer = new ClearMany(bind_name, &m_bind_list);
+    gROOT->Append(clearer);
+    auto cmdname = std::string("/Clear/PAGE_") + clean_name;
+    m_server->RegisterCommand(cmdname.c_str(),
+        (bind_name + "->Clear()").c_str());
+  }
 }
 
 uint32_t RootGui::AddPlot(std::string const &a_name, Plot *a_plot)
@@ -162,21 +170,20 @@ uint32_t RootGui::AddPlot(std::string const &a_name, Plot *a_plot)
   plot_wrap->name = a_name;
   plot_wrap->plot = a_plot;
   {
-    auto bind_name = std::string("plutt_Bind_") +
-        CleanName(page->name + "_" + a_name);
+    std::string clean_name = CleanName(page->name + "_" + a_name);
+    auto bind_name = std::string("plutt_BindClear_") + clean_name;
     auto clearer = new Bind(bind_name, plot_wrap);
     gROOT->Append(clearer);
     m_bind_list.push_back(clearer);
+    page->m_bind_list.push_back(clearer);
 
     {
-      auto cmdname = std::string("/Clear/") +
-          CleanName(page->name + "_" + a_name);
+      auto cmdname = std::string("/Clear/HIST_") + clean_name;
       m_server->RegisterCommand(cmdname.c_str(),
           (bind_name + "->Clear()").c_str());
     }
     {
-      auto cmdname = std::string("/LinLog/") +
-          CleanName(page->name + "_" + a_name);
+      auto cmdname = std::string("/LinLog/HIST_") + clean_name;
       m_server->RegisterCommand(cmdname.c_str(),
           (bind_name + "->SetDrawOption()").c_str());
     }
@@ -186,12 +193,20 @@ uint32_t RootGui::AddPlot(std::string const &a_name, Plot *a_plot)
 
 std::string RootGui::CleanName(std::string const &a_name)
 {
-  std::string ret = a_name;
-  for (auto it = ret.begin(); ret.end() != it; ++it) {
-    auto c = *it;
+  std::string ret;
+  int prev = -1;
+  for (auto it = a_name.begin(); a_name.end() != it; ++it) {
+    int c = *it;
     if ('_' != c && !isalnum(c)) {
-      *it = '_';
+      c = '_';
     }
+    if (-1 != prev && ('_' != prev || '_' != c)) {
+      ret += (char)prev;
+    }
+    prev = c;
+  }
+  if ('_' != prev) {
+    ret += (char)prev;
   }
   return ret;
 }
