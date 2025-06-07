@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -81,6 +81,45 @@ class Visual: public Gui::Plot {
     uint32_t m_gui_id;
 };
 
+class VisualAnnular: public Visual {
+  public:
+    VisualAnnular(std::string const &, double, double, double, bool, double,
+        unsigned, double);
+    void Draw(Gui *);
+    void Fill(
+        Input::Type, Input::Scalar const &,
+        Input::Type, Input::Scalar const &);
+    void Fit();
+    void Latch();
+    void Prefill(
+        Input::Type, Input::Scalar const &,
+        Input::Type, Input::Scalar const &);
+
+  private:
+    double m_r_min;
+    double m_r_max;
+    double m_phi0;
+    Range m_range_r;
+    Range m_range_p;
+    Gui::Axis m_axis_r;
+    Gui::Axis m_axis_p;
+    std::mutex m_hist_mutex;
+    uint64_t m_drop_counts_ms;
+    struct Slices {
+      Slices(unsigned a_num):
+        slice_vec(a_num),
+        active_i(0),
+        t_prev(0) {}
+      std::vector<VisualHistVec> slice_vec;
+      size_t active_i;
+      uint64_t t_prev;
+    } m_hist;
+    Gui::Axis m_axis_r_copy;
+    Gui::Axis m_axis_p_copy;
+    VisualHistVec m_hist_copy;
+    bool m_is_log_z;
+};
+
 class VisualHist: public Visual {
   public:
     enum Fitter {
@@ -124,9 +163,9 @@ class VisualHist: public Visual {
 
 class VisualHist2: public Visual {
   public:
-    VisualHist2(std::string const &, size_t, uint32_t, uint32_t,
-        LinearTransform const &, LinearTransform const &, char const *, bool,
-        double, unsigned, double);
+    VisualHist2(std::string const &, uint32_t, uint32_t, LinearTransform const
+        &, LinearTransform const &, char const *, bool, double, unsigned,
+        double);
     void Draw(Gui *);
     void Fill(
         Input::Type, Input::Scalar const &,
@@ -138,7 +177,6 @@ class VisualHist2: public Visual {
         Input::Type, Input::Scalar const &);
 
   private:
-    //size_t m_colormap;
     uint32_t m_xb;
     uint32_t m_yb;
     LinearTransform m_transform_x;
@@ -162,7 +200,6 @@ class VisualHist2: public Visual {
     Gui::Axis m_axis_y_copy;
     VisualHistVec m_hist_copy;
     bool m_is_log_z;
-    std::vector<uint8_t> m_pixels;
 };
 
 #endif

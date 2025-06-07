@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -270,6 +270,170 @@ Visual::~Visual()
 {
 }
 
+VisualAnnular::VisualAnnular(std::string const &a_title, double a_r_min,
+    double a_r_max, double a_phi0, bool a_is_log_z, double a_drop_counts_s,
+    unsigned a_drop_counts_num, double a_drop_stats_s):
+  Visual(a_title),
+  m_r_min(a_r_min),
+  m_r_max(a_r_max),
+  m_phi0(a_phi0),
+  m_range_r(a_drop_stats_s),
+  m_range_p(a_drop_stats_s),
+  m_axis_r(),
+  m_axis_p(),
+  m_hist_mutex(),
+  m_drop_counts_ms((uint64_t)(1000 * a_drop_counts_s)),
+  m_hist(a_drop_counts_num),
+  m_axis_r_copy(),
+  m_axis_p_copy(),
+  m_hist_copy(),
+  m_is_log_z(a_is_log_z)
+{
+}
+
+void VisualAnnular::Draw(Gui *a_gui)
+{
+  if (m_hist_copy.empty()) {
+    return;
+  }
+  g_gui.DrawAnnular(a_gui, m_gui_id, m_axis_r_copy, m_r_min, m_r_max,
+      m_axis_p_copy, m_phi0, m_is_log_z, m_hist_copy);
+}
+
+void VisualAnnular::Fill(Input::Type a_type_r, Input::Scalar const &a_r,
+    Input::Type a_type_p, Input::Scalar const &a_p)
+{
+  const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  // Fill.
+  auto span_r = m_axis_r.max - m_axis_r.min;
+  auto span_p = m_axis_p.max - m_axis_p.min;
+  double dr;
+  switch (a_type_r) {
+    case Input::kUint64:
+      dr = IntSubDouble(a_r.u64, m_axis_r.min);
+      break;
+    case Input::kInt64:
+      dr = IntSubDouble(a_r.i64, m_axis_r.min);
+      break;
+    case Input::kDouble:
+      dr = a_r.dbl - m_axis_r.min;
+      break;
+    case Input::kNone:
+    default:
+      throw std::runtime_error(__func__);
+  }
+  double dp;
+  switch (a_type_p) {
+    case Input::kUint64:
+      dp = IntSubDouble(a_p.u64, m_axis_p.min);
+      break;
+    case Input::kInt64:
+      dp = IntSubDouble(a_p.i64, m_axis_p.min);
+      break;
+    case Input::kDouble:
+      dp = a_p.dbl - m_axis_p.min;
+      break;
+    case Input::kNone:
+    default:
+      throw std::runtime_error(__func__);
+  }
+  uint32_t j = (uint32_t)(m_axis_r.bins * dr / span_r);
+  uint32_t i = (uint32_t)(m_axis_p.bins * dp / span_p);
+  assert(i < m_axis_p.bins);
+  assert(j < m_axis_r.bins);
+  ++m_hist.slice_vec.at(m_hist.active_i).at(i * m_axis_r.bins + j);
+}
+
+void VisualAnnular::Fit()
+{
+  const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  if (m_range_r.IsAdded() &&
+      (m_range_r.GetMin() < m_axis_r.min ||
+       m_range_r.GetMax() >= m_axis_r.max ||
+       m_range_p.GetMin() < m_axis_p.min ||
+       m_range_p.GetMax() >= m_axis_p.max)) {
+    auto axis_r = m_range_r.GetExtents(0);
+    auto axis_p = m_range_p.GetExtents(0);
+    if (m_axis_r.bins != axis_r.bins ||
+        m_axis_r.min != axis_r.min ||
+        m_axis_r.max != axis_r.max ||
+        m_axis_p.bins != axis_p.bins ||
+        m_axis_p.min != axis_p.min ||
+        m_axis_p.max != axis_p.max) {
+      // Have to re-bin all slices.
+      auto &v = m_hist.slice_vec;
+      for (auto it = v.begin(); v.end() != it; ++it) {
+        auto &h = *it;
+        h = Rebin2(h,
+            m_axis_r.bins, m_axis_r.min, m_axis_r.max,
+            m_axis_p.bins, m_axis_p.min, m_axis_p.max,
+            axis_r.bins, axis_r.min, axis_r.max,
+            axis_p.bins, axis_p.min, axis_p.max);
+      }
+      m_axis_r = axis_r;
+      m_axis_p = axis_p;
+    }
+  }
+}
+
+void VisualAnnular::Latch()
+{
+  const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  auto &v = m_hist.slice_vec;
+
+  if (g_gui.DoClear(m_gui_id)) {
+    // TODO: See VisualHist::Latch.
+    m_range_r.Clear();
+    m_range_p.Clear();
+    m_axis_r.Clear();
+    m_axis_p.Clear();
+    for (auto it = v.begin(); v.end() != it; ++it) {
+      it->clear();
+    }
+  }
+
+  m_axis_r_copy = m_axis_r;
+  m_axis_p_copy = m_axis_p;
+
+  if (v.size() > 1) {
+    // Update slices, i.e. throw away oldest slice and start filling it.
+    auto t_cur = Time_get_ms();
+    if (t_cur > m_hist.t_prev + m_drop_counts_ms) {
+      m_hist.active_i = (m_hist.active_i + 1) % v.size();
+      auto &h = v.at(m_hist.active_i);
+      memset(h.data(), 0, h.size() * sizeof h[0]);
+      m_hist.t_prev = t_cur;
+    }
+  }
+
+  if (m_hist_copy.size() != v.at(0).size()) {
+    m_hist_copy.resize(v.at(0).size());
+  }
+
+  // Sum up slices.
+  memcpy(m_hist_copy.data(), v.at(0).data(),
+      m_hist_copy.size() * sizeof m_hist_copy[0]);
+  for (size_t i = 1; i < v.size(); ++i) {
+    auto const &h = v.at(i);
+    assert(m_hist_copy.size() == h.size());
+    for (size_t j = 0; j < h.size(); ++j) {
+      m_hist_copy[j] += h[j];
+    }
+  }
+}
+
+void VisualAnnular::Prefill(Input::Type a_type_r, Input::Scalar const &a_r,
+    Input::Type a_type_p, Input::Scalar const &a_p)
+{
+  const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  m_range_r.Add(a_type_r, a_r);
+  m_range_p.Add(a_type_p, a_p);
+}
+
 VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
     LinearTransform const &a_transform, char const *a_fitter, bool a_is_log_y,
     bool a_is_contour, double a_drop_counts_s, unsigned a_drop_counts_num,
@@ -512,12 +676,11 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
   }
 }
 
-VisualHist2::VisualHist2(std::string const &a_title, size_t a_colormap,
-    uint32_t a_yb, uint32_t a_xb, LinearTransform const &a_ty, LinearTransform
-    const &a_tx, char const *a_fitter, bool a_is_log_z, double
-    a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s):
+VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
+    a_xb, LinearTransform const &a_ty, LinearTransform const &a_tx, char const
+    *a_fitter, bool a_is_log_z, double a_drop_counts_s, unsigned
+    a_drop_counts_num, double a_drop_stats_s):
   Visual(a_title),
-  //m_colormap(a_colormap),
   m_xb(a_xb),
   m_yb(a_yb),
   m_transform_x(a_tx),
@@ -532,8 +695,7 @@ VisualHist2::VisualHist2(std::string const &a_title, size_t a_colormap,
   m_axis_x_copy(),
   m_axis_y_copy(),
   m_hist_copy(),
-  m_is_log_z(a_is_log_z),
-  m_pixels()
+  m_is_log_z(a_is_log_z)
 {
 }
 

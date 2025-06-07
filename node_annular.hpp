@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2025
+ * Copyright (C) 2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -20,32 +20,30 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_HIST2_HPP
-#define NODE_HIST2_HPP
+#ifndef NODE_ANNULAR_HPP
+#define NODE_ANNULAR_HPP
 
 #include <node.hpp>
 #include <visual.hpp>
 
 /*
- * Collects a vs b in a 2D histogram, actual histogramming is performed in
- * visual.*.
+ * Collects r and phi in radial histogram, actual histogramming is performed
+ * in visual.*.
  */
-class NodeHist2: public NodeCuttable {
+class NodeAnnular: public NodeCuttable {
   public:
-    NodeHist2(std::string const &, char const *, NodeValue *, NodeValue *,
-        uint32_t, uint32_t, LinearTransform const &, LinearTransform const &,
-        char const *, bool, double, unsigned, double);
+    NodeAnnular(std::string const &, char const *, NodeValue *, double,
+        double, NodeValue *, double, bool, double, unsigned, double);
     void Process(uint64_t);
 
   private:
-    NodeHist2(NodeHist2 const &);
-    NodeHist2 &operator=(NodeHist2 const &);
+    NodeAnnular(NodeAnnular const &);
+    NodeAnnular &operator=(NodeAnnular const &);
 
-    NodeValue *m_x;
-    NodeValue *m_y;
-    uint32_t m_xb;
-    uint32_t m_yb;
-    VisualHist2 m_visual_hist2;
+    NodeValue *m_r;
+    NodeValue *m_phi;
+    double m_phi0;
+    VisualAnnular m_visual_annular;
 };
 
 #endif

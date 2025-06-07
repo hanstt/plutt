@@ -41,6 +41,7 @@
 
 #include <node.hpp>
 #include <node_alias.hpp>
+#include <node_annular.hpp>
 #include <node_bitfield.hpp>
 #include <node_cluster.hpp>
 #include <node_coarse_fine.hpp>
@@ -228,6 +229,29 @@ NodeValue *Config::AddAlias(char const *a_name, NodeValue *a_value, uint32_t
   return node;
 }
 
+void Config::AddAnnular(char const *a_title, NodeValue *a_r, double a_r_min,
+    double a_r_max, NodeValue *a_phi, double a_phi0, bool a_log_z, double
+    a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s)
+{
+  if (a_drop_counts_s > 0.0 && a_drop_stats_s > 0.0) {
+    std::cerr << a_title <<
+        ": Can only drop one of counts and stats!\n";
+    throw std::runtime_error(__func__);
+  }
+  if (a_drop_counts_num > 5) {
+    std::cerr << a_title <<
+        ": Cannot allow more than 5 drop-counts slices!\n";
+    throw std::runtime_error(__func__);
+  }
+  // We must have at least 1 slice for the standard histos.
+  a_drop_counts_num = std::max(a_drop_counts_num, 1U);
+
+  auto node = new NodeAnnular(GetLocStr(), a_title, a_r, a_r_min, a_r_max,
+      a_phi, a_phi0, a_log_z, a_drop_counts_s, a_drop_counts_num,
+      a_drop_stats_s);
+  NodeCuttableAdd(node);
+}
+
 NodeValue *Config::AddBitfield(BitfieldArg *a_arg)
 {
   std::ostringstream oss;
@@ -390,9 +414,9 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
   }
   a_drop_counts_num = std::max(a_drop_counts_num, 1U);
 
-  auto node = new NodeHist2(GetLocStr(), a_title, m_colormap, a_y, a_x,
-      a_yb, a_xb, LinearTransform(ky, my), LinearTransform(kx, mx), a_fit,
-      a_log_z, a_drop_counts_s, a_drop_counts_num, a_drop_stats_s);
+  auto node = new NodeHist2(GetLocStr(), a_title, a_y, a_x, a_yb, a_xb,
+      LinearTransform(ky, my), LinearTransform(kx, mx), a_fit, a_log_z,
+      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s);
   NodeCuttableAdd(node);
 }
 

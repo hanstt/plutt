@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -193,6 +194,39 @@ bool SdlGui::Draw(double a_event_rate)
   return true;
 }
 
+void SdlGui::DrawAnnular(uint32_t a_id, Axis const &a_axis_r, double a_r_min,
+    double a_r_max, Axis const &a_axis_p, double a_phi0, bool a_is_log_z,
+    std::vector<uint32_t> const &a_v)
+{
+  auto page = m_page_vec.at(a_id >> 16);
+  auto plot_wrap = page->plot_wrap_vec.at(a_id & 0xffff);
+
+  auto dy = m_window->Newline();
+  auto size_tot = m_window->GetSize();
+  ImPlutt::Pos size(size_tot.x, size_tot.y - dy);
+
+  double min = -1.1 * a_axis_r.max;
+  double max = 2.1 * a_axis_r.max;
+
+  if (!plot_wrap->is_log_set) {
+    plot_wrap->is_log_set = true;
+    plot_wrap->plot_state.is_log.is_on = a_is_log_z;
+  }
+  ImPlutt::Plot plot(m_window, &plot_wrap->plot_state,
+      plot_wrap->name.c_str(), size,
+      ImPlutt::Point(min, min),
+      ImPlutt::Point(max, max),
+      a_is_log_z, true);
+
+#if 0
+  m_window->PlotHist2(&plot, /*m_colormap*/0,
+      ImPlutt::Point(minx, miny),
+      ImPlutt::Point(maxx, maxy),
+      a_v, a_axis_y.bins, a_axis_x.bins,
+      plot_wrap->pixels);
+#endif
+}
+
 void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
     const &a_transform, bool a_is_log_y, bool a_is_contour,
     std::vector<uint32_t> const &a_v, std::vector<Peak> const &a_peak_vec)
@@ -275,7 +309,7 @@ void SdlGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const
       ImPlutt::Point(maxx, maxy),
       a_is_log_z, true);
 
-  m_window->PlotHist2(&plot, /*m_colormap*/0,
+  m_window->PlotHist2(&plot, 0,
       ImPlutt::Point(minx, miny),
       ImPlutt::Point(maxx, maxy),
       a_v, a_axis_y.bins, a_axis_x.bins,

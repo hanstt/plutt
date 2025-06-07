@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,6 +61,8 @@ class Gui {
 
     virtual bool Draw(double) = 0;
 
+    virtual void DrawAnnular(uint32_t, Axis const &, double, double, Axis
+        const &, double, bool, std::vector<uint32_t> const &) = 0;
     virtual void DrawHist1(uint32_t, Axis const &, LinearTransform const &,
         bool, bool, std::vector<uint32_t> const &, std::vector<Peak> const &)
         = 0;
@@ -81,6 +84,8 @@ class GuiCollection {
 
     bool Draw(double);
 
+    void DrawAnnular(Gui *, uint32_t, Gui::Axis const &, double, double,
+        Gui::Axis const &, double, bool, std::vector<uint32_t> const &);
     void DrawHist1(Gui *, uint32_t, Gui::Axis const &,
         LinearTransform const &, bool, bool, std::vector<uint32_t> const &,
         std::vector<Gui::Peak> const &);

@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,7 @@ class TCanvas;
 class TGraph;
 class TH1I;
 class TH2I;
+class TH2Poly;
 class THttpServer;
 class TText;
 
@@ -45,6 +47,8 @@ class RootGui: public Gui {
 
     bool Draw(double);
 
+    void DrawAnnular(uint32_t, Axis const &, double, double, Axis const &,
+        double, bool, std::vector<uint32_t> const &);
     void DrawHist1(uint32_t, Axis const &, LinearTransform const &, bool,
         bool, std::vector<uint32_t> const &, std::vector<Peak> const &);
     void DrawHist2(uint32_t, Axis const &, Axis const &,
@@ -66,6 +70,12 @@ class RootGui: public Gui {
       Plot *plot;
       TH1I *h1;
       TH2I *h2;
+      struct {
+        Axis axis_r;
+        Axis axis_p;
+        TH2Poly *hp;
+        std::vector<int> bin_vec;
+      } poly;
       std::vector<TGraph> gr_vec;
       std::vector<TText> tx_vec;
       bool do_clear;

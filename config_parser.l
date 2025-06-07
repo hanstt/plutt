@@ -56,6 +56,7 @@ yycplloc_update()
 
 abs                    return TK_ABS;
 acos                   return TK_ACOS;
+annular                return TK_ANNULAR;
 asin                   return TK_ASIN;
 atan                   return TK_ATAN;
 appearance             return TK_APPEARANCE;

@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -115,6 +116,18 @@ bool GuiCollection::Draw(double a_event_rate)
     ok &= gui->Draw(a_event_rate);
   }
   return ok;
+}
+
+void GuiCollection::DrawAnnular(Gui *a_gui, uint32_t a_id, Gui::Axis const
+    &a_axis_r, double a_r_min, double a_r_max, Gui::Axis const &a_axis_p,
+    double a_phi0, bool a_is_log_z, std::vector<uint32_t> const &a_v)
+{
+  auto it = m_gui_map.find(a_gui);
+  assert(m_gui_map.end() != it);
+  auto gui_i = it->second;
+  auto const &pe = m_plot_vec.at(a_id);
+  a_gui->DrawAnnular(pe.id_vec.at(gui_i), a_axis_r, a_r_min, a_r_max,
+      a_axis_p, a_phi0, a_is_log_z, a_v);
 }
 
 void GuiCollection::DrawHist1(Gui *a_gui, uint32_t a_id, Gui::Axis const

@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,6 +39,8 @@ class SdlGui: public Gui {
 
     bool Draw(double);
 
+    void DrawAnnular(uint32_t, Axis const &, double, double, Axis const &,
+        double, bool, std::vector<uint32_t> const &);
     void DrawHist1(uint32_t, Axis const &, LinearTransform const &, bool,
         bool, std::vector<uint32_t> const &, std::vector<Gui::Peak> const &);
     void DrawHist2(uint32_t, Axis const &, Axis const &,

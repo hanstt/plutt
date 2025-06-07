@@ -104,6 +104,10 @@ struct FitEntry {
 };
 std::vector<FitEntry> g_fit_vec;
 
+static struct {
+	double r_min;
+	double r_max;
+} g_annular;
 static NodeValue *g_pedestal_tpat;
 static uint32_t g_binsx;
 static uint32_t g_binsy;
@@ -150,6 +154,7 @@ static double g_drop_stats = -1.0;
 
 %token TK_ABS
 %token TK_ACOS
+%token TK_ANNULAR
 %token TK_APPEARANCE
 %token TK_ASIN
 %token TK_ATAN
@@ -247,6 +252,7 @@ stmt_list
 
 stmt
 	: assign
+	| annular
 	| appearance
 	| clock_match
 	| cluster
@@ -542,6 +548,40 @@ assign
 		free($1);
 	}
 
+r_limits
+	: '(' const ',' const ')' {
+		LOC_SAVE(@1);
+		g_annular.r_min = $2.GetDouble();
+		g_annular.r_max = $4.GetDouble();
+	}
+annular_opts
+	:
+	| annular_opt_list
+annular_opt_list
+	: TK_LOGZ { g_logz = 1; }
+	| drop_counts
+	| drop_stats
+annular_opt_list
+	: annular_opt
+	| annular_opt_list annular_opt
+annular_opt
+	: ',' annular_arg
+annular_arg
+	: TK_LOGZ { g_logz = 1; }
+	| drop_counts
+	| drop_stats
+annular
+	: TK_ANNULAR '(' TK_STRING ',' value ',' r_limits ',' value ',' const annular_opts ')' {
+		LOC_SAVE(@1);
+		g_config->AddAnnular($3, $5, g_annular.r_min, g_annular.r_max,
+		    $9, $11.GetDouble(), g_logz, g_drop_counts.time,
+		    g_drop_counts.slice_num, g_drop_stats);
+		g_logz = 0;
+		g_drop_counts.time = -1.0;
+		g_drop_stats = -1.0;
+		free($3);
+	}
+
 mexpr
 	: alias { $$ = $1; }
 	| member { $$ = $1; }
@@ -627,7 +667,7 @@ hist_cut
 		g_config->HistCutAdd(g_cut_poly);
 		g_cut_poly = nullptr;
 	}
-hist_drop_counts
+drop_counts
 	: TK_DROP_COUNTS '(' const unit_time ')' {
 		LOC_SAVE(@1);
 		g_drop_counts.time = $3.GetDouble() * $4;
@@ -638,7 +678,7 @@ hist_drop_counts
 		g_drop_counts.time = $3.GetDouble() * $4;
 		g_drop_counts.slice_num = $6.GetI64();
 	}
-hist_drop_stats
+drop_stats
 	: TK_DROP_STATS '=' const unit_time {
 		LOC_SAVE(@1);
 		g_drop_stats = $3.GetDouble() * $4;
@@ -660,8 +700,8 @@ hist_arg
 	| TK_LOGY { g_logy = 1; }
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| hist_cut
-	| hist_drop_counts
-	| hist_drop_stats
+	| drop_counts
+	| drop_stats
 hist2d_opts
 	:
 	| hist2d_opt_list
@@ -677,8 +717,8 @@ hist2d_arg
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| TK_TRANSFORMY '=' TK_IDENT { g_transformy = $3; }
 	| hist_cut
-	| hist_drop_counts
-	| hist_drop_stats
+	| drop_counts
+	| drop_stats
 
 coarse_fine
 	: TK_COARSE_FINE '(' value ',' value ',' clock_period ')' {

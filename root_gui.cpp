@@ -30,6 +30,7 @@
 #include <TGraph.h>
 #include <TH1I.h>
 #include <TH2I.h>
+#include <TH2Poly.h>
 #include <THttpServer.h>
 #include <TROOT.h>
 #include <TSystem.h>
@@ -86,12 +87,14 @@ RootGui::PlotWrap::PlotWrap():
   plot(),
   h1(),
   h2(),
+  poly(),
   gr_vec(),
   tx_vec(),
   do_clear(),
   is_log_set(),
   is_log()
 {
+  poly.hp = nullptr;
 }
 
 RootGui::Page::Page():
@@ -246,6 +249,77 @@ bool RootGui::Draw(double a_event_rate)
   return !gSystem->ProcessEvents();
 }
 
+void RootGui::DrawAnnular(uint32_t a_id, Axis const &a_axis_r, double a_r_min,
+    double a_r_max, Axis const &a_axis_p, double a_phi0, bool a_is_log_z,
+    std::vector<uint32_t> const &a_v)
+{
+  auto page_i = a_id >> 16;
+  auto plot_i = a_id & 0xffff;
+  auto page = m_page_vec.at(page_i);
+  auto plot = page->plot_wrap_vec.at(plot_i);
+  if (plot->h1 || plot->h2) {
+    throw std::runtime_error(__func__);
+  }
+  if (!plot->is_log_set) {
+    plot->is_log_set = true;
+    plot->is_log = a_is_log_z;
+  }
+  auto pad = page->canvas->cd(1 + (int)plot_i);
+  pad->SetLogz(plot->is_log);
+  if (plot->poly.hp) {
+    auto &axis_r = plot->poly.axis_r;
+    auto &axis_p = plot->poly.axis_p;
+    if (axis_r.bins != a_axis_r.bins ||
+        axis_r.min  != a_axis_r.min ||
+        axis_r.max  != a_axis_r.max ||
+        axis_p.bins != a_axis_p.bins ||
+        axis_p.min  != a_axis_p.min ||
+        axis_p.max  != a_axis_p.max) {
+      delete plot->poly.hp;
+      plot->poly.hp = nullptr;
+      axis_r = a_axis_r;
+      axis_p = a_axis_p;
+    }
+  }
+  if (!plot->poly.hp) {
+    plot->poly.bin_vec.resize(a_axis_r.bins * a_axis_p.bins);
+    size_t bin_i = 0;
+    double x[4], y[4];
+    auto extent = 1.1 * a_r_max;
+    plot->poly.hp = new TH2Poly(plot->name.c_str(), plot->name.c_str(),
+        -extent, extent, -extent, extent);
+    plot->poly.hp->Draw("colz");
+    auto dphi = (2 * M_PI * (a_phi0 < 0.0 ? -1 : 1)) / a_axis_p.bins;
+    auto phi0 = 2 * M_PI * fabs(a_phi0) / 360;
+    auto dr = (a_r_max - a_r_min) / a_axis_r.bins;
+    for (size_t i = 0; i < a_axis_p.bins; ++i) {
+      auto p0 = dphi * ((double)i + 0.05) + phi0;
+      auto p1 = dphi * ((double)i + 0.95) + phi0;
+      for (size_t j = 0; j < a_axis_r.bins; ++j) {
+        auto r0 = dr * ((double)j + 0.1) + a_r_min;
+        auto r1 = dr * ((double)j + 0.9) + a_r_min;
+        x[0] = r0 * cos(p0);
+        x[1] = r1 * cos(p0);
+        x[2] = r1 * cos(p1);
+        x[3] = r0 * cos(p1);
+        y[0] = r0 * sin(p0);
+        y[1] = r1 * sin(p0);
+        y[2] = r1 * sin(p1);
+        y[3] = r0 * sin(p1);
+        plot->poly.bin_vec.at(bin_i++) = plot->poly.hp->AddBin(4, x, y);
+      }
+    }
+  }
+  size_t k = 0;
+  for (size_t i = 0; i < a_axis_p.bins; ++i) {
+    for (size_t j = 0; j < a_axis_r.bins; ++j) {
+      plot->poly.hp->SetBinContent(plot->poly.bin_vec.at(k), a_v.at(k));
+      ++k;
+    }
+  }
+  plot->poly.hp->ResetStats();
+}
+
 // TODO: Use axis transform.
 void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
     const &a_transform, bool a_is_log_y, bool a_is_contour,
@@ -255,7 +329,7 @@ void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
   auto plot_i = a_id & 0xffff;
   auto page = m_page_vec.at(page_i);
   auto plot = page->plot_wrap_vec.at(plot_i);
-  if (plot->h2) {
+  if (plot->h2 || plot->poly.hp) {
     throw std::runtime_error(__func__);
   }
   if (!plot->is_log_set) {
@@ -327,7 +401,7 @@ void RootGui::DrawHist2(uint32_t a_id, Axis const &a_axis_x, Axis const
   auto plot_i = a_id & 0xffff;
   auto page = m_page_vec.at(page_i);
   auto plot = page->plot_wrap_vec.at(plot_i);
-  if (plot->h1) {
+  if (plot->h1 || plot->poly.hp) {
     throw std::runtime_error(__func__);
   }
   if (!plot->is_log_set) {

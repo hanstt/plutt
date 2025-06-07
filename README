@@ -360,6 +360,15 @@ hist2d(title, y, x [, args])
 		fit
 			Does not exist.
 
+annular(title, r, r_limits, phi, phi_ref)
+	Draw an annular histogram of the values r:v and phi:v, with the given
+	title.
+	r_limits = (r_min, r_max)
+		This option maps r:v to min_r..max_r.
+	phi_ref = [+-]angle
+		Maps phi:v to phi angles, where 0 points to the right and
+		positive values are counter clockwise.
+
 b = bitfield(a1, n1, ..., aN, nN)
 	Combines signals of given bit-widths into one value. The (ai,ni) pairs
 	are combined in ascending order, ie the first pair becomes the least

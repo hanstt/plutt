@@ -1,6 +1,6 @@
 " plutt, a scriptable monitor for experimental data.
 "
-" Copyright (C) 2023-2024
+" Copyright (C) 2023-2025
 " Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 "
 " This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ syn match pluttComment "\/\/.*$"
 syn match pluttNumber "\<\d\+"
 syn match pluttString "\"[^\"]*\""
 
-syn keyword pluttFunctions appearance binsx binsy bitfield clock_match cluster coarse_fine colormap contoured ctdc cut drop_counts drop_stats filled filter_range fit hist hist2d length logy logz match_index match_value max mean_arith mean_geom min page pedestal select_index signal sub_mod tamex3 tot tpat transformx transformy trig_map ui_rate vftx2 zero_suppress
+syn keyword pluttFunctions annular appearance binsx binsy bitfield clock_match cluster coarse_fine colormap contoured ctdc cut drop_counts drop_stats filled filter_range fit hist hist2d length logy logz match_index match_value max mean_arith mean_geom min page pedestal select_index signal sub_mod tamex3 tot tpat transformx transformy trig_map ui_rate vftx2 zero_suppress
 
 hi def link pluttComment Comment
 hi def link pluttFunctions Type
