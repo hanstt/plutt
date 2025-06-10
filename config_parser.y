@@ -520,13 +520,15 @@ signal
 	}
 
 value
-	: bitfield      { $$ = $1; }
+	: alias         { $$ = $1; }
+	| bitfield      { $$ = $1; }
 	| coarse_fine   { $$ = $1; }
 	| mexpr         { $$ = $1; }
 	| length        { $$ = $1; }
 	| max           { $$ = $1; }
 	| mean_arith    { $$ = $1; }
 	| mean_geom     { $$ = $1; }
+	| member        { $$ = $1; }
 	| select_index  { $$ = $1; }
 	| sub_mod       { $$ = $1; }
 	| tot           { $$ = $1; }
@@ -583,39 +585,37 @@ annular
 	}
 
 mexpr
-	: alias { $$ = $1; }
-	| member { $$ = $1; }
-	| '(' mexpr ')' { $$ = $2; }
-	| mexpr '+' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), ADD); }
-	| const '+' mexpr { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), ADD); }
-	| mexpr '+' mexpr { MEXPR(@1, $$, $1,      $3,            0.0, ADD); }
-	| mexpr '-' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), SUB); }
-	| const '-' mexpr { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), SUB); }
-	| mexpr '-' mexpr { MEXPR(@1, $$, $1,      $3,            0.0, SUB); }
-	| mexpr '*' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), MUL); }
-	| const '*' mexpr { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), MUL); }
-	| mexpr '*' mexpr { MEXPR(@1, $$, $1,      $3,            0.0, MUL); }
-	| mexpr '/' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), DIV); }
-	| const '/' mexpr { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), DIV); }
-	| mexpr '/' mexpr { MEXPR(@1, $$, $1,      $3,            0.0, DIV); }
-	| '-' mexpr       { MEXPR(@1, $$, nullptr, $2,            0.0, SUB); }
-	| TK_COS  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  COS); }
-	| TK_SIN  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  SIN); }
-	| TK_TAN  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  TAN); }
-	| TK_ACOS '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0, ACOS); }
-	| TK_ASIN '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0, ASIN); }
-	| TK_ATAN '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0, ATAN); }
-	| TK_SQRT '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0, SQRT); }
-	| TK_EXP  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  EXP); }
-	| TK_LOG  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  LOG); }
-	| TK_LOG  '(' const ',' mexpr ')' {
+	: '(' value ')' { $$ = $2; }
+	| value '+' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), ADD); }
+	| const '+' value { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), ADD); }
+	| value '+' value { MEXPR(@1, $$, $1,      $3,            0.0, ADD); }
+	| value '-' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), SUB); }
+	| const '-' value { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), SUB); }
+	| value '-' value { MEXPR(@1, $$, $1,      $3,            0.0, SUB); }
+	| value '*' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), MUL); }
+	| const '*' value { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), MUL); }
+	| value '*' value { MEXPR(@1, $$, $1,      $3,            0.0, MUL); }
+	| value '/' const { MEXPR(@1, $$, $1, nullptr, $3.GetDouble(), DIV); }
+	| const '/' value { MEXPR(@1, $$, nullptr, $3, $1.GetDouble(), DIV); }
+	| value '/' value { MEXPR(@1, $$, $1,      $3,            0.0, DIV); }
+	| '-' value       { MEXPR(@1, $$, nullptr, $2,            0.0, SUB); }
+	| TK_COS  '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  COS); }
+	| TK_SIN  '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  SIN); }
+	| TK_TAN  '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  TAN); }
+	| TK_ACOS '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0, ACOS); }
+	| TK_ASIN '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0, ASIN); }
+	| TK_ATAN '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0, ATAN); }
+	| TK_SQRT '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0, SQRT); }
+	| TK_EXP  '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  EXP); }
+	| TK_LOG  '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  LOG); }
+	| TK_LOG  '(' const ',' value ')' {
 		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(),  LOG);
 	}
-	| TK_ABS  '(' mexpr ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  ABS); }
-	| TK_POW  '(' mexpr ',' const ')' {
+	| TK_ABS  '(' value ')' { MEXPR(@1, $$, $3, nullptr, 0.0,  ABS); }
+	| TK_POW  '(' value ',' const ')' {
 		MEXPR(@1, $$, $3, nullptr, $5.GetDouble(), POW);
 	}
-	| TK_POW  '(' const ',' mexpr ')' {
+	| TK_POW  '(' const ',' value ')' {
 		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(), POW);
 	}
 
