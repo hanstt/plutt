@@ -119,7 +119,7 @@ static int g_contour;
 static struct {
 	double time;
 	unsigned slice_num;
-} g_drop_counts = {-1.0, 3};
+} g_drop_counts = {-1.0, 1};
 static double g_drop_stats = -1.0;
 
 static void ResetDrawArgs() {
@@ -135,7 +135,7 @@ static void ResetDrawArgs() {
 	g_logz = 0;
 	g_contour = 0;
 	g_drop_counts.time = -1.0;
-	g_drop_counts.slice_num = 3;
+	g_drop_counts.slice_num = 1;
 	g_drop_stats = -1.0;
 }
 
@@ -686,6 +686,7 @@ drop_counts
 	: TK_DROP_COUNTS '(' const unit_time ')' {
 		LOC_SAVE(@1);
 		g_drop_counts.time = $3.GetDouble() * $4;
+		g_drop_counts.slice_num = 2;
 	}
 	| TK_DROP_COUNTS '(' const unit_time ',' const ')' {
 		LOC_SAVE(@1);
@@ -693,12 +694,12 @@ drop_counts
 		g_drop_counts.slice_num = $6.GetI64();
 		if (g_drop_counts.slice_num < 1) {
 			std::cerr << g_config->GetLocStr() <<
-			    ": Must have at least 1 drop-slice!\n";
+			    ": Must have >= 1 drop-slice!\n";
 			throw std::runtime_error(__func__);
 		}
 		if (g_drop_counts.slice_num > 5) {
 			std::cerr << g_config->GetLocStr() <<
-			    ": Must have less than 5 drop-slices!\n";
+			    ": Must have <= 5 drop-slices!\n";
 			throw std::runtime_error(__func__);
 		}
 	}

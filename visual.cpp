@@ -282,7 +282,7 @@ VisualAnnular::VisualAnnular(std::string const &a_title, double a_r_min,
   m_axis_r(),
   m_axis_p(),
   m_hist_mutex(),
-  m_drop_counts_ms((uint64_t)(1000 * a_drop_counts_s)),
+  m_drop_counts_ms((int64_t)(1000 * a_drop_counts_s)),
   m_hist(a_drop_counts_num),
   m_axis_r_copy(),
   m_axis_p_copy(),
@@ -398,10 +398,10 @@ void VisualAnnular::Latch()
   m_axis_r_copy = m_axis_r;
   m_axis_p_copy = m_axis_p;
 
-  if (v.size() > 1) {
+  if (m_drop_counts_ms > 0) {
     // Update slices, i.e. throw away oldest slice and start filling it.
     auto t_cur = Time_get_ms();
-    if (t_cur > m_hist.t_prev + m_drop_counts_ms) {
+    if (t_cur > m_hist.t_prev + (uint64_t)m_drop_counts_ms) {
       m_hist.active_i = (m_hist.active_i + 1) % v.size();
       auto &h = v.at(m_hist.active_i);
       memset(h.data(), 0, h.size() * sizeof h[0]);
@@ -445,7 +445,7 @@ VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
   m_range(a_drop_stats_s),
   m_axis(),
   m_hist_mutex(),
-  m_drop_counts_ms((uint64_t)(1000 * a_drop_counts_s)),
+  m_drop_counts_ms((int64_t)(1000 * a_drop_counts_s)),
   m_hist(a_drop_counts_num),
   m_axis_copy(),
   m_hist_copy(),
@@ -553,10 +553,10 @@ void VisualHist::Latch()
 
   m_axis_copy = m_axis;
 
-  if (v.size() > 1) {
+  if (m_drop_counts_ms > 0) {
     // Update slices, i.e. throw away oldest slice and start filling it.
     auto t_cur = Time_get_ms();
-    if (t_cur > m_hist.t_prev + m_drop_counts_ms) {
+    if (t_cur > m_hist.t_prev + (uint64_t)m_drop_counts_ms) {
       m_hist.active_i = (m_hist.active_i + 1) % v.size();
       auto &h = v.at(m_hist.active_i);
       memset(h.data(), 0, h.size() * sizeof h[0]);
@@ -690,7 +690,7 @@ VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
   m_axis_x(),
   m_axis_y(),
   m_hist_mutex(),
-  m_drop_counts_ms((uint64_t)(1000 * a_drop_counts_s)),
+  m_drop_counts_ms((int64_t)(1000 * a_drop_counts_s)),
   m_hist(a_drop_counts_num),
   m_axis_x_copy(),
   m_axis_y_copy(),
@@ -806,10 +806,10 @@ void VisualHist2::Latch()
   m_axis_x_copy = m_axis_x;
   m_axis_y_copy = m_axis_y;
 
-  if (v.size() > 1) {
+  if (m_drop_counts_ms > 0) {
     // Update slices, i.e. throw away oldest slice and start filling it.
     auto t_cur = Time_get_ms();
-    if (t_cur > m_hist.t_prev + m_drop_counts_ms) {
+    if (t_cur > m_hist.t_prev + (uint64_t)m_drop_counts_ms) {
       m_hist.active_i = (m_hist.active_i + 1) % v.size();
       auto &h = v.at(m_hist.active_i);
       memset(h.data(), 0, h.size() * sizeof h[0]);

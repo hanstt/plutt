@@ -104,7 +104,7 @@ class VisualAnnular: public Visual {
     Gui::Axis m_axis_r;
     Gui::Axis m_axis_p;
     std::mutex m_hist_mutex;
-    uint64_t m_drop_counts_ms;
+    int64_t m_drop_counts_ms;
     struct Slices {
       Slices(unsigned a_num):
         slice_vec(a_num),
@@ -144,7 +144,7 @@ class VisualHist: public Visual {
     Range m_range;
     Gui::Axis m_axis;
     std::mutex m_hist_mutex;
-    uint64_t m_drop_counts_ms;
+    int64_t m_drop_counts_ms;
     struct Slices {
       Slices(unsigned a_num):
         slice_vec(a_num),
@@ -186,7 +186,7 @@ class VisualHist2: public Visual {
     Gui::Axis m_axis_x;
     Gui::Axis m_axis_y;
     std::mutex m_hist_mutex;
-    uint64_t m_drop_counts_ms;
+    int64_t m_drop_counts_ms;
     struct Slices {
       Slices(unsigned a_num):
         slice_vec(a_num),
