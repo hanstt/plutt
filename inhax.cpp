@@ -184,7 +184,7 @@ void const *Inhax::Fetch(unsigned a_bytes)
       std::cout << "End of file." << std::endl;
       return nullptr;
     }
-    m_in_buf_bytes += rc;
+    m_in_buf_bytes += (size_t)rc;
   }
   return &m_in_buf.at(0);
 }
