@@ -119,8 +119,25 @@ static int g_contour;
 static struct {
 	double time;
 	unsigned slice_num;
-} g_drop_counts = {-1.0, 0};
+} g_drop_counts = {-1.0, 3};
 static double g_drop_stats = -1.0;
+
+static void ResetDrawArgs() {
+	g_binsx = 0;
+	g_binsy = 0;
+	free(g_transformx);
+	g_transformx = nullptr;
+	free(g_transformy);
+	g_transformy = nullptr;
+	free(g_fit);
+	g_fit = nullptr;
+	g_logy = 0;
+	g_logz = 0;
+	g_contour = 0;
+	g_drop_counts.time = -1.0;
+	g_drop_counts.slice_num = 3;
+	g_drop_stats = -1.0;
+}
 
 #define CTDC_BITS 12
 #define TAMEX3_BITS 11
@@ -578,9 +595,7 @@ annular
 		g_config->AddAnnular($3, $5, g_annular.r_min, g_annular.r_max,
 		    $9, $11.GetDouble(), g_logz, g_drop_counts.time,
 		    g_drop_counts.slice_num, g_drop_stats);
-		g_logz = 0;
-		g_drop_counts.time = -1.0;
-		g_drop_stats = -1.0;
+		ResetDrawArgs();
 		free($3);
 	}
 
@@ -671,12 +686,21 @@ drop_counts
 	: TK_DROP_COUNTS '(' const unit_time ')' {
 		LOC_SAVE(@1);
 		g_drop_counts.time = $3.GetDouble() * $4;
-		g_drop_counts.slice_num = 3;
 	}
 	| TK_DROP_COUNTS '(' const unit_time ',' const ')' {
 		LOC_SAVE(@1);
 		g_drop_counts.time = $3.GetDouble() * $4;
 		g_drop_counts.slice_num = $6.GetI64();
+		if (g_drop_counts.slice_num < 1) {
+			std::cerr << g_config->GetLocStr() <<
+			    ": Must have at least 1 drop-slice!\n";
+			throw std::runtime_error(__func__);
+		}
+		if (g_drop_counts.slice_num > 5) {
+			std::cerr << g_config->GetLocStr() <<
+			    ": Must have less than 5 drop-slices!\n";
+			throw std::runtime_error(__func__);
+		}
 	}
 drop_stats
 	: TK_DROP_STATS '=' const unit_time {
@@ -731,13 +755,7 @@ hist
 		g_config->AddHist1($3, $5, g_binsx, g_transformx, g_fit,
 		    g_logy, g_contour, g_drop_counts.time,
 		    g_drop_counts.slice_num, g_drop_stats);
-		g_binsx = 0;
-		free(g_transformx); g_transformx = nullptr;
-		free(g_fit); g_fit = nullptr;
-		g_logy = 0;
-		g_contour = 0;
-		g_drop_counts.time = -1.0;
-		g_drop_stats = -1.0;
+		ResetDrawArgs();
 		free($3);
 	}
 	| TK_HIST2D '(' TK_STRING ',' value hist2d_opts ')' {
@@ -746,14 +764,7 @@ hist
 		    g_transformy, g_transformx, g_fit, g_logz,
 		    g_drop_counts.time, g_drop_counts.slice_num,
 		    g_drop_stats);
-		g_binsx = 0;
-		g_binsy = 0;
-		free(g_transformx); g_transformx = nullptr;
-		free(g_transformy); g_transformy = nullptr;
-		free(g_fit); g_fit = nullptr;
-		g_logz = 0;
-		g_drop_counts.time = -1.0;
-		g_drop_stats = -1.0;
+		ResetDrawArgs();
 		free($3);
 	}
 	| TK_HIST2D '(' TK_STRING ',' value ',' value hist2d_opts ')' {
@@ -762,14 +773,7 @@ hist
 		    g_transformy, g_transformx, g_fit, g_logz,
 		    g_drop_counts.time, g_drop_counts.slice_num,
 		    g_drop_stats);
-		g_binsx = 0;
-		g_binsy = 0;
-		free(g_transformx); g_transformx = nullptr;
-		free(g_transformy); g_transformy = nullptr;
-		free(g_fit); g_fit = nullptr;
-		g_logz = 0;
-		g_drop_counts.time = -1.0;
-		g_drop_stats = -1.0;
+		ResetDrawArgs();
 		free($3);
 	}
 match_index

@@ -238,13 +238,6 @@ void Config::AddAnnular(char const *a_title, NodeValue *a_r, double a_r_min,
         ": Can only drop one of counts and stats!\n";
     throw std::runtime_error(__func__);
   }
-  if (a_drop_counts_num > 5) {
-    std::cerr << a_title <<
-        ": Cannot allow more than 5 drop-counts slices!\n";
-    throw std::runtime_error(__func__);
-  }
-  // We must have at least 1 slice for the standard histos.
-  a_drop_counts_num = std::max(a_drop_counts_num, 1U);
 
   auto node = new NodeAnnular(GetLocStr(), a_title, a_r, a_r_min, a_r_max,
       a_phi, a_phi0, a_log_z, a_drop_counts_s, a_drop_counts_num,
@@ -357,13 +350,6 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
         ": Can only drop one of counts and stats!\n";
     throw std::runtime_error(__func__);
   }
-  if (a_drop_counts_num > 5) {
-    std::cerr << a_title <<
-        ": Cannot allow more than 5 drop-counts slices!\n";
-    throw std::runtime_error(__func__);
-  }
-  // We must have at least 1 slice for the standard histos.
-  a_drop_counts_num = std::max(a_drop_counts_num, 1U);
 
   auto node = new NodeHist1(GetLocStr(), a_title, a_x, a_xb,
       LinearTransform(k, m), a_fit, a_log_y, a_contour, a_drop_counts_s,
@@ -407,12 +393,6 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
         ": Can only drop one of counts and stats!\n";
     throw std::runtime_error(__func__);
   }
-  if (a_drop_counts_num > 5) {
-    std::cerr << a_title <<
-        ": Cannot allow more than 5 drop-counts slices!\n";
-    throw std::runtime_error(__func__);
-  }
-  a_drop_counts_num = std::max(a_drop_counts_num, 1U);
 
   auto node = new NodeHist2(GetLocStr(), a_title, a_y, a_x, a_yb, a_xb,
       LinearTransform(ky, my), LinearTransform(kx, mx), a_fit, a_log_z,
