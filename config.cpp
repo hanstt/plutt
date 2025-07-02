@@ -41,6 +41,7 @@
 
 #include <node.hpp>
 #include <node_alias.hpp>
+#include <node_array.hpp>
 #include <node_annular.hpp>
 #include <node_bitfield.hpp>
 #include <node_cluster.hpp>
@@ -243,6 +244,20 @@ void Config::AddAnnular(char const *a_title, NodeValue *a_r, double a_r_min,
       a_phi, a_phi0, a_log_z, a_drop_counts_s, a_drop_counts_num,
       a_drop_stats_s);
   NodeCuttableAdd(node);
+}
+
+NodeValue *Config::AddArray(NodeValue *a_node, uint64_t a_i, uint64_t
+    a_mhit_i)
+{
+  std::ostringstream oss;
+  oss << __LINE__ << ',' << a_node << ',' << a_i << ',' << a_mhit_i;
+  auto key = oss.str();
+  auto node = NodeValueGet(key);
+  if (!node) {
+    NodeValueAdd(key,
+        node = new NodeArray(GetLocStr(), a_node, a_i, a_mhit_i));
+  }
+  return node;
 }
 
 NodeValue *Config::AddBitfield(BitfieldArg *a_arg)

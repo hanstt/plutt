@@ -232,6 +232,25 @@ See below for the "official" definition of the 'signal' syntax.
 What's the grammar/syntax?
 --------------------------
 
+signal[i]
+	Creates a new signal from the i:th entry if it exists, and only the
+	first value, e.g.:
+		signal.id  = [1, 2]             [2]
+		signal.end = [1, 2]   -> [1] -> [1]
+		signal.v   = [v1, v2]           [v2]
+		                                []
+		                         [2] -> []
+		                                []
+signal[i][j]
+	Creates a new signal from the i:th entry and the j:th value if it
+	exists, e.g.:
+		signal.id  = [1, 2]                            [2]
+		signal.end = [2, 4]               -> [1][0] -> [1]
+		signal.v   = [v11, v12, v21, v22]              [v21]
+		                                               []
+		                                     [1][2] -> []
+		                                               []
+
 signal:id
 	Creates a new signal with the ID's as values:
 		id = [-1]

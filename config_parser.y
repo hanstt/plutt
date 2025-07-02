@@ -232,6 +232,7 @@ static void ResetDrawArgs() {
 %token TK_OP_DDASH
 
 %type <value> alias
+%type <value> array
 %type <value> bitfield
 %type <bitfield> bitfield_arg
 %type <bitfield> bitfield_args
@@ -538,6 +539,7 @@ signal
 
 value
 	: alias         { $$ = $1; }
+	| array         { $$ = $1; }
 	| bitfield      { $$ = $1; }
 	| coarse_fine   { $$ = $1; }
 	| mexpr         { $$ = $1; }
@@ -558,6 +560,16 @@ member
 		LOC_SAVE(@1);
 		$$ = g_config->AddMember($1, $3);
 		free($3);
+	}
+
+array
+	: alias '[' TK_INTEGER ']' {
+		LOC_SAVE(@1);
+		$$ = g_config->AddArray($1, $3.GetI64());
+	}
+	| alias '[' TK_INTEGER ']' '[' TK_INTEGER ']' {
+		LOC_SAVE(@1);
+		$$ = g_config->AddArray($1, $3.GetI64(), $6.GetI64());
 	}
 
 assign

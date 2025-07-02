@@ -59,6 +59,7 @@ class Config {
     NodeValue *AddAlias(char const *, NodeValue *, uint32_t);
     void AddAnnular(char const *, NodeValue *, double, double, NodeValue *,
         double, bool, double, unsigned, double);
+    NodeValue *AddArray(NodeValue *, uint64_t, uint64_t = 0);
     NodeValue *AddBitfield(BitfieldArg *);
     NodeValue *AddCluster(NodeValue *);
     NodeValue *AddCoarseFine(NodeValue *, NodeValue *, double);
