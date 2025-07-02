@@ -21,9 +21,11 @@
  */
 
 #include <cassert>
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <stdexcept>
+#include <vector>
 #include <node_array.hpp>
 
 NodeArray::NodeArray(std::string const &a_loc, NodeValue *a_child, uint64_t
