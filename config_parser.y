@@ -33,6 +33,7 @@
 #include <gui.hpp>
 #include <node_bitfield.hpp>
 #include <node_filter_range.hpp>
+#include <node_merge.hpp>
 #include <util.hpp>
 
 #define LOC_SAVE(arg) g_config->SetLoc(arg.first_line, arg.first_column)
@@ -162,6 +163,7 @@ static void ResetDrawArgs() {
 	Node *node;
 	NodeValue *value;
 	struct BitfieldArg *bitfield;
+	struct MergeArg *merge;
 }
 
 %token <c> TK_DOUBLE
@@ -203,6 +205,7 @@ static void ResetDrawArgs() {
 %token TK_MAX
 %token TK_MEAN_ARITH
 %token TK_MEAN_GEOM
+%token TK_MERGE
 %token TK_MIN
 %token TK_PAGE
 %token TK_PEDESTAL
@@ -248,6 +251,9 @@ static void ResetDrawArgs() {
 %type <value> mean_arith
 %type <value> mean_geom
 %type <value> member
+%type <value> merge
+%type <merge> merge_arg
+%type <merge> merge_args
 %type <value> mexpr
 %type <dbl> clock_range
 %type <value> select_index
@@ -548,6 +554,7 @@ value
 	| mean_arith    { $$ = $1; }
 	| mean_geom     { $$ = $1; }
 	| member        { $$ = $1; }
+	| merge         { $$ = $1; }
 	| select_index  { $$ = $1; }
 	| sub_mod       { $$ = $1; }
 	| tot           { $$ = $1; }
@@ -609,6 +616,24 @@ annular
 		    g_drop_counts.slice_num, g_drop_stats);
 		ResetDrawArgs();
 		free($3);
+	}
+
+merge_args
+	: merge_arg { $$ = $1; }
+	| merge_args ',' merge_arg {
+		/* Beware, builds the list in reverse order! */
+		$3->next = $1;
+		$$ = $3;
+	}
+merge_arg
+	: alias {
+		LOC_SAVE(@1);
+		$$ = new MergeArg(g_config->GetLocStr(), $1);
+	}
+merge
+	: TK_MERGE '(' merge_args ')' {
+		LOC_SAVE(@1);
+		$$ = g_config->AddMerge($3);
 	}
 
 mexpr

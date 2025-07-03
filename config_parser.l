@@ -88,6 +88,7 @@ match_value            return TK_MATCH_VALUE;
 max                    return TK_MAX;
 mean_arith             return TK_MEAN_ARITH;
 mean_geom              return TK_MEAN_GEOM;
+merge                  return TK_MERGE;
 min                    return TK_MIN;
 page                   return TK_PAGE;
 pedestal               return TK_PEDESTAL;

@@ -71,13 +71,14 @@ void NodeSubMod::Process(uint64_t a_evid)
     auto mi_r = val_r.GetID()[i_r];
     auto me_l = val_l.GetEnd()[i_l];
     auto me_r = val_r.GetEnd()[i_r];
-    if (mi_l < mi_r) {
+    if (mi_l > 0 && mi_l < mi_r) {
       ++i_l;
       vi_l = me_l;
-    } else if (mi_l > mi_r) {
+    } else if (mi_r > 0 && mi_l > mi_r) {
       ++i_r;
       vi_r = me_r;
     } else {
+      auto id = std::max(mi_l, mi_r);
       while (vi_l < me_l && vi_r < me_r) {
         Input::Scalar diff;
         if (Input::kDouble == val_l.GetType()) {
@@ -89,7 +90,7 @@ void NodeSubMod::Process(uint64_t a_evid)
           auto r = val_r.GetV().at(vi_r).u64;
           diff.dbl = SubModU64(l, r, m_range);
         }
-        m_value.Push(mi_l, diff);
+        m_value.Push(id, diff);
         ++vi_l;
         ++vi_r;
       }

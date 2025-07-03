@@ -30,6 +30,7 @@
 struct BitfieldArg;
 struct FilterRangeCond;
 struct FilterRangeArg;
+struct MergeArg;
 class CutPolygon;
 class Node;
 class NodeAlias;
@@ -81,6 +82,7 @@ class Config {
     NodeValue *AddMember(NodeValue *, char const *);
     NodeValue *AddMExpr(NodeValue *, NodeValue *, double,
         NodeMExpr::Operation);
+    NodeValue *AddMerge(MergeArg *);
     NodeValue *AddPedestal(NodeValue *, double, NodeValue *);
     NodeValue *AddSelectId(NodeValue *, uint32_t, uint32_t);
     void AddSignal(char const *, char const *, char const *, char const *);

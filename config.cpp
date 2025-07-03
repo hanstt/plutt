@@ -57,6 +57,7 @@
 #include <node_mean_arith.hpp>
 #include <node_mean_geom.hpp>
 #include <node_member.hpp>
+#include <node_merge.hpp>
 #include <node_mexpr.hpp>
 #include <node_pedestal.hpp>
 #include <node_select_id.hpp>
@@ -497,6 +498,21 @@ NodeValue *Config::AddMember(NodeValue *a_node, char const *a_suffix)
   auto node = NodeValueGet(key);
   if (!node) {
     NodeValueAdd(key, node = new NodeMember(GetLocStr(), a_node, a_suffix));
+  }
+  return node;
+}
+
+NodeValue *Config::AddMerge(MergeArg *a_arg)
+{
+  std::ostringstream oss;
+  oss << __LINE__;
+  for (auto arg = a_arg; arg; arg = arg->next) {
+    oss << ',' << arg->node;
+  }
+  auto key = oss.str();
+  auto node = NodeValueGet(key);
+  if (!node) {
+    NodeValueAdd(key, node = new NodeMerge(GetLocStr(), a_arg));
   }
   return node;
 }
