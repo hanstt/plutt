@@ -267,6 +267,7 @@ static void ResetDrawArgs() {
 
 %left '-' '+'
 %left '*' '/'
+%left ':'
 
 %%
 
@@ -563,7 +564,7 @@ value
 	| zero_suppress { $$ = $1; }
 
 member
-	: alias ':' TK_IDENT {
+	: value ':' TK_IDENT {
 		LOC_SAVE(@1);
 		$$ = g_config->AddMember($1, $3);
 		free($3);
