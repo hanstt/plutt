@@ -141,8 +141,8 @@ namespace {
     for (;;) {
       // Fetch event and wait until buffered event is done.
       if (!g_input->Fetch()) {
-        std::unique_lock<std::mutex> lock(g_inp.mutex);
-        g_inp.running = false;
+        sleep(1);
+        continue;
       }
       std::unique_lock<std::mutex> lock(g_inp.mutex);
       g_inp.input_cv.wait(lock, []{
@@ -378,7 +378,6 @@ int main(int argc, char **argv)
   std::thread thread_event(main_event, argc, argv);
 
   uint64_t event_i0 = 0;
-  unsigned loop_n = 0;
   double event_rate = 0.0;
 
   std::cout << "Entering main loop...\n";
@@ -415,6 +414,11 @@ int main(int argc, char **argv)
         sleep(3);
         is_throttled = true;
       }
+      struct timespec ts;
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      auto ms = (uint64_t)
+          (1000 * (double)ts.tv_sec + 1e-6 * (double)ts.tv_nsec);
+      Time_set_ms(ms);
     }
 #endif
 
@@ -428,15 +432,16 @@ int main(int argc, char **argv)
 
     g_main_running &= g_gui.Draw(event_rate);
 
-    ++loop_n;
 #define RATE_PER_SECOND 2
     {
-      std::unique_lock<std::mutex> lock(g_inp.mutex);
-      if (g_config->UIRateGet() / RATE_PER_SECOND == loop_n) {
+      static uint64_t t_prev = 0;
+      uint64_t t = Time_get_ms();
+      if (t_prev + 1000 / RATE_PER_SECOND < t) {
+        std::unique_lock<std::mutex> lock(g_inp.mutex);
         auto event_i1 = g_inp.event_i;
         event_rate = (double)(event_i1 - event_i0) * RATE_PER_SECOND;
         event_i0 = event_i1;
-        loop_n = 0;
+        t_prev = t;
       }
     }
   }
