@@ -55,10 +55,13 @@ void NodeArray::Process(uint64_t a_evid)
   auto const &vid = val.GetID();
   if (m_i < vid.size()) {
     auto const &v = val.GetV();
-    if (m_mhit_i < v.size()) {
+    auto const &vend = val.GetEnd();
+    auto end = vend[m_i];
+    auto vi = 0 == m_i ? 0 : vend[m_i - 1];
+    if (vi + m_mhit_i < end) {
       m_value.SetType(val.GetType());
       auto id = vid[m_i];
-      auto s = v[m_mhit_i];
+      auto s = v[vi + m_mhit_i];
       m_value.Push(id, s);
     }
   }
