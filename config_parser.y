@@ -690,7 +690,14 @@ bitfield
 		$$ = g_config->AddBitfield($3);
 	}
 cluster
-	: TK_IDENT ',' TK_IDENT '=' TK_CLUSTER '(' value ')' {
+	: TK_IDENT '=' TK_CLUSTER '(' value ')' {
+		LOC_SAVE(@3);
+		auto node = g_config->AddCluster($5);
+		LOC_SAVE(@1);
+		g_config->AddAlias($1, node, 0);
+		free($1);
+	}
+	| TK_IDENT ',' TK_IDENT '=' TK_CLUSTER '(' value ')' {
 		LOC_SAVE(@5);
 		auto node = g_config->AddCluster($7);
 		LOC_SAVE(@1);
@@ -699,19 +706,6 @@ cluster
 		g_config->AddAlias($3, node, 1);
 		free($1);
 		free($3);
-	}
-	| TK_IDENT ',' TK_IDENT ',' TK_IDENT '=' TK_CLUSTER '(' value ')' {
-		LOC_SAVE(@7);
-		auto node = g_config->AddCluster($9);
-		LOC_SAVE(@1);
-		g_config->AddAlias($1, node, 0);
-		LOC_SAVE(@3);
-		g_config->AddAlias($3, node, 1);
-		LOC_SAVE(@5);
-		g_config->AddAlias($5, node, 2);
-		free($1);
-		free($3);
-		free($5);
 	}
 
 hist_cut

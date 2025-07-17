@@ -412,20 +412,17 @@ b = bitfield(a1, n1, ..., aN, nN)
 		a2:v   = [3, 4, 5]
 		n2 = 8
 
+b = cluster(a)
 b, c = cluster(a)
-b, c, d = cluster(a)
 	Makes clusters of 'a', ie large neighbouring entries wrt to a:id are
-	grouped. 'b:v' = weighted a:id:s ie "x", 'c:v' = sum, and the optional
-	'd:v' is the eta function, ie the centroid within the cluster.
-		                        b:id  = [0, 0]
-		                        b:end = [1, 2]
-		                        b:v   = [2, 5]
-		a:id  = [1, 2, 3, 5]    c:id  = [0, 0]
-		a:end = [1, 2, 3, 4] => c:end = [1, 2]
-		a:v   = [4, 5, 6, 7]    c:v   = [15, 7]
-		                        d:id  = [0, 0]
-		                        d:end = [1, 2]
-		                        d:v   = [0, 0.45]
+	grouped. 'b:id' = a:id's weighted and floored, 'b:v' = sum, and the
+	optional 'c:v' is the eta function, ie the centroid within the cluster.
+		a:id  = [1, 2, 3, 5]    b:id  = [2, 5]
+		a:end = [1, 2, 3, 4] => b:end = [1, 2]
+		a:v   = [4, 5, 6, 7]    b:v   = [15, 7]
+		                        c:id  = [2, 5]
+		                        c:end = [1, 2]
+		                        c:v   = [0, 0.45]
 
 d = coarse_fine(a, b, c)
 	Does on-the-fly fine-time calibration. 'a' = coarse times, 'b' = fine

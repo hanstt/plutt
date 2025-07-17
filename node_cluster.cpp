@@ -33,12 +33,10 @@
 NodeCluster::NodeCluster(std::string const &a_loc, NodeValue *a_child):
   NodeValue(a_loc),
   m_child(a_child),
-  m_x(),
-  m_e(),
+  m_clu(),
   m_eta()
 {
-  m_x.SetType(Input::kDouble);
-  m_e.SetType(Input::kDouble);
+  m_clu.SetType(Input::kDouble);
   m_eta.SetType(Input::kDouble);
 }
 
@@ -46,10 +44,8 @@ Value const &NodeCluster::GetValue(uint32_t a_ret_i)
 {
   switch (a_ret_i) {
     case 0:
-      return m_x;
+      return m_clu;
     case 1:
-      return m_e;
-    case 2:
       return m_eta;
     default:
       throw std::runtime_error(__func__);
@@ -61,8 +57,7 @@ void NodeCluster::Process(uint64_t a_evid)
   NODE_PROCESS_GUARD(a_evid);
   NODE_PROCESS(m_child, a_evid);
 
-  m_x.Clear();
-  m_e.Clear();
+  m_clu.Clear();
   m_eta.Clear();
 
   auto const &val = m_child->GetValue();
@@ -83,49 +78,45 @@ void NodeCluster::Process(uint64_t a_evid)
   };
   std::set<Entry, decltype(cmp)> sorted_set(cmp);
   uint32_t mi_prev = UINT32_MAX / 2;
-  // The next three will be inited, but not all compilers figure that out.
-  uint32_t sum_n = 0;
-  double sum_xe = 0.0;
+  // The next few will be inited, but not all compilers figure that out.
+  double sum_x = 0.0;
   double sum_e = 0.0;
   uint32_t v_i = 0;
   for (uint32_t i = 0; i < miv.size(); ++i) {
     auto mi = miv.at(i);
     if (mi_prev + 1 != mi) {
-      if (sum_n > 0) {
+      if (sum_e > 0) {
         // Create previous cluster.
         Entry entry;
-        entry.x = sum_xe / sum_e;
+        entry.x = sum_x / sum_e;
         entry.e = sum_e;
         sorted_set.insert(entry);
       }
-      sum_n = 0;
-      sum_xe = 0.0;
+      sum_x = 0.0;
       sum_e = 0.0;
     }
     // Keep clusterizing.
     auto vv = v.at(v_i).GetDouble(val.GetType());
-    sum_xe += mi * vv;
+    sum_x += mi * vv;
     sum_e += vv;
-    ++sum_n;
     v_i = mev.at(i);
     mi_prev = mi;
   }
-  if (sum_n > 0) {
+  if (sum_e > 0) {
     // Create remaining cluster.
     Entry entry;
-    entry.x = sum_xe / sum_e;
+    entry.x = sum_x / sum_e;
     entry.e = sum_e;
     sorted_set.insert(entry);
   }
 
   // Move sorted set to value.
   for (auto it = sorted_set.begin(); sorted_set.end() != it; ++it) {
+    auto mi = (uint32_t)it->x;
     Input::Scalar s;
-    s.dbl = it->x;
-    m_x.Push(0, s);
     s.dbl = it->e;
-    m_e.Push(0, s);
+    m_clu.Push(mi, s);
     s.dbl = it->x - floor(it->x);
-    m_eta.Push(0, s);
+    m_eta.Push(mi, s);
   }
 }

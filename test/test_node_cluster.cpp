@@ -63,25 +63,22 @@ void MyTest::Run()
 
     auto const &x = n.GetValue(0);
     TEST_BOOL(x.GetV().empty());
-    auto const &e = n.GetValue(1);
-    TEST_BOOL(e.GetV().empty());
-    auto const &eta = n.GetValue(2);
+    auto const &eta = n.GetValue(1);
     TEST_BOOL(eta.GetV().empty());
 
     nv.Preprocess(&n);
     TestNodeProcess(n, 1);
 
     TEST_CMP(x.GetV().size(), ==, 2U);
-    TEST_CMP(e.GetV().size(), ==, 2U);
     TEST_CMP(eta.GetV().size(), ==, 2U);
 
     auto mid = (double)(1*4+2*5+3*6) / (4+5+6);
 
-    TEST_CMP(x.GetV(0, false), ==, mid);
-    TEST_CMP(x.GetV(1, false), ==, 5);
+    TEST_CMP(x.GetID()[0], ==, (unsigned)mid);
+    TEST_CMP(x.GetID()[1], ==, 5U);
 
-    TEST_CMP(e.GetV(0, false), ==, 15);
-    TEST_CMP(e.GetV(1, false), ==, 7);
+    TEST_CMP(x.GetV(0, false), ==, 15);
+    TEST_CMP(x.GetV(1, false), ==, 7);
 
     TEST_CMP(eta.GetV(0, false), ==, mid - floor(mid));
     TEST_CMP(eta.GetV(1, false), ==, 0);
