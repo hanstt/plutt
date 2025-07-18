@@ -1,6 +1,6 @@
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023-2024
+# Copyright (C) 2023-2025
 # Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 # Håkan T Johansson <f96hajo@chalmers.se>
 #
@@ -53,19 +53,30 @@ else
 $(info nlopt: no)
 endif
 
-# ROOT?
+# ROOT input?
 
 ALLOW_ROOT=Box
-ifeq ($(shell ($(ROOT_CONFIG) --version 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_ROOT))
+ifeq ($(shell $(ROOT_CONFIG) --version &> /dev/null && echo YesBox),Yes$(ALLOW_ROOT))
 CPPFLAGS+=-DPLUTT_ROOT=1
 ROOT_CFLAGS:=$(shell $(ROOT_CONFIG) --cflags | sed 's/-I/-isystem/')
-LIBS+=$(shell $(ROOT_CONFIG) --libs) -lRHTTP
+LIBS+=$(shell $(ROOT_CONFIG) --libs)
 ROOT_CLING:=$(shell $(ROOT_CONFIG) --prefix)/bin/rootcling
 ROOT_DICT_O:=$(BUILD_DIR)/test/test_root_dict.o
 ROOT_DICT_PCM:=$(BUILD_DIR)/test_root_dict_rdict.pcm
 $(info ROOT: yes)
 else
 $(info ROOT: no)
+endif
+
+# ROOT GUI?
+
+ALLOW_ROOT_HTTP=Box
+ifeq ($(shell $(ROOT_CONFIG) --features | grep http && echo YesBox),Yes$(ALLOW_ROOT_HTTP))
+CPPFLAGS+=-DPLUTT_ROOT_HTTP=1
+LIBS+=-lRHTTP
+$(info ROOT_HTTP: yes)
+else
+$(info ROOT_HTTP: no)
 endif
 
 # SDL2?

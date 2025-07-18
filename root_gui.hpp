@@ -20,10 +20,10 @@
  * MA  02110-1301  USA
  */
 
+#if PLUTT_ROOT_HTTP
+
 #ifndef ROOT_GUI_HPP
 #define ROOT_GUI_HPP
-
-#if PLUTT_ROOT
 
 #include <gui.hpp>
 

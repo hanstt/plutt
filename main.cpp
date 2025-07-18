@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  * Bastian Loeher <b.loeher@gsi.de>
  *
@@ -44,6 +44,8 @@
 #endif
 #if PLUTT_ROOT
 # include <root.hpp>
+#endif
+#if PLUTT_ROOT_HTTP
 # include <root_gui.hpp>
 #endif
 #if PLUTT_UCESB
@@ -81,7 +83,7 @@ namespace {
 #if PLUTT_SDL2
     GUI_SDL = 1 << 0,
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
     GUI_ROOT = 1 << 1,
 #endif
     GUI_LAST
@@ -104,7 +106,7 @@ namespace {
 #if PLUTT_SDL2
     std::cout << " sdl";
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
     std::cout << " root(:port)";
 #endif
     std::cout << "\n";
@@ -214,6 +216,9 @@ int main(int argc, char **argv)
 #endif
 #if PLUTT_ROOT
   std::cout << " ROOT";
+#endif
+#if PLUTT_ROOT_HTTP
+  std::cout << " ROOT-HTTP";
   uint16_t web_port = 8080;
 #endif
 #if PLUTT_UCESB
@@ -239,7 +244,7 @@ int main(int argc, char **argv)
           gui_type |= GUI_SDL;
         } else
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
         if (0 == strncmp(optarg, "root", 4)) {
           if ('\0' != optarg[4]) {
             if (':' != optarg[4]) {
@@ -319,7 +324,7 @@ int main(int argc, char **argv)
     gui_type = GUI_SDL;
   }
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
   if (!gui_type) {
     gui_type = GUI_ROOT;
   }
@@ -335,7 +340,7 @@ int main(int argc, char **argv)
     g_gui.AddGui(sdl_gui);
   }
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
   RootGui *root_gui = nullptr;
   if (GUI_ROOT & gui_type) {
     std::cout << "Creating ROOT GUI on port " << web_port << "...\n";
@@ -407,7 +412,7 @@ int main(int argc, char **argv)
       Time_set_ms(t_end);
     }
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
     if (GUI_ROOT & gui_type) {
       if (!is_throttled) {
         // This is medium-latency presentation, let's take it easy.
@@ -461,7 +466,7 @@ int main(int argc, char **argv)
     ImPlutt::Destroy();
   }
 #endif
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
   if (GUI_ROOT & gui_type) {
     delete root_gui;
   }

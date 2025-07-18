@@ -20,7 +20,7 @@
  * MA  02110-1301  USA
  */
 
-#if PLUTT_ROOT
+#if PLUTT_ROOT_HTTP
 
 #include <iostream>
 #include <list>
