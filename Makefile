@@ -56,7 +56,7 @@ endif
 # ROOT input?
 
 ALLOW_ROOT=Box
-ifeq ($(shell ($(ROOT_CONFIG) --version 2> /dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_ROOT))
+ifeq ($(shell ($(ROOT_CONFIG) --version 2>/dev/null && echo YesBox) | grep YesBox),Yes$(ALLOW_ROOT))
 CPPFLAGS+=-DPLUTT_ROOT=1
 ROOT_CFLAGS:=$(shell $(ROOT_CONFIG) --cflags | sed 's/-I/-isystem/')
 LIBS+=$(shell $(ROOT_CONFIG) --libs)
@@ -71,7 +71,7 @@ endif
 # ROOT GUI?
 
 ALLOW_ROOT_HTTP=Box
-ifeq ($(shell $(ROOT_CONFIG) --features 2>/dev/null | grep http && echo YesBox),Yes$(ALLOW_ROOT_HTTP))
+ifeq ($(shell $(ROOT_CONFIG) --features | grep -o http)Box,http$(ALLOW_ROOT_HTTP))
 CPPFLAGS+=-DPLUTT_ROOT_HTTP=1
 LIBS+=-lRHTTP
 $(info ROOT_HTTP: yes)
