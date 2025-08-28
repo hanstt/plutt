@@ -153,9 +153,7 @@ Config::Config(char const *a_path):
     GET_MEMBER(id, ID);
     {
       auto it2 = m_alias_map.find(sig->GetEnd());
-      if (m_alias_map.end() != it2) {
-        end = it2->second;
-      }
+      end = m_alias_map.end() != it2 ? it2->second : nullptr;
     }
     GET_MEMBER(v, V);
 std::cout << sig->GetLocStr() << ' ' << id << ' ' << end << ' ' << v <<
