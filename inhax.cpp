@@ -60,16 +60,8 @@ Inhax::Inhax(Config &a_config, int a_argc, char **a_argv):
   // Prepare map of signals.
   auto signal_list = a_config.GetSignalList();
   for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-    auto sig = *it;
-    if (!sig->id.empty() && !sig->v.empty()) {
-      BindSignal(a_config, sig->name, sig->id, NodeSignal::kId);
-      if (!sig->end.empty()) {
-        BindSignal(a_config, sig->name, sig->end, NodeSignal::kEnd);
-      }
-      BindSignal(a_config, sig->name, sig->v, NodeSignal::kV);
-    } else {
-      BindSignal(a_config, sig->name, sig->name, NodeSignal::kV);
-    }
+    auto name = *it;
+    BindSignal(a_config, name);
   }
 }
 
@@ -82,12 +74,11 @@ Inhax::~Inhax()
   }
 }
 
-void Inhax::BindSignal(Config &a_config, std::string const &a_base_name,
-    std::string const &a_name, NodeSignal::MemberType a_member_type)
+void Inhax::BindSignal(Config &a_config, std::string const &a_name)
 {
   auto ret = m_map.insert(std::make_pair(a_name, Entry()));
   m_map_lu.push_back(ret.first);
-  a_config.BindSignal(a_base_name, a_member_type, m_map_lu.size() - 1,
+  a_config.BindSignal(a_name, NodeSignal::kV, m_map_lu.size() - 1,
       Input::kUint64);
 }
 

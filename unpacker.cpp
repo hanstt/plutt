@@ -118,17 +118,8 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   std::string signals_str;
   auto signal_list = a_config.GetSignalList();
   for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-    auto sig = *it;
-    signals_str += sig->name + ',';
-    if (!sig->id.empty()) {
-      signals_str += sig->id + ',';
-    }
-    if (!sig->end.empty()) {
-      signals_str += sig->end + ',';
-    }
-    if (!sig->v.empty()) {
-      signals_str += sig->v + ',';
-    }
+    auto name = *it;
+    signals_str += name + ',';
   }
 
   // Generate struct file.
@@ -198,57 +189,46 @@ Unpacker::Unpacker(Config &a_config, int a_argc, char **a_argv):
   std::set<std::string> signal_set;
   size_t event_buf_i = 0;
   for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-    auto sig = *it;
-    if (!sig->id.empty() && !sig->v.empty()) {
-      BindSignal(&a_config, buf_struct, sig->name, sig->id, NodeSignal::kId,
-          event_buf_i, signal_set);
-      if (!sig->end.empty()) {
-        BindSignal(&a_config, buf_struct, sig->name, sig->end,
-            NodeSignal::kEnd, event_buf_i, signal_set);
-      }
-      BindSignal(&a_config, buf_struct, sig->name, sig->v, NodeSignal::kV,
-          event_buf_i, signal_set);
-      continue;
-    }
-    auto has_ = FindSignal(buf_struct, sig->name, signal_set);
-    auto has_MI = FindSignal(buf_struct, sig->name + "MI", signal_set);
-    auto has_ME = FindSignal(buf_struct, sig->name + "ME", signal_set);
-    auto has_v = FindSignal(buf_struct, sig->name + "v", signal_set);
+    auto name = *it;
+    auto has_ = FindSignal(buf_struct, name, signal_set);
+    auto has_MI = FindSignal(buf_struct, name + "MI", signal_set);
+    auto has_ME = FindSignal(buf_struct, name + "ME", signal_set);
+    auto has_v = FindSignal(buf_struct, name + "v", signal_set);
     if (has_ && has_MI && has_ME && has_v) {
-      BindSignal(&a_config, buf_struct, sig->name, sig->name + "MI",
-          NodeSignal::kId, event_buf_i, signal_set);
-      BindSignal(&a_config, buf_struct, sig->name, sig->name + "ME",
-          NodeSignal::kEnd, event_buf_i, signal_set);
-      BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
-          NodeSignal::kV, event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, name, name + "MI", NodeSignal::kId,
+          event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, name, name + "ME", NodeSignal::kEnd,
+          event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, name, name + "v", NodeSignal::kV,
+          event_buf_i, signal_set);
       continue;
     }
-    auto has_I = FindSignal(buf_struct, sig->name + "I", signal_set);
-    auto has_E = FindSignal(buf_struct, sig->name + "E", signal_set);
+    auto has_I = FindSignal(buf_struct, name + "I", signal_set);
+    auto has_E = FindSignal(buf_struct, name + "E", signal_set);
     if (has_ && has_I && (has_v || has_E)) {
-      BindSignal(&a_config, buf_struct, sig->name, sig->name + "I",
-          NodeSignal::kId, event_buf_i, signal_set);
+      BindSignal(&a_config, buf_struct, name, name + "I", NodeSignal::kId,
+          event_buf_i, signal_set);
       if (has_v) {
-        BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
-            NodeSignal::kV, event_buf_i, signal_set);
+        BindSignal(&a_config, buf_struct, name, name + "v", NodeSignal::kV,
+            event_buf_i, signal_set);
       } else {
-        BindSignal(&a_config, buf_struct, sig->name, sig->name + "E",
-            NodeSignal::kV, event_buf_i, signal_set);
+        BindSignal(&a_config, buf_struct, name, name + "E", NodeSignal::kV,
+            event_buf_i, signal_set);
       }
       continue;
     }
     if (has_ && (has_v || has_E)) {
       if (has_v) {
-        BindSignal(&a_config, buf_struct, sig->name, sig->name + "v",
-            NodeSignal::kV, event_buf_i, signal_set);
+        BindSignal(&a_config, buf_struct, name, name + "v", NodeSignal::kV,
+            event_buf_i, signal_set);
       } else {
-        BindSignal(&a_config, buf_struct, sig->name, sig->name + "E",
-            NodeSignal::kV, event_buf_i, signal_set);
+        BindSignal(&a_config, buf_struct, name, name + "E", NodeSignal::kV,
+            event_buf_i, signal_set);
       }
       continue;
     }
-    BindSignal(&a_config, buf_struct, sig->name, sig->name, NodeSignal::kV,
-        event_buf_i, signal_set);
+    BindSignal(&a_config, buf_struct, name, name, NodeSignal::kV, event_buf_i,
+        signal_set);
   }
   m_event_buf.resize(event_buf_i);
   m_out_buf.resize(m_out_size);

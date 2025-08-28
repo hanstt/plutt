@@ -208,45 +208,37 @@ RootChain::RootChain(Config &a_config, Root *a_root, int a_argc, char
   if (m_chain.GetNtrees() > 0) {
     // Look for branches for each signal.
     for (auto it = signal_list.begin(); signal_list.end() != it; ++it) {
-      auto sig = *it;
-      if (!sig->id.empty() && !sig->v.empty()) {
-        BindBranch(a_config, sig->name, sig->id, NodeSignal::kId);
-        if (!sig->end.empty()) {
-          BindBranch(a_config, sig->name, sig->end, NodeSignal::kEnd);
-        }
-        BindBranch(a_config, sig->name, sig->v, NodeSignal::kV);
-        continue;
-      }
-      auto has_ = FindBranch(sig->name);
-      auto has_MI = FindBranch(sig->name + "MI");
-      auto has_ME = FindBranch(sig->name + "ME");
-      auto has_v = FindBranch(sig->name + "v");
+      auto name = *it;
+      auto has_ = FindBranch(name);
+      auto has_MI = FindBranch(name + "MI");
+      auto has_ME = FindBranch(name + "ME");
+      auto has_v = FindBranch(name + "v");
       if (has_ && has_MI && has_ME && has_v) {
-        BindBranch(a_config, sig->name, sig->name + "MI", NodeSignal::kId);
-        BindBranch(a_config, sig->name, sig->name + "ME", NodeSignal::kEnd);
-        BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+        BindBranch(a_config, name, name + "MI", NodeSignal::kId);
+        BindBranch(a_config, name, name + "ME", NodeSignal::kEnd);
+        BindBranch(a_config, name, name + "v", NodeSignal::kV);
         continue;
       }
-      auto has_I = FindBranch(sig->name + "I");
-      auto has_E = FindBranch(sig->name + "E");
+      auto has_I = FindBranch(name + "I");
+      auto has_E = FindBranch(name + "E");
       if (has_ && has_I && (has_v || has_E)) {
-        BindBranch(a_config, sig->name, sig->name + "I", NodeSignal::kId);
+        BindBranch(a_config, name, name + "I", NodeSignal::kId);
         if (has_v) {
-          BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+          BindBranch(a_config, name, name + "v", NodeSignal::kV);
         } else {
-          BindBranch(a_config, sig->name, sig->name + "E", NodeSignal::kV);
+          BindBranch(a_config, name, name + "E", NodeSignal::kV);
         }
         continue;
       }
       if (has_ && (has_v || has_E)) {
         if (has_v) {
-          BindBranch(a_config, sig->name, sig->name + "v", NodeSignal::kV);
+          BindBranch(a_config, name, name + "v", NodeSignal::kV);
         } else {
-          BindBranch(a_config, sig->name, sig->name + "E", NodeSignal::kV);
+          BindBranch(a_config, name, name + "E", NodeSignal::kV);
         }
         continue;
       }
-      BindBranch(a_config, sig->name, sig->name, NodeSignal::kV);
+      BindBranch(a_config, name, name, NodeSignal::kV);
     }
   }
 }

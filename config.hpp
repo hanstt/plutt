@@ -36,7 +36,7 @@ class Node;
 class NodeAlias;
 class NodeCut;
 class NodeCuttable;
-class NodeSignal;
+class NodeSignalUser;
 class NodeValue;
 
 /*
@@ -44,16 +44,6 @@ class NodeValue;
  */
 class Config {
   public:
-    struct Signal {
-      Signal(std::string const &, std::string const &, std::string const &,
-          std::string const &, std::string const &);
-      std::string loc;
-      std::string name;
-      std::string id;
-      std::string end;
-      std::string v;
-    };
-
     Config(char const *);
     ~Config();
 
@@ -85,7 +75,7 @@ class Config {
     NodeValue *AddMerge(MergeArg *);
     NodeValue *AddPedestal(NodeValue *, double, NodeValue *);
     NodeValue *AddSelectId(NodeValue *, uint32_t, uint32_t);
-    void AddSignal(char const *, char const *, char const *, char const *);
+    NodeValue *AddSignalUser(char const *, char const *, char const *);
     NodeValue *AddSubMod(NodeValue *, NodeValue *, double);
     NodeValue *AddTot(NodeValue *, NodeValue *, double);
     NodeValue *AddTpat(NodeValue *, uint32_t);
@@ -108,7 +98,7 @@ class Config {
     void DoEvent(Input *);
     Input const *GetInput() const;
     Input *GetInput();
-    std::list<Signal const *> GetSignalList() const;
+    std::list<std::string> GetSignalList() const;
     void UnbindSignals();
 
   private:
@@ -130,12 +120,12 @@ class Config {
     // For de-duplicating nodes.
     // The key is "__LINE__,arg_0,...,arg_n".
     std::map<std::string, NodeValue *> m_node_value_map;
-    // config_parser identifiers start out as unassigned aliases, are then
-    // assigned by assignment operations, and unassigned ones at the end are
-    // considered signals that an Input must provide.
+    // config_parser identifiers start out as unassigned aliases, are assigned
+    // by assignment operations, and unassigned ones at the end are considered
+    // signals that an Input must provide.
     std::map<std::string, NodeAlias *> m_alias_map;
-    // Explicit signal descriptors.
-    std::map<std::string, Signal> m_signal_descr_map;
+    // User signals are assigned when all aliases are available.
+    std::list<NodeSignalUser *> m_signal_user_list;
     // Unassigned aliases and signal descriptors are moved here.
     std::map<std::string, NodeSignal *> m_signal_map;
     // Cutting is special due to "soft" name-based dependencies.

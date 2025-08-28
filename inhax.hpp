@@ -60,8 +60,7 @@ class Inhax: public Input {
 
     Inhax(Inhax const &);
     Inhax &operator=(Inhax const &);
-    void BindSignal(Config &, std::string const &, std::string const &,
-        NodeSignal::MemberType);
+    void BindSignal(Config &, std::string const &);
     void const *Fetch(unsigned);
     void Shift(unsigned);
 

@@ -58,10 +58,9 @@
 #include <node_mean_geom.hpp>
 #include <node_member.hpp>
 #include <node_merge.hpp>
-#include <node_mexpr.hpp>
 #include <node_pedestal.hpp>
 #include <node_select_id.hpp>
-#include <node_signal.hpp>
+#include <node_signal_user.hpp>
 #include <node_sub_mod.hpp>
 #include <node_tot.hpp>
 #include <node_tpat.hpp>
@@ -83,12 +82,6 @@ extern int yycplex_destroy();
 
 extern char const *yycppath;
 
-Config::Signal::Signal(std::string const &a_loc, std::string const &a_name,
-    std::string const &a_id, std::string const &a_end, std::string const
-    &a_v):
-  loc(a_loc), name(a_name), id(a_id), end(a_end), v(a_v)
-{}
-
 Config::Config(char const *a_path):
   m_path(a_path),
   m_line(),
@@ -96,7 +89,7 @@ Config::Config(char const *a_path):
   m_trig_map(),
   m_node_value_map(),
   m_alias_map(),
-  m_signal_descr_map(),
+  m_signal_user_list(),
   m_signal_map(),
   m_cut_node_list(),
   m_cuttable_map(),
@@ -131,34 +124,43 @@ Config::Config(char const *a_path):
   yycplex_destroy();
   std::cout << a_path << ": Done!\n";
 
-  // Copy unassigned aliases to signal-description map, should come from
-  // Input.
+  // Create signals for unassigned aliases, should come from Input.
   for (auto it = m_alias_map.begin(); m_alias_map.end() != it; ++it) {
     auto alias = it->second;
     if (!alias->GetSource()) {
       auto const &name = it->first;
-      auto it2 = m_signal_descr_map.find(name);
-      if (m_signal_descr_map.end() == it2) {
-        m_signal_descr_map.insert(std::make_pair(name,
-            Signal(alias->GetLocStr(), name, "", "", "")));
+      auto signal = new NodeSignal(*this, name);
+      signal->SetLocStr(it->second->GetLocStr());
+      alias->SetSource(GetLocStr(), signal);
+      m_signal_map.insert(std::make_pair(name, signal));
+      std::cout << "Signal=" << it->first << '\n';
+    }
+  }
+  // Assign user signals.
+  for (auto it = m_signal_user_list.begin(); m_signal_user_list.end() != it;
+      ++it) {
+    auto sig = *it;
+    NodeValue *id, *end, *v;
+#define GET_MEMBER(var, name) do { \
+    auto it2 = m_alias_map.find(sig->Get##name()); \
+    if (m_alias_map.end() == it2) { \
+      std::cerr << sig->GetLocStr() << ": User " #name " '" << \
+          sig->Get##name() << "' does not exist!\n"; \
+      throw std::runtime_error(__func__); \
+    } \
+    var = it2->second; \
+  } while (0)
+    GET_MEMBER(id, ID);
+    {
+      auto it2 = m_alias_map.find(sig->GetEnd());
+      if (m_alias_map.end() != it2) {
+        end = it2->second;
       }
     }
-  }
-  // Create signals from description map.
-  for (auto it = m_signal_descr_map.begin(); m_signal_descr_map.end() != it;
-      ++it) {
-    auto const &name = it->first;
-    auto signal = new NodeSignal(*this, name);
-    signal->SetLocStr(it->second.loc);
-    auto it2 = m_alias_map.find(name);
-    if (m_alias_map.end() != it2) {
-      auto alias = it2->second;
-      alias->SetSource(GetLocStr(), signal);
-    }
-    m_signal_map.insert(std::make_pair(it->first, signal));
-  }
-  for (auto it = m_signal_map.begin(); m_signal_map.end() != it; ++it) {
-    std::cout << "Signal=" << it->first << '\n';
+    GET_MEMBER(v, V);
+std::cout << sig->GetLocStr() << ' ' << id << ' ' << end << ' ' << v <<
+std::endl;
+    sig->SetSources(id, end, v);
   }
 
   if (!m_cut_poly_list.empty()) {
@@ -558,12 +560,19 @@ NodeValue *Config::AddSelectId(NodeValue *a_child, uint32_t a_first,
   return node;
 }
 
-void Config::AddSignal(char const *a_name, char const *a_id, char const
-    *a_end, char const *a_v)
+NodeValue *Config::AddSignalUser(char const *a_id, char const *a_end, char
+    const *a_v)
 {
-  m_signal_descr_map.insert(
-      std::make_pair(a_name, Signal(GetLocStr(), a_name, a_id, a_end ? a_end :
-      "", a_v)));
+  std::ostringstream oss;
+  oss << __LINE__ << ',' << a_id << ',' << (a_end ? a_end : "") << ',' << a_v;
+  auto key = oss.str();
+  auto node = NodeValueGet(key);
+  if (!node) {
+    auto sig = new NodeSignalUser(GetLocStr(), a_id, a_end, a_v);
+    m_signal_user_list.push_back(sig);
+    NodeValueAdd(key, node = sig);
+  }
+  return node;
 }
 
 NodeValue *Config::AddSubMod(NodeValue *a_left, NodeValue *a_right, double
@@ -816,12 +825,11 @@ std::string Config::GetLocStr() const
   return oss.str();
 }
 
-std::list<Config::Signal const *> Config::GetSignalList() const
+std::list<std::string> Config::GetSignalList() const
 {
-  std::list<Signal const *> list;
-  for (auto it = m_signal_descr_map.begin(); m_signal_descr_map.end() != it;
-      ++it) {
-    list.push_back(&it->second);
+  std::list<std::string> list;
+  for (auto it = m_signal_map.begin(); m_signal_map.end() != it; ++it) {
+    list.push_back(it->first);
   }
   return list;
 }

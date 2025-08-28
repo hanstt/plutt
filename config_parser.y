@@ -257,6 +257,7 @@ static void ResetDrawArgs() {
 %type <value> mexpr
 %type <dbl> clock_range
 %type <value> select_index
+%type <value> signal
 %type <value> sub_mod
 %type <value> tot
 %type <value> tpat
@@ -290,7 +291,6 @@ stmt
 	| match_value
 	| page
 	| pedestal
-	| signal
 	| ui_rate
 
 appearance
@@ -528,20 +528,18 @@ fit
 	}
 
 signal
-	: TK_IDENT '=' TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ')' {
+	: TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ')' {
 		LOC_SAVE(@1);
-		g_config->AddSignal($1, $5, nullptr, $7);
-		free($1);
+		$$ = g_config->AddSignalUser($3, nullptr, $5);
+		free($3);
 		free($5);
-		free($7);
 	}
-	| TK_IDENT '=' TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ',' TK_IDENT ')' {
+	| TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ',' TK_IDENT ')' {
 		LOC_SAVE(@1);
-		g_config->AddSignal($1, $5, $7, $9);
-		free($1);
+		$$ = g_config->AddSignalUser($3, $5, $7);
+		free($3);
 		free($5);
 		free($7);
-		free($9);
 	}
 
 value
@@ -557,6 +555,7 @@ value
 	| member        { $$ = $1; }
 	| merge         { $$ = $1; }
 	| select_index  { $$ = $1; }
+	| signal        { $$ = $1; }
 	| sub_mod       { $$ = $1; }
 	| tot           { $$ = $1; }
 	| tpat          { $$ = $1; }
