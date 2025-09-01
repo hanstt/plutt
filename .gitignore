@@ -1,3 +1,4 @@
+build_*
 *.bash
 *.plutt
 *.root

@@ -2,7 +2,8 @@
 
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+# Copyright (C) 2025
+# Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,5 +26,5 @@
 
 scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-build_dir=$(make -s -C $scriptdir -f build_dir_echo.mk)
+build_dir=$(make -s -C $scriptdir -f gmake/build_dir_echo.mk)
 $DB $scriptdir/$build_dir/plutt $*

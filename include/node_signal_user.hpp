@@ -30,22 +30,15 @@
  */
 class NodeSignalUser: public NodeValue {
   public:
-    NodeSignalUser(std::string const &, char const *, char const *, char const
+    NodeSignalUser(std::string const &, NodeValue *, NodeValue *, NodeValue
         *);
-    std::string const &GetID() const;
-    std::string const &GetEnd() const;
-    std::string const &GetV() const;
     Value const &GetValue(uint32_t);
     void Process(uint64_t);
-    void SetSources(NodeValue *, NodeValue *, NodeValue *);
 
   private:
     NodeSignalUser(NodeSignalUser const &);
     NodeSignalUser &operator=(NodeSignalUser const &);
 
-    std::string m_id_name;
-    std::string m_end_name;
-    std::string m_v_name;
     NodeValue *m_id;
     NodeValue *m_end;
     NodeValue *m_v;

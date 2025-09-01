@@ -28,32 +28,14 @@
 #include <vector>
 #include <node_signal_user.hpp>
 
-NodeSignalUser::NodeSignalUser(std::string const &a_loc, char const *a_id,
-    char const *a_end, char const *a_v):
+NodeSignalUser::NodeSignalUser(std::string const &a_loc, NodeValue *a_id,
+    NodeValue *a_end, NodeValue *a_v):
   NodeValue(a_loc),
-  m_id_name(a_id),
-  m_end_name(a_end ? a_end : ""),
-  m_v_name(a_v),
-  m_id(),
-  m_end(),
-  m_v(),
+  m_id(a_id),
+  m_end(a_end),
+  m_v(a_v),
   m_value()
 {
-}
-
-std::string const &NodeSignalUser::GetID() const
-{
-  return m_id_name;
-}
-
-std::string const &NodeSignalUser::GetEnd() const
-{
-  return m_end_name;
-}
-
-std::string const &NodeSignalUser::GetV() const
-{
-  return m_v_name;
 }
 
 Value const &NodeSignalUser::GetValue(uint32_t a_ret_i)
@@ -117,16 +99,4 @@ void NodeSignalUser::Process(uint64_t a_evid)
       m_value.Push(id, vv.at(i));
     }
   }
-}
-
-void NodeSignalUser::SetSources(NodeValue *a_id, NodeValue *a_end, NodeValue
-    *a_v)
-{
-  if (m_id || m_end || m_v) {
-    std::cerr << "Already set at " << GetLocStr() << "!\n";
-    throw std::runtime_error(__func__);
-  }
-  m_id = a_id;
-  m_end = a_end;
-  m_v = a_v;
 }

@@ -528,18 +528,13 @@ fit
 	}
 
 signal
-	: TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ')' {
+	: TK_SIGNAL '(' alias ',' alias ')' {
 		LOC_SAVE(@1);
 		$$ = g_config->AddSignalUser($3, nullptr, $5);
-		free($3);
-		free($5);
 	}
-	| TK_SIGNAL '(' TK_IDENT ',' TK_IDENT ',' TK_IDENT ')' {
+	| TK_SIGNAL '(' alias ',' alias ',' alias ')' {
 		LOC_SAVE(@1);
 		$$ = g_config->AddSignalUser($3, $5, $7);
-		free($3);
-		free($5);
-		free($7);
 	}
 
 value
