@@ -37,6 +37,28 @@
 
 extern GuiCollection g_gui;
 
+namespace {
+
+double
+SubTyped(Input::Type a_type, Gui::Axis const &a_axis, Input::Scalar const
+    &a_s)
+{
+  auto span = a_axis.max - a_axis.min;
+  switch (a_type) {
+    case Input::kUint64:
+      return IntSubDouble(a_s.u64, a_axis.min) / span;
+    case Input::kInt64:
+      return IntSubDouble(a_s.i64, a_axis.min) / span;
+    case Input::kDouble:
+      return (a_s.dbl - a_axis.min) / span;
+    case Input::kNone:
+    default:
+      throw std::runtime_error(__func__);
+  }
+}
+
+}
+
 Range::Range(double a_drop_stats_s):
   m_mode(MODE_ALL),
   m_type(Input::kNone),
@@ -306,40 +328,10 @@ void VisualAnnular::Fill(Input::Type a_type_r, Input::Scalar const &a_r,
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
   // Fill.
-  auto span_r = m_axis_r.max - m_axis_r.min;
-  auto span_p = m_axis_p.max - m_axis_p.min;
-  double dr;
-  switch (a_type_r) {
-    case Input::kUint64:
-      dr = IntSubDouble(a_r.u64, m_axis_r.min);
-      break;
-    case Input::kInt64:
-      dr = IntSubDouble(a_r.i64, m_axis_r.min);
-      break;
-    case Input::kDouble:
-      dr = a_r.dbl - m_axis_r.min;
-      break;
-    case Input::kNone:
-    default:
-      throw std::runtime_error(__func__);
-  }
-  double dp;
-  switch (a_type_p) {
-    case Input::kUint64:
-      dp = IntSubDouble(a_p.u64, m_axis_p.min);
-      break;
-    case Input::kInt64:
-      dp = IntSubDouble(a_p.i64, m_axis_p.min);
-      break;
-    case Input::kDouble:
-      dp = a_p.dbl - m_axis_p.min;
-      break;
-    case Input::kNone:
-    default:
-      throw std::runtime_error(__func__);
-  }
-  uint32_t j = (uint32_t)(m_axis_r.bins * dr / span_r);
-  uint32_t i = (uint32_t)(m_axis_p.bins * dp / span_p);
+  auto dr = SubTyped(a_type_r, m_axis_r, a_r);
+  auto dp = SubTyped(a_type_p, m_axis_p, a_p);
+  uint32_t j = (uint32_t)(m_axis_r.bins * dr);
+  uint32_t i = (uint32_t)(m_axis_p.bins * dp);
   assert(i < m_axis_p.bins);
   assert(j < m_axis_r.bins);
   ++m_hist.slice_vec.at(m_hist.active_i).at(i * m_axis_r.bins + j);
@@ -489,23 +481,8 @@ void VisualHist::Fill(Input::Type a_type, Input::Scalar const &a_x)
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
   // And the filling, at last.
-  auto span = m_axis.max - m_axis.min;
-  double dx;
-  switch (a_type) {
-    case Input::kUint64:
-      dx = IntSubDouble(a_x.u64, m_axis.min);
-      break;
-    case Input::kInt64:
-      dx = IntSubDouble(a_x.i64, m_axis.min);
-      break;
-    case Input::kDouble:
-      dx = a_x.dbl - m_axis.min;
-      break;
-    case Input::kNone:
-    default:
-      throw std::runtime_error(__func__);
-  }
-  uint32_t i = (uint32_t)(m_axis.bins * dx / span);
+  auto dx = SubTyped(a_type, m_axis, a_x);
+  uint32_t i = (uint32_t)(m_axis.bins * dx);
   assert(i < m_axis.bins);
   ++m_hist.slice_vec.at(m_hist.active_i).at(i);
 }
@@ -714,40 +691,10 @@ void VisualHist2::Fill(Input::Type a_type_y, Input::Scalar const &a_y,
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
   // Fill.
-  auto span_x = m_axis_x.max - m_axis_x.min;
-  auto span_y = m_axis_y.max - m_axis_y.min;
-  double dx;
-  switch (a_type_x) {
-    case Input::kUint64:
-      dx = IntSubDouble(a_x.u64, m_axis_x.min);
-      break;
-    case Input::kInt64:
-      dx = IntSubDouble(a_x.i64, m_axis_x.min);
-      break;
-    case Input::kDouble:
-      dx = a_x.dbl - m_axis_x.min;
-      break;
-    case Input::kNone:
-    default:
-      throw std::runtime_error(__func__);
-  }
-  double dy;
-  switch (a_type_y) {
-    case Input::kUint64:
-      dy = IntSubDouble(a_y.u64, m_axis_y.min);
-      break;
-    case Input::kInt64:
-      dy = IntSubDouble(a_y.i64, m_axis_y.min);
-      break;
-    case Input::kDouble:
-      dy = a_y.dbl - m_axis_y.min;
-      break;
-    case Input::kNone:
-    default:
-      throw std::runtime_error(__func__);
-  }
-  uint32_t j = (uint32_t)(m_axis_x.bins * dx / span_x);
-  uint32_t i = (uint32_t)(m_axis_y.bins * dy / span_y);
+  auto dx = SubTyped(a_type_x, m_axis_x, a_x);
+  auto dy = SubTyped(a_type_y, m_axis_y, a_y);
+  uint32_t j = (uint32_t)(m_axis_x.bins * dx);
+  uint32_t i = (uint32_t)(m_axis_y.bins * dy);
   assert(i < m_axis_y.bins);
   assert(j < m_axis_x.bins);
   ++m_hist.slice_vec.at(m_hist.active_i).at(i * m_axis_x.bins + j);
