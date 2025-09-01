@@ -104,25 +104,22 @@ namespace {
     }
     std::cout << "Usage: " << g_arg0 <<
         " -f config [-g gui] [-j jobs] input...\n";
-    std::cout << "\n";
-    std::cout << " -g values (this arg can be repeated):";
+    std::cout << " -g   values (this arg can be repeated):";
 #if PLUTT_SDL2
     std::cout << " sdl";
 #endif
 #if PLUTT_ROOT_HTTP
     std::cout << " root(:port)";
 #endif
-    std::cout << "\n\n";
-    std::cout << "Input options:\n";
     std::cout << "\n";
+    std::cout << "Input options:\n";
 #if PLUTT_ROOT
-    std::cout << " -r tree-name root-files...\n";
-    std::cout << " -R tree-name directories...\n";
+    std::cout << " -r   tree-name root-files...\n";
+    std::cout << " -R   tree-name directories...\n";
 #endif
 #if PLUTT_UCESB
-    std::cout << " -u unpacker args...\n";
+    std::cout << " -u   unpacker args...\n";
 #endif
-    std::cout << "\n";
     exit(a_msg ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
@@ -212,24 +209,29 @@ int main(int argc, char **argv)
   signal(SIGINT, sighandler);
 
   // Print some niceties.
-  std::cout << "Built with:";
+  std::cout << "Built with: ";
+  std::string with;
 #if PLUTT_SDL2
-  std::cout << " SDL2,freetype2";
+  with += "SDL2+freetype2";
 #endif
 #if PLUTT_NLOPT
-  std::cout << " nlopt";
+  if (!with.empty()) with += ',';
+  with += "nlopt";
 #endif
 #if PLUTT_ROOT
-  std::cout << " ROOT";
+  if (!with.empty()) with += ',';
+  with += "ROOT";
 #endif
 #if PLUTT_ROOT_HTTP
-  std::cout << " ROOT-HTTP";
+  if (!with.empty()) with += ',';
+  with += "ROOT-HTTP";
   uint16_t web_port = 8080;
 #endif
 #if PLUTT_UCESB
-  std::cout << " ucesb";
+  if (!with.empty()) with += ',';
+  with += "ucesb";
 #endif
-  std::cout << ".\n";
+  std::cout << with << ".\n";
 
   // Handle arguments.
   enum InputType input_type = INPUT_NONE;
