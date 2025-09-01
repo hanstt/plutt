@@ -136,30 +136,6 @@ Config::Config(char const *a_path):
       std::cout << "Signal=" << it->first << '\n';
     }
   }
-  // Assign user signals.
-  for (auto it = m_signal_user_list.begin(); m_signal_user_list.end() != it;
-      ++it) {
-    auto sig = *it;
-    NodeValue *id, *end, *v;
-#define GET_MEMBER(var, name) do { \
-    auto it2 = m_alias_map.find(sig->Get##name()); \
-    if (m_alias_map.end() == it2) { \
-      std::cerr << sig->GetLocStr() << ": User " #name " '" << \
-          sig->Get##name() << "' does not exist!\n"; \
-      throw std::runtime_error(__func__); \
-    } \
-    var = it2->second; \
-  } while (0)
-    GET_MEMBER(id, ID);
-    {
-      auto it2 = m_alias_map.find(sig->GetEnd());
-      end = m_alias_map.end() != it2 ? it2->second : nullptr;
-    }
-    GET_MEMBER(v, V);
-std::cout << sig->GetLocStr() << ' ' << id << ' ' << end << ' ' << v <<
-std::endl;
-    sig->SetSources(id, end, v);
-  }
 
   if (!m_cut_poly_list.empty()) {
     throw std::runtime_error(__func__);
@@ -558,11 +534,11 @@ NodeValue *Config::AddSelectId(NodeValue *a_child, uint32_t a_first,
   return node;
 }
 
-NodeValue *Config::AddSignalUser(char const *a_id, char const *a_end, char
-    const *a_v)
+NodeValue *Config::AddSignalUser(NodeValue *a_id, NodeValue *a_end, NodeValue
+    *a_v)
 {
   std::ostringstream oss;
-  oss << __LINE__ << ',' << a_id << ',' << (a_end ? a_end : "") << ',' << a_v;
+  oss << __LINE__ << ',' << a_id << ',' << a_end << ',' << a_v;
   auto key = oss.str();
   auto node = NodeValueGet(key);
   if (!node) {

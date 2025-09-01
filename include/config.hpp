@@ -75,7 +75,7 @@ class Config {
     NodeValue *AddMerge(MergeArg *);
     NodeValue *AddPedestal(NodeValue *, double, NodeValue *);
     NodeValue *AddSelectId(NodeValue *, uint32_t, uint32_t);
-    NodeValue *AddSignalUser(char const *, char const *, char const *);
+    NodeValue *AddSignalUser(NodeValue *, NodeValue *, NodeValue *);
     NodeValue *AddSubMod(NodeValue *, NodeValue *, double);
     NodeValue *AddTot(NodeValue *, NodeValue *, double);
     NodeValue *AddTpat(NodeValue *, uint32_t);

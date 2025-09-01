@@ -21,7 +21,7 @@
 
 .SECONDARY:
 
-include build_dir.mk
+include gmake/build_dir.mk
 
 ROOT_CONFIG:=root-config
 SDL2_CONFIG=sdl2-config
@@ -136,17 +136,17 @@ CXXFLAGS+=-O3
 endif
 
 CPPFLAGS:=$(CPPFLAGS) -MMD \
-	-I$(BUILD_DIR) -I.
+	-I$(BUILD_DIR)/src -Iinclude -I.
 CXXFLAGS_UNSAFE:=$(CXXFLAGS) -fPIC -std=c++11
 CXXFLAGS:=$(CXXFLAGS_UNSAFE) -Wall -Wconversion -Werror -Wshadow -Wswitch-enum
 LDFLAGS:=$(LDFLAGS) -fPIC
 
 MKDIR=[ -d $(@D) ] || mkdir -p $(@D)
 
-SRC:=$(wildcard *.cpp)
+SRC:=$(wildcard src/*.cpp)
 OBJ:=$(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRC)) \
-	$(addprefix $(BUILD_DIR)/,config_parser.yy.o config_parser.tab.o) \
-	$(addprefix $(BUILD_DIR)/,trig_map_parser.yy.o trig_map_parser.tab.o)
+	$(addprefix $(BUILD_DIR)/src/,config_parser.yy.o config_parser.tab.o) \
+	$(addprefix $(BUILD_DIR)/src/,trig_map_parser.yy.o trig_map_parser.tab.o)
 PLUTT:=$(BUILD_DIR)/plutt
 
 TEST_SRC:=$(wildcard test/*.cpp)
@@ -193,26 +193,26 @@ $(BUILD_DIR)/%.yy.c: %.l
 $(BUILD_DIR)/%.tab.o: $(BUILD_DIR)/%.tab.c
 	@echo TABO $@
 	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
-$(BUILD_DIR)/config_parser.tab.c: config_parser.y Makefile
+$(BUILD_DIR)/src/config_parser.tab.c: src/config_parser.y Makefile
 	@echo TABC $@
 	$(QUIET)$(MKDIR)
 	$(QUIET)bison $(BISON_FLAGS) $(BISON_PREFIX_YYCP) -d -o $@ $<
-$(BUILD_DIR)/trig_map_parser.tab.c: trig_map_parser.y Makefile
+$(BUILD_DIR)/src/trig_map_parser.tab.c: src/trig_map_parser.y Makefile
 	@echo TABC $@
 	$(QUIET)$(MKDIR)
 	$(QUIET)bison $(BISON_FLAGS) $(BISON_PREFIX_YYTM) -d -o $@ $<
 
 # These cannot be generalized...
-$(BUILD_DIR)/config_parser.yy.h: $(BUILD_DIR)/config_parser.yy.c
-$(BUILD_DIR)/config_parser.yy.c: $(BUILD_DIR)/config_parser.tab.h
-$(BUILD_DIR)/config_parser.tab.h: $(BUILD_DIR)/config_parser.tab.c
-$(BUILD_DIR)/trig_map_parser.yy.h: $(BUILD_DIR)/trig_map_parser.yy.c
-$(BUILD_DIR)/trig_map_parser.yy.c: $(BUILD_DIR)/trig_map_parser.tab.h
-$(BUILD_DIR)/trig_map_parser.tab.h: $(BUILD_DIR)/trig_map_parser.tab.c
+$(BUILD_DIR)/src/config_parser.yy.h: $(BUILD_DIR)/src/config_parser.yy.c
+$(BUILD_DIR)/src/config_parser.yy.c: $(BUILD_DIR)/src/config_parser.tab.h
+$(BUILD_DIR)/src/config_parser.tab.h: $(BUILD_DIR)/src/config_parser.tab.c
+$(BUILD_DIR)/src/trig_map_parser.yy.h: $(BUILD_DIR)/src/trig_map_parser.yy.c
+$(BUILD_DIR)/src/trig_map_parser.yy.c: $(BUILD_DIR)/src/trig_map_parser.tab.h
+$(BUILD_DIR)/src/trig_map_parser.tab.h: $(BUILD_DIR)/src/trig_map_parser.tab.c
 
-$(BUILD_DIR)/root.o: root.cpp Makefile
-$(BUILD_DIR)/root_gui.o: root_gui.cpp Makefile
-$(BUILD_DIR)/root.o $(BUILD_DIR)/root_gui.o:
+$(BUILD_DIR)/src/root.o: src/root.cpp Makefile
+$(BUILD_DIR)/src/root_gui.o: src/root_gui.cpp Makefile
+$(BUILD_DIR)/src/root.o $(BUILD_DIR)/src/root_gui.o:
 	@echo ROOTO $@
 	$(QUIET)$(MKDIR)
 	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS) $(ROOT_CFLAGS)
@@ -230,15 +230,15 @@ $(BUILD_DIR)/test/test_root_dict.o: $(BUILD_DIR)/test/test_root_dict.cpp
 $(BUILD_DIR)/test/test_root_dict.cpp: test/test_root.hpp test/test_root_linkdef.hpp
 	@echo CLING $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)$(ROOT_CLING) -f -DPLUTT_ROOT=1 -I. $@ $^
+	$(QUIET)$(ROOT_CLING) -f -DPLUTT_ROOT=1 -Iinclude $@ $^
 
 $(BUILD_DIR)/test/test_root_dict_rdict.pcm: $(BUILD_DIR)/test/test_root_dict.cpp
 $(BUILD_DIR)/test_root_dict_rdict.pcm: $(BUILD_DIR)/test/test_root_dict_rdict.pcm
 	@echo CP $@
 	$(QUIET)cp $< $@
 
-$(BUILD_DIR)/config.o: $(BUILD_DIR)/config_parser.yy.h
-$(BUILD_DIR)/trig_map.o: $(BUILD_DIR)/trig_map_parser.yy.h
+$(BUILD_DIR)/src/config.o: $(BUILD_DIR)/src/config_parser.yy.h
+$(BUILD_DIR)/src/trig_map.o: $(BUILD_DIR)/src/trig_map_parser.yy.h
 
 # Vim config file support.
 

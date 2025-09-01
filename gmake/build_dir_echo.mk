@@ -1,6 +1,7 @@
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+# Copyright (C) 2023, 2025
+# Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,6 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301  USA
 
-include build_dir.mk
+include gmake/build_dir.mk
 all:
 	@echo $(BUILD_DIR)
