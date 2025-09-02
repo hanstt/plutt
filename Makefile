@@ -113,6 +113,12 @@ ifeq (Darwin,$(shell uname -s))
 LDFLAGS:=-framework CoreServices
 endif
 
+# FreeBSD inotify for file watching.
+
+ifeq (FreeBSD,$(shell uname -s))
+LIBS+=-linotify
+endif
+
 # Bison flags.
 
 # --version prints info to stdout if the -W flags are accepted, else stderr.

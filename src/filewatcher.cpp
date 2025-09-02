@@ -25,9 +25,12 @@
 #include <vector>
 #include <filewatcher.hpp>
 
-#ifdef __linux__
+#if defined( __linux__) || defined(__FreeBSD__)
 
+#ifdef __linux__
 #       include <linux/limits.h>
+#endif
+#       include <limits.h>
 #       include <sys/inotify.h>
 #       include <sys/poll.h>
 #       include <cstring>
@@ -87,7 +90,7 @@ std::string FileWatcherImpl::WaitFile(unsigned a_timeout_ms)
 
     fds[0].fd = m_fd;
     fds[0].events = POLLIN;
-    nfds = poll(fds, LENGTH(fds), a_timeout_ms);
+    nfds = poll(fds, LENGTH(fds), (int) a_timeout_ms);
     if (nfds < 0) {
       std::cerr << "poll: " << strerror(errno) << ".\n";
       throw std::runtime_error(__func__);
