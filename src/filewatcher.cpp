@@ -25,9 +25,12 @@
 #include <vector>
 #include <filewatcher.hpp>
 
-#ifdef __linux__
+#if defined( __linux__) || defined(__FreeBSD__)
 
+#ifdef __linux__
 #       include <linux/limits.h>
+#endif
+#       include <limits.h>
 #       include <sys/inotify.h>
 #       include <sys/poll.h>
 #       include <cstring>
