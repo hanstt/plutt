@@ -90,7 +90,7 @@ std::string FileWatcherImpl::WaitFile(unsigned a_timeout_ms)
 
     fds[0].fd = m_fd;
     fds[0].events = POLLIN;
-    nfds = poll(fds, LENGTH(fds), a_timeout_ms);
+    nfds = poll(fds, LENGTH(fds), (int) a_timeout_ms);
     if (nfds < 0) {
       std::cerr << "poll: " << strerror(errno) << ".\n";
       throw std::runtime_error(__func__);
