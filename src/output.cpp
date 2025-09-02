@@ -20,33 +20,8 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_ANNULAR_HPP
-#define NODE_ANNULAR_HPP
-
-#include <node.hpp>
+#include <cstdint>
+#include <string>
 #include <output.hpp>
-#include <visual.hpp>
 
-/*
- * Collects r and phi in radial histogram, actual histogramming is performed
- * in visual.*.
- */
-class NodeAnnular: public NodeCuttable {
-  public:
-    NodeAnnular(std::string const &, char const *, NodeValue *, double,
-        double, NodeValue *, double, bool, double, unsigned, double);
-    void Process(uint64_t);
-
-  private:
-    NodeAnnular(NodeAnnular const &);
-    NodeAnnular &operator=(NodeAnnular const &);
-
-    NodeValue *m_r;
-    NodeValue *m_phi;
-    double m_phi0;
-    VisualAnnular m_visual_annular;
-    Output::Var m_out_r;
-    Output::Var m_out_p;
-};
-
-#endif
+Output *g_output;

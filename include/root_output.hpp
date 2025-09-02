@@ -20,33 +20,41 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_ANNULAR_HPP
-#define NODE_ANNULAR_HPP
+#if PLUTT_ROOT
 
-#include <node.hpp>
+#ifndef ROOT_OUTPUT_HPP
+#define ROOT_OUTPUT_HPP
+
 #include <output.hpp>
-#include <visual.hpp>
+
+class TBranch;
+class TFile;
+class TTree;
 
 /*
- * Collects r and phi in radial histogram, actual histogramming is performed
- * in visual.*.
+ * Writes ROOT tree.
  */
-class NodeAnnular: public NodeCuttable {
+class RootOutput: public Output {
   public:
-    NodeAnnular(std::string const &, char const *, NodeValue *, double,
-        double, NodeValue *, double, bool, double, unsigned, double);
-    void Process(uint64_t);
+    RootOutput(std::string const &, std::string const &);
+    ~RootOutput();
+    void Add(Var *, std::string const &);
+    void Fill(Var const &, double);
+    void FinishEvent();
 
   private:
-    NodeAnnular(NodeAnnular const &);
-    NodeAnnular &operator=(NodeAnnular const &);
+    RootOutput(RootOutput const &);
+    RootOutput &operator=(RootOutput const &);
 
-    NodeValue *m_r;
-    NodeValue *m_phi;
-    double m_phi0;
-    VisualAnnular m_visual_annular;
-    Output::Var m_out_r;
-    Output::Var m_out_p;
+    struct Entry {
+      double dbl;
+    };
+    TFile *m_file;
+    TTree *m_tree;
+    std::list<std::string> m_proto_list;
+    std::vector<Entry> m_var_vec;
 };
+
+#endif
 
 #endif

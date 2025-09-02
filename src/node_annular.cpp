@@ -29,6 +29,8 @@
 #include <util.hpp>
 #include <node_annular.hpp>
 
+extern Output *g_output;
+
 NodeAnnular::NodeAnnular(std::string const &a_loc, char const *a_title,
     NodeValue *a_r, double a_r_min, double a_r_max, NodeValue *a_phi, double
     a_phi0, bool a_log_z, double a_drop_counts_s, unsigned a_drop_counts_num,
@@ -37,8 +39,14 @@ NodeAnnular::NodeAnnular(std::string const &a_loc, char const *a_title,
   m_r(a_r),
   m_phi(a_phi),
   m_visual_annular(a_title, a_r_min, a_r_max, a_phi0, a_log_z,
-      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s)
+      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s),
+  m_out_r(),
+  m_out_p()
 {
+  if (g_output) {
+    g_output->Add(&m_out_r, std::string(a_title) + "_r");
+    g_output->Add(&m_out_p, std::string(a_title) + "_p");
+  }
 }
 
 void NodeAnnular::Process(uint64_t a_evid)
@@ -72,6 +80,10 @@ void NodeAnnular::Process(uint64_t a_evid)
   for (uint32_t i = 0; i < size; ++i) {
     auto const &r = vec_r.at(i);
     auto const &phi = vec_phi.at(i);
+    if (g_output) {
+      g_output->Fill(m_out_r, val_r.GetV(i, true));
+      g_output->Fill(m_out_p, val_phi.GetV(i, true));
+    }
     m_visual_annular.Fill(val_r.GetType(), r, val_phi.GetType(), phi);
   }
 }

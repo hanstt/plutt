@@ -37,6 +37,7 @@
 #include <TText.h>
 
 #include <root_gui.hpp>
+#include <util.hpp>
 
 class RootGui::Bind: public TNamed
 {
@@ -192,26 +193,6 @@ uint32_t RootGui::AddPlot(std::string const &a_name, Plot *a_plot)
     }
   }
   return ((uint32_t)m_page_vec.size() - 1) << 16 | ((uint32_t)vec.size() - 1);
-}
-
-std::string RootGui::CleanName(std::string const &a_name)
-{
-  std::string ret;
-  int prev = -1;
-  for (auto it = a_name.begin(); a_name.end() != it; ++it) {
-    int c = *it;
-    if ('_' != c && !isalnum(c)) {
-      c = '_';
-    }
-    if (-1 != prev && ('_' != prev || '_' != c)) {
-      ret += (char)prev;
-    }
-    prev = c;
-  }
-  if ('_' != prev) {
-    ret += (char)prev;
-  }
-  return ret;
 }
 
 bool RootGui::DoClear(uint32_t a_id)

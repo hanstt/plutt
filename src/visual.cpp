@@ -327,7 +327,6 @@ void VisualAnnular::Fill(Input::Type a_type_r, Input::Scalar const &a_r,
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
-  // Fill.
   auto dr = SubTyped(a_type_r, m_axis_r, a_r);
   auto dp = SubTyped(a_type_p, m_axis_p, a_p);
   uint32_t j = (uint32_t)(m_axis_r.bins * dr);
@@ -480,7 +479,6 @@ void VisualHist::Fill(Input::Type a_type, Input::Scalar const &a_x)
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
-  // And the filling, at last.
   auto dx = SubTyped(a_type, m_axis, a_x);
   uint32_t i = (uint32_t)(m_axis.bins * dx);
   assert(i < m_axis.bins);
@@ -690,7 +688,6 @@ void VisualHist2::Fill(Input::Type a_type_y, Input::Scalar const &a_y,
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
-  // Fill.
   auto dx = SubTyped(a_type_x, m_axis_x, a_x);
   auto dy = SubTyped(a_type_y, m_axis_y, a_y);
   uint32_t j = (uint32_t)(m_axis_x.bins * dx);

@@ -212,7 +212,10 @@ $(BUILD_DIR)/src/trig_map_parser.tab.h: $(BUILD_DIR)/src/trig_map_parser.tab.c
 
 $(BUILD_DIR)/src/root.o: src/root.cpp Makefile
 $(BUILD_DIR)/src/root_gui.o: src/root_gui.cpp Makefile
-$(BUILD_DIR)/src/root.o $(BUILD_DIR)/src/root_gui.o:
+$(BUILD_DIR)/src/root_output.o: src/root_output.cpp Makefile
+$(BUILD_DIR)/src/root.o \
+    $(BUILD_DIR)/src/root_gui.o \
+    $(BUILD_DIR)/src/root_output.o:
 	@echo ROOTO $@
 	$(QUIET)$(MKDIR)
 	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS) $(ROOT_CFLAGS)

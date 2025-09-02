@@ -29,6 +29,8 @@
 #include <util.hpp>
 #include <node_hist2.hpp>
 
+extern Output *g_output;
+
 NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
     *a_y, NodeValue *a_x, uint32_t a_yb, uint32_t a_xb, LinearTransform const
     &a_transformy, LinearTransform const &a_transformx, char const *a_fit,
@@ -40,8 +42,14 @@ NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
   m_xb(a_xb),
   m_yb(a_yb),
   m_visual_hist2(a_title, m_yb, m_xb, a_transformy, a_transformx, a_fit,
-      a_log_z, a_drop_counts_s, a_drop_counts_num, a_drop_stats_s)
+      a_log_z, a_drop_counts_s, a_drop_counts_num, a_drop_stats_s),
+  m_out_x(),
+  m_out_y()
 {
+  if (g_output) {
+    g_output->Add(&m_out_x, std::string(a_title) + "_x");
+    g_output->Add(&m_out_y, std::string(a_title) + "_y");
+  }
 }
 
 void NodeHist2::Process(uint64_t a_evid)
@@ -104,6 +112,10 @@ void NodeHist2::Process(uint64_t a_evid)
     for (uint32_t i = 0; i < size; ++i) {
       auto const &x = vec_x.at(i);
       auto const &y = vec_y.at(i);
+      if (g_output) {
+        g_output->Fill(m_out_x, val_x.GetV(i, true));
+        g_output->Fill(m_out_y, val_y.GetV(i, true));
+      }
       m_visual_hist2.Fill(val_y.GetType(), y, val_x.GetType(), x);
     }
   }

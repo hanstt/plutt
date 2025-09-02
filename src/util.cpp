@@ -39,6 +39,26 @@ namespace {
   uint64_t g_time_ms;
 }
 
+std::string CleanName(std::string const &a_name)
+{
+  std::string ret;
+  int prev = -1;
+  for (auto it = a_name.begin(); a_name.end() != it; ++it) {
+    int c = *it;
+    if ('_' != c && !isalnum(c)) {
+      c = '_';
+    }
+    if (-1 != prev && ('_' != prev || '_' != c)) {
+      ret += (char)prev;
+    }
+    prev = c;
+  }
+  if ('_' != prev) {
+    ret += (char)prev;
+  }
+  return ret;
+}
+
 LinearTransform::LinearTransform(double a_k, double a_m):
   m_k(a_k),
   m_m(a_m)

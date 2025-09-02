@@ -29,6 +29,8 @@
 #include <util.hpp>
 #include <node_hist1.hpp>
 
+extern Output *g_output;
+
 NodeHist1::NodeHist1(std::string const &a_loc, char const *a_title, NodeValue
     *a_x, uint32_t a_xb, LinearTransform const &a_transform, char const
     *a_fit, bool a_log_y, bool a_contour, double a_drop_counts_s, unsigned
@@ -37,8 +39,12 @@ NodeHist1::NodeHist1(std::string const &a_loc, char const *a_title, NodeValue
   m_x(a_x),
   m_xb(a_xb),
   m_visual_hist(a_title, m_xb, a_transform, a_fit, a_log_y, a_contour,
-      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s)
+      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s),
+  m_out()
 {
+  if (g_output) {
+    g_output->Add(&m_out, a_title);
+  }
 }
 
 void NodeHist1::Process(uint64_t a_evid)
@@ -63,6 +69,9 @@ void NodeHist1::Process(uint64_t a_evid)
   // Fill.
   for (uint32_t i = 0; i < v.size(); ++i) {
     auto const &x = v.at(i);
+    if (g_output) {
+      g_output->Fill(m_out, val_x.GetV(i, true));
+    }
     m_visual_hist.Fill(val_x.GetType(), x);
   }
 }

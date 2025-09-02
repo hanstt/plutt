@@ -59,8 +59,6 @@ class RootGui: public Gui {
     RootGui(RootGui const &);
     RootGui &operator=(RootGui const &);
 
-    std::string CleanName(std::string const &);
-
     class Bind;
     class ClearMany;
 

@@ -24,6 +24,7 @@
 #define NODE_HIST2_HPP
 
 #include <node.hpp>
+#include <output.hpp>
 #include <visual.hpp>
 
 /*
@@ -46,6 +47,8 @@ class NodeHist2: public NodeCuttable {
     uint32_t m_xb;
     uint32_t m_yb;
     VisualHist2 m_visual_hist2;
+    Output::Var m_out_x;
+    Output::Var m_out_y;
 };
 
 #endif

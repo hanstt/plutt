@@ -25,6 +25,9 @@
 
 #define LENGTH(x) (sizeof x / sizeof *x)
 
+// Replaces weird chars with '_' and avoids doubles.
+std::string CleanName(std::string const &);
+
 class LinearTransform {
   public:
     LinearTransform(double, double);

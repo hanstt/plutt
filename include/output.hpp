@@ -20,33 +20,29 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_ANNULAR_HPP
-#define NODE_ANNULAR_HPP
+#ifndef OUTPUT_HPP
+#define OUTPUT_HPP
 
-#include <node.hpp>
-#include <output.hpp>
-#include <visual.hpp>
+#include <input.hpp>
 
 /*
- * Collects r and phi in radial histogram, actual histogramming is performed
- * in visual.*.
+ * For writing to "disk".
  */
-class NodeAnnular: public NodeCuttable {
+class Output {
   public:
-    NodeAnnular(std::string const &, char const *, NodeValue *, double,
-        double, NodeValue *, double, bool, double, unsigned, double);
-    void Process(uint64_t);
+    struct Var {
+      uint32_t id;
+    };
 
-  private:
-    NodeAnnular(NodeAnnular const &);
-    NodeAnnular &operator=(NodeAnnular const &);
-
-    NodeValue *m_r;
-    NodeValue *m_phi;
-    double m_phi0;
-    VisualAnnular m_visual_annular;
-    Output::Var m_out_r;
-    Output::Var m_out_p;
+    virtual ~Output() {}
+    // Add variable to output.
+    virtual void Add(Var *, std::string const &) = 0;
+    // Fill variable.
+    virtual void Fill(Var const &, double) = 0;
+    // Finish event with filled variables.
+    virtual void FinishEvent() = 0;
 };
+
+extern Output *g_output;
 
 #endif

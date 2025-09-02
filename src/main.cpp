@@ -36,6 +36,7 @@
 
 #include <config.hpp>
 #include <gui.hpp>
+#include <output.hpp>
 #if PLUTT_SDL2
 # include <SDL_compat.h>
 # include <SDL.h>
@@ -44,6 +45,7 @@
 #endif
 #if PLUTT_ROOT
 # include <root.hpp>
+# include <root_output.hpp>
 #endif
 #if PLUTT_ROOT_HTTP
 # include <root_gui.hpp>
@@ -58,6 +60,7 @@
 
 extern Config *g_config;
 extern GuiCollection g_gui;
+extern Output *g_output;
 
 namespace {
 
@@ -93,6 +96,12 @@ namespace {
   char const *g_conf_path;
   long g_jobs;
   Input *g_input;
+#if PLUTT_ROOT
+  struct {
+    std::string path;
+    std::string name;
+  } g_out_root;
+#endif
   bool g_main_running = true;
 
   void help(char const *a_msg)
@@ -119,6 +128,10 @@ namespace {
 #endif
 #if PLUTT_UCESB
     std::cout << " -u   unpacker args...\n";
+#endif
+    std::cout << "Output options:\n";
+#if PLUTT_ROOT
+    std::cout << " -o   path:tree-name\n";
 #endif
     exit(a_msg ? EXIT_FAILURE : EXIT_SUCCESS);
   }
@@ -185,6 +198,9 @@ namespace {
       g_config->DoEvent(g_input);
       ++g_inp.event_i;
       lock.unlock();
+      if (g_output) {
+        g_output->FinishEvent();
+      }
       g_inp.input_cv.notify_one();
     }
     std::cout << "Exited event loop.\n";
@@ -238,7 +254,8 @@ int main(int argc, char **argv)
   unsigned gui_type = GUI_NONE;
   (void)gui_type;
   int c;
-  while ((c = getopt(argc, argv, "hf:g:j:x" ROOT_ARGOPT UCESB_ARGOPT)) != -1) {
+  while ((c = getopt(argc, argv, "hf:g:j:o:x" ROOT_ARGOPT UCESB_ARGOPT)) !=
+      -1) {
     switch (c) {
       case 'h':
         help(nullptr);
@@ -284,6 +301,17 @@ int main(int argc, char **argv)
         }
         break;
 #if PLUTT_ROOT
+      case 'o':
+        {
+          std::string arg = optarg;
+          auto colon = arg.find(':');
+          if (arg.npos == colon) {
+            help("Missing output ROOT tree name.");
+          }
+          g_out_root.path = arg.substr(0, colon);
+          g_out_root.name = arg.substr(colon + 1);
+        }
+        break;
       case 'r':
         if (argc - optind < 2) {
           help("Not enough parameters for -r.");
@@ -353,6 +381,13 @@ int main(int argc, char **argv)
     std::cout << "Creating ROOT GUI on port " << web_port << "...\n";
     root_gui = new RootGui(web_port);
     g_gui.AddGui(root_gui);
+  }
+#endif
+
+  // Create output before creating nodes.
+#if PLUTT_ROOT
+  if (!g_out_root.path.empty() && !g_out_root.name.empty()) {
+    g_output = new RootOutput(g_out_root.path, g_out_root.name);
   }
 #endif
 
@@ -481,6 +516,7 @@ int main(int argc, char **argv)
 
   delete g_input;
   delete g_config;
+  delete g_output;
 
   return 0;
 }
