@@ -27,6 +27,7 @@
 #include <condition_variable>
 #include <csignal>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <map>
@@ -94,6 +95,7 @@ namespace {
 
   char const *g_arg0;
   char const *g_conf_path;
+  char const *g_dot_path;
   long g_jobs;
   Input *g_input;
 #if PLUTT_ROOT
@@ -112,7 +114,8 @@ namespace {
       std::cout << "\n";
     }
     std::cout << "Usage: " << g_arg0 <<
-        " -f config [-g gui] [-j jobs] input...\n";
+        " -f config [-d path] [-g gui] [-j jobs] input...\n";
+    std::cout << " -d   generate dot file from nodes.";
     std::cout << " -g   values (this arg can be repeated):";
 #if PLUTT_SDL2
     std::cout << " sdl";
@@ -254,9 +257,12 @@ int main(int argc, char **argv)
   unsigned gui_type = GUI_NONE;
   (void)gui_type;
   int c;
-  while ((c = getopt(argc, argv, "hf:g:j:o:x" ROOT_ARGOPT UCESB_ARGOPT)) !=
+  while ((c = getopt(argc, argv, "d:hf:g:j:o:x" ROOT_ARGOPT UCESB_ARGOPT)) !=
       -1) {
     switch (c) {
+      case 'd':
+        g_dot_path = optarg;
+        break;
       case 'h':
         help(nullptr);
       case 'f':
@@ -394,7 +400,7 @@ int main(int argc, char **argv)
   // Config figures out requested signals and asks the input to deliver blobs
   // of arrays.
   // The ctor sets g_config by itself, nice hack bro.
-  new Config(g_conf_path);
+  new Config(g_conf_path, g_dot_path);
   switch (input_type) {
 #if PLUTT_ROOT
     case INPUT_ROOT_FILES:

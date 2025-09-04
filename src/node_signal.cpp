@@ -24,6 +24,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <map>

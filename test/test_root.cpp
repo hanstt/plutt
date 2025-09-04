@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 
 #if PLUTT_ROOT
 
+#include <fstream>
 #include <iostream>
 #include <list>
 
@@ -79,7 +80,7 @@ void MyTest::Run()
   delete file;
   delete cls;
 
-  auto config = new Config("test/test_root.plutt");
+  auto config = new Config("test/test_root.plutt", nullptr);
   char *argv[2];
   argv[0] = strdup("tree");
   argv[1] = strdup(FILENAME);

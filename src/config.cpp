@@ -23,6 +23,7 @@
 #include <err.h>
 
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <map>
@@ -82,8 +83,10 @@ extern int yycplex_destroy();
 
 extern char const *yycppath;
 
-Config::Config(char const *a_path):
+Config::Config(char const *a_path, char const *a_dot_path):
   m_path(a_path),
+  m_dot_node_map(),
+  m_dot_link_map(),
   m_line(),
   m_col(),
   m_trig_map(),
@@ -134,8 +137,41 @@ Config::Config(char const *a_path):
       alias->SetSource(GetLocStr(), signal);
       m_signal_map.insert(std::make_pair(name, signal));
       std::cout << "Signal=" << it->first << '\n';
+
+      std::ostringstream oss;
+      oss << "Signal=" << name;
+      DotAddNode(signal, oss.str(), {});
+      DotAddLink(alias, signal);
     }
   }
+
+  // Write dot file.
+  if (a_dot_path) {
+    std::ofstream of(a_dot_path);
+    if (!of.is_open()) {
+      warn("ofstream(%s)", a_dot_path);
+      throw std::runtime_error(__func__);
+    }
+    of << "digraph plutt {\n";
+    of << "graph [ rankdir = \"LR\" ]\n";
+    for (auto it = m_dot_node_map.begin(); m_dot_node_map.end() != it; ++it) {
+      auto const &e = it->second;
+      of << " " << (uintptr_t)it->first << " [ shape=record; label=\"<f>" <<
+          e.name;
+      unsigned i = 0;
+      for (auto it2 = e.outs.begin(); e.outs.end() != it2; ++it2, ++i) {
+        of << "|<f" << i << "> " << *it2;
+      }
+      of << "\" ]" << '\n';
+    }
+    for (auto it = m_dot_link_map.begin(); m_dot_link_map.end() != it; ++it) {
+      of << " " << it->second << ":f -> " << it->first << "\n";
+    }
+    of << "}\n";
+    of.close();
+  }
+  m_dot_node_map.clear();
+  m_dot_link_map.clear();
 
   if (!m_cut_poly_list.empty()) {
     throw std::runtime_error(__func__);
@@ -204,6 +240,12 @@ NodeValue *Config::AddAlias(char const *a_name, NodeValue *a_value, uint32_t
     }
     NodeValueAdd(key, node = alias);
   }
+
+  std::ostringstream oss2;
+  oss2 << "Alias=" << a_name;
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_value);
+
   return node;
 }
 
@@ -221,6 +263,12 @@ void Config::AddAnnular(char const *a_title, NodeValue *a_r, double a_r_min,
       a_phi, a_phi0, a_log_z, a_drop_counts_s, a_drop_counts_num,
       a_drop_stats_s);
   NodeCuttableAdd(node);
+
+  std::ostringstream oss2;
+  oss2 << "Annular:" << a_title;
+  DotAddNode(node, oss2.str(), {"r", "phi"});
+  DotAddLink(node, a_r, 0);
+  DotAddLink(node, a_phi, 1);
 }
 
 NodeValue *Config::AddArray(NodeValue *a_node, uint64_t a_i, uint64_t
@@ -234,11 +282,23 @@ NodeValue *Config::AddArray(NodeValue *a_node, uint64_t a_i, uint64_t
     NodeValueAdd(key,
         node = new NodeArray(GetLocStr(), a_node, a_i, a_mhit_i));
   }
+
+  std::ostringstream oss2;
+  oss2 << "Array(i=" << a_i << ",mhit=" << a_mhit_i << ')';
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_node);
+
   return node;
 }
 
 NodeValue *Config::AddBitfield(BitfieldArg *a_arg)
 {
+  // Args are destroyed before we can dot them.
+  std::list<Node *> l;
+  for (auto arg = a_arg; arg; arg = arg->next) {
+    l.push_back(arg->node);
+  }
+
   std::ostringstream oss;
   oss << __LINE__;
   for (auto arg = a_arg; arg; arg = arg->next) {
@@ -249,6 +309,20 @@ NodeValue *Config::AddBitfield(BitfieldArg *a_arg)
   if (!node) {
     NodeValueAdd(key, node = new NodeBitfield(GetLocStr(), a_arg));
   }
+
+  std::vector<std::string> outs;
+  unsigned i = 0;
+  for (auto it = l.begin(); l.end() != it; ++it, ++i) {
+    std::ostringstream oss2;
+    oss2 << i;
+    outs.push_back(oss2.str());
+  }
+  DotAddNode(node, "Bitfield", outs);
+  i = 0;
+  for (auto it = l.begin(); l.end() != it; ++it, ++i) {
+    DotAddLink(node, *it, i);
+  }
+
   return node;
 }
 
@@ -261,6 +335,8 @@ NodeValue *Config::AddCluster(NodeValue *a_node)
   if (!node) {
     NodeValueAdd(key, node = new NodeCluster(GetLocStr(), a_node));
   }
+  DotAddNode(node, "Cluster");
+  DotAddLink(node, a_node);
   return node;
 }
 
@@ -275,15 +351,18 @@ NodeValue *Config::AddCoarseFine(NodeValue *a_coarse, NodeValue *a_fine,
     NodeValueAdd(key, node = new NodeCoarseFine(GetLocStr(), a_coarse, a_fine,
         a_fine_range));
   }
+  DotAddNode(node, "CoarseFine", {"coarse", "fine"});
+  DotAddLink(node, a_coarse, 0);
+  DotAddLink(node, a_fine, 1);
   return node;
 }
 
 NodeValue *Config::AddCut(CutPolygon *a_poly)
 {
   // TODO: De-duplicate this properly...
-  auto node_cut = new NodeCut(GetLocStr(), a_poly);
-  NodeCutAdd(node_cut);
-  return node_cut;
+  auto node = new NodeCut(GetLocStr(), a_poly);
+  NodeCutAdd(node);
+  return node;
 }
 
 NodeValue *Config::AddFilterRange(
@@ -293,8 +372,8 @@ NodeValue *Config::AddFilterRange(
   std::ostringstream oss;
   oss << __LINE__;
   for (auto it = a_cond_vec.begin(); a_cond_vec.end() != it; ++it) {
-    oss << ',' << it->node << ',' << it->lower << ',' << it->lower_le << ',' <<
-        it->upper << ',' << it->upper_le;
+    oss << ',' << it->node << ',' << it->lower << ',' << it->lower_le << ','
+        << it->upper << ',' << it->upper_le;
   }
   for (auto it = a_arg_vec.begin(); a_arg_vec.end() != it; ++it) {
     oss << ',' << *it;
@@ -305,6 +384,20 @@ NodeValue *Config::AddFilterRange(
     NodeValueAdd(key,
         node = new NodeFilterRange(GetLocStr(), a_cond_vec, a_arg_vec));
   }
+
+  std::vector<std::string> outs;
+  unsigned i = 0;
+  for (auto it = a_cond_vec.begin(); a_cond_vec.end() != it; ++it, ++i) {
+    std::ostringstream oss2;
+    oss2 << i;
+    outs.push_back(oss2.str());
+  }
+  DotAddNode(node, "FilterRange", outs);
+  i = 0;
+  for (auto it = a_cond_vec.begin(); a_cond_vec.end() != it; ++it, ++i) {
+    DotAddLink(node, it->node, i);
+  }
+
   return node;
 }
 
@@ -347,6 +440,11 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
       LinearTransform(k, m), a_fit, a_log_y, a_contour, a_drop_counts_s,
       a_drop_counts_num, a_drop_stats_s);
   NodeCuttableAdd(node);
+
+  std::ostringstream oss2;
+  oss2 << "Hist1=\\\"" << a_title << "\\\"";
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_x);
 }
 
 void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
@@ -390,6 +488,17 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
       LinearTransform(ky, my), LinearTransform(kx, mx), a_fit, a_log_z,
       a_drop_counts_s, a_drop_counts_num, a_drop_stats_s);
   NodeCuttableAdd(node);
+
+  std::ostringstream oss2;
+  oss2 << "Hist2=\\\"" << a_title << "\\\"";
+  if (!a_x) {
+    DotAddNode(node, oss2.str(), {"xy"});
+    DotAddLink(node, a_y, 0);
+  } else {
+    DotAddNode(node, oss2.str(), {"x", "y"});
+    DotAddLink(node, a_x, 0);
+    DotAddLink(node, a_y, 1);
+  }
 }
 
 NodeValue *Config::AddLength(NodeValue *a_value)
@@ -401,6 +510,10 @@ NodeValue *Config::AddLength(NodeValue *a_value)
   if (!node) {
     NodeValueAdd(key, node = new NodeLength(GetLocStr(), a_value));
   }
+
+  DotAddNode(node, "Length");
+  DotAddLink(node, a_value);
+
   return node;
 }
 
@@ -413,6 +526,11 @@ NodeValue *Config::AddMatchId(NodeValue *a_l, NodeValue *a_r)
   if (!node) {
     NodeValueAdd(key, node = new NodeMatchId(GetLocStr(), a_l, a_r));
   }
+
+  DotAddNode(node, "MatchId", {"left", "right"});
+  DotAddLink(node, a_l, 0);
+  DotAddLink(node, a_r, 1);
+
   return node;
 }
 
@@ -427,6 +545,11 @@ NodeValue *Config::AddMatchValue(NodeValue *a_l, NodeValue *a_r, double
     NodeValueAdd(key,
         node = new NodeMatchValue(GetLocStr(), a_l, a_r, a_cutoff));
   }
+
+  DotAddNode(node, "MatchValue", {"left", "right"});
+  DotAddLink(node, a_l, 0);
+  DotAddLink(node, a_r, 1);
+
   return node;
 }
 
@@ -439,6 +562,10 @@ NodeValue *Config::AddMax(NodeValue *a_value)
   if (!node) {
     NodeValueAdd(key, node = new NodeMax(GetLocStr(), a_value));
   }
+
+  DotAddNode(node, "Max");
+  DotAddLink(node, a_value);
+
   return node;
 }
 
@@ -451,6 +578,16 @@ NodeValue *Config::AddMeanArith(NodeValue *a_l, NodeValue *a_r)
   if (!node) {
     NodeValueAdd(key, node = new NodeMeanArith(GetLocStr(), a_l, a_r));
   }
+
+  if (a_r) {
+    DotAddNode(node, "MeanArith", {"left", "right"});
+    DotAddLink(node, a_l, 0);
+    DotAddLink(node, a_r, 1);
+  } else {
+    DotAddNode(node, "MeanArith");
+    DotAddLink(node, a_l);
+  }
+
   return node;
 }
 
@@ -463,6 +600,16 @@ NodeValue *Config::AddMeanGeom(NodeValue *a_l, NodeValue *a_r)
   if (!node) {
     NodeValueAdd(key, node = new NodeMeanGeom(GetLocStr(), a_l, a_r));
   }
+
+  if (a_r) {
+    DotAddNode(node, "MeanGeom", {"left", "right"});
+    DotAddLink(node, a_l, 0);
+    DotAddLink(node, a_r, 1);
+  } else {
+    DotAddNode(node, "MeanGeom");
+    DotAddLink(node, a_l);
+  }
+
   return node;
 }
 
@@ -475,11 +622,23 @@ NodeValue *Config::AddMember(NodeValue *a_node, char const *a_suffix)
   if (!node) {
     NodeValueAdd(key, node = new NodeMember(GetLocStr(), a_node, a_suffix));
   }
+
+  std::ostringstream oss2;
+  oss2 << "Member:" << a_suffix;
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_node);
+
   return node;
 }
 
 NodeValue *Config::AddMerge(MergeArg *a_arg)
 {
+  // Args are destroyed before we can dot them.
+  std::list<Node *> l;
+  for (auto arg = a_arg; arg; arg = arg->next) {
+    l.push_back(arg->node);
+  }
+
   std::ostringstream oss;
   oss << __LINE__;
   for (auto arg = a_arg; arg; arg = arg->next) {
@@ -490,6 +649,21 @@ NodeValue *Config::AddMerge(MergeArg *a_arg)
   if (!node) {
     NodeValueAdd(key, node = new NodeMerge(GetLocStr(), a_arg));
   }
+
+  std::vector<std::string> outs;
+  unsigned i = 0;
+  for (auto it = l.begin(); l.end() != it; ++it, ++i) {
+    std::ostringstream oss2;
+    oss2 << i;
+    outs.push_back(oss2.str());
+  }
+  i = 0;
+  for (auto it = l.begin(); l.end() != it; ++it, ++i) {
+    DotAddLink(node, *it, i);
+  }
+
+  DotAddNode(node, "Merge", outs);
+
   return node;
 }
 
@@ -503,6 +677,53 @@ NodeValue *Config::AddMExpr(NodeValue *a_l, NodeValue *a_r, double a_d,
   if (!node) {
     NodeValueAdd(key, node = new NodeMExpr(GetLocStr(), a_l, a_r, a_d, a_op));
   }
+
+  std::ostringstream ossl;
+  std::ostringstream ossr;
+  std::vector<std::string> outs;
+  if (!a_l) {
+    ossl << a_d;
+    ossr << "right";
+    outs = {"right"};
+    DotAddLink(node, a_r, 0);
+  } else if (!a_r) {
+    ossl << "left";
+    ossr << a_d;
+    outs = {"left"};
+    DotAddLink(node, a_l, 0);
+  } else {
+    ossl << "left";
+    ossr << "right";
+    outs = {"left", "right"};
+    DotAddLink(node, a_l, 0);
+    DotAddLink(node, a_r, 1);
+  }
+  std::string op;
+  switch (a_op) {
+    case NodeMExpr::ADD:  op = "+"; break;
+    case NodeMExpr::SUB:  op = "-"; break;
+    case NodeMExpr::MUL:  op = "*"; break;
+    case NodeMExpr::DIV:  op = "/"; break;
+    case NodeMExpr::COS:  op = "cos"; break;
+    case NodeMExpr::SIN:  op = "sin"; break;
+    case NodeMExpr::TAN:  op = "tan"; break;
+    case NodeMExpr::ACOS: op = "acos"; break;
+    case NodeMExpr::ASIN: op = "asin"; break;
+    case NodeMExpr::ATAN: op = "atan"; break;
+    case NodeMExpr::SQRT: op = "sqrt"; break;
+    case NodeMExpr::EXP:  op = "exp"; break;
+    case NodeMExpr::LOG:  op = "log"; break;
+    case NodeMExpr::ABS:  op = "abs"; break;
+    case NodeMExpr::POW:  op = "pow"; break;
+  }
+  if (1 == op.size()) {
+    DotAddNode(node, std::string("MExpr:") + ossl.str() + op + ossr.str(),
+        outs);
+  } else {
+    DotAddNode(node, std::string("MExpr:") + op + '(' + ossl.str() + ')',
+        outs);
+  }
+
   return node;
 }
 
@@ -517,6 +738,13 @@ NodeValue *Config::AddPedestal(NodeValue *a_value, double a_cutoff, NodeValue
     NodeValueAdd(key,
         node = new NodePedestal(GetLocStr(), a_value, a_cutoff, a_tpat));
   }
+
+  std::ostringstream oss2;
+  oss2 << "Pedestal, cutoff=" << a_cutoff;
+  DotAddNode(node, oss2.str(), {"Value", "Tpat"});
+  DotAddLink(node, a_value, 0);
+  DotAddLink(node, a_tpat, 1);
+
   return node;
 }
 
@@ -531,6 +759,12 @@ NodeValue *Config::AddSelectId(NodeValue *a_child, uint32_t a_first,
     NodeValueAdd(key,
         node = new NodeSelectId(GetLocStr(), a_child, a_first, a_last));
   }
+
+  std::ostringstream oss2;
+  oss2 << "SelectID=" << a_first << ".." << a_last;
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_child);
+
   return node;
 }
 
@@ -546,6 +780,19 @@ NodeValue *Config::AddSignalUser(NodeValue *a_id, NodeValue *a_end, NodeValue
     m_signal_user_list.push_back(sig);
     NodeValueAdd(key, node = sig);
   }
+
+  if (!a_end) {
+    DotAddNode(node, "SignalUser", {"id", "v"});
+  } else {
+    DotAddNode(node, "SignalUser", {"id", "end", "v"});
+  }
+  unsigned i = 0;
+  DotAddLink(node, a_id, i++);
+  if (a_end) {
+    DotAddLink(node, a_end, i++);
+  }
+  DotAddLink(node, a_v, i++);
+
   return node;
 }
 
@@ -560,6 +807,11 @@ NodeValue *Config::AddSubMod(NodeValue *a_left, NodeValue *a_right, double
     NodeValueAdd(key,
         node = new NodeSubMod(GetLocStr(), a_left, a_right, a_range));
   }
+
+  DotAddNode(node, "SubMod", {"left", "right"});
+  DotAddLink(node, a_left, 0);
+  DotAddLink(node, a_right, 1);
+
   return node;
 }
 
@@ -574,6 +826,11 @@ NodeValue *Config::AddTot(NodeValue *a_leading, NodeValue *a_trailing, double
     NodeValueAdd(key,
         node = new NodeTot(GetLocStr(), a_leading, a_trailing, a_range));
   }
+
+  DotAddNode(node, "ToT", {"leading", "trailing"});
+  DotAddLink(node, a_leading, 0);
+  DotAddLink(node, a_trailing, 1);
+
   return node;
 }
 
@@ -586,6 +843,12 @@ NodeValue *Config::AddTpat(NodeValue *a_tpat, uint32_t a_mask)
   if (!node) {
     NodeValueAdd(key, node = new NodeTpat(GetLocStr(), a_tpat, a_mask));
   }
+
+  std::ostringstream oss2;
+  oss2 << "Tpat, mask=0x" << std::hex << a_mask;
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_tpat);
+
   return node;
 }
 
@@ -602,6 +865,11 @@ NodeValue *Config::AddTrigMap(char const *a_path, char const *a_prefix,
     NodeValueAdd(key, node = new NodeTrigMap(GetLocStr(), prefix, a_left,
         a_right, a_range));
   }
+
+  DotAddNode(node, "TrigMap", {"left", "right"});
+  DotAddLink(node, a_left, 0);
+  DotAddLink(node, a_right, 1);
+
   return node;
 }
 
@@ -615,6 +883,12 @@ NodeValue *Config::AddZeroSuppress(NodeValue *a_value, double a_cutoff)
     NodeValueAdd(key,
         node = new NodeZeroSuppress(GetLocStr(), a_value, a_cutoff));
   }
+
+  std::ostringstream oss2;
+  oss2 << "ZeroSuppress:" << a_cutoff;
+  DotAddNode(node, oss2.str());
+  DotAddLink(node, a_value);
+
   return node;
 }
 
@@ -671,6 +945,30 @@ void Config::ColormapSet(char const *a_name)
     throw std::runtime_error(__func__);
   }
 #endif
+}
+
+void Config::DotAddLink(Node *a_parent, Node *a_child, size_t a_i)
+{
+  std::ostringstream oss;
+  oss << (uintptr_t)a_parent << ":f" << a_i;
+  auto it = m_dot_link_map.find(oss.str());
+  if (m_dot_link_map.end() == it) {
+    m_dot_link_map.insert(std::make_pair(oss.str(), (uintptr_t)a_child));
+  } else if (0 == it->second) {
+    it->second = (uintptr_t)a_child;
+  }
+}
+
+void Config::DotAddNode(Node *a_node, std::string const &a_name,
+    std::vector<std::string> const &a_outs)
+{
+  auto it = m_dot_node_map.find(a_node);
+  if (m_dot_node_map.end() == it) {
+    DotEntry entry;
+    entry.name = a_name;
+    entry.outs = a_outs;
+    m_dot_node_map.insert(std::make_pair(a_node, entry));
+  }
 }
 
 void Config::HistCutAdd(CutPolygon *a_poly)

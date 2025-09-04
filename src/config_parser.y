@@ -22,10 +22,12 @@
 
 %{
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <map>
 #include <vector>
+
 #include <config.hpp>
 #include <config_parser.hpp>
 #include <config_parser.tab.h>

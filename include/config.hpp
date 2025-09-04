@@ -44,7 +44,7 @@ class NodeValue;
  */
 class Config {
   public:
-    Config(char const *);
+    Config(char const *, char const *);
     ~Config();
 
     NodeValue *AddAlias(char const *, NodeValue *, uint32_t);
@@ -105,6 +105,9 @@ class Config {
     Config(Config const &);
     Config &operator=(Config const &);
     void CutListBind(std::string const &);
+    void DotAddLink(Node *, Node *, size_t = 0);
+    void DotAddNode(Node *, std::string const &, std::vector<std::string>
+        const & = {"in"});
     void NodeCutAdd(NodeCut *);
     void NodeCuttableAdd(NodeCuttable *);
     void NodeValueAdd(std::string const &, NodeValue *);
@@ -114,7 +117,13 @@ class Config {
       double k;
       double m;
     };
+    struct DotEntry {
+      std::string name;
+      std::vector<std::string> outs;
+    };
     std::string m_path;
+    std::map<Node *, DotEntry> m_dot_node_map;
+    std::map<std::string, uintptr_t> m_dot_link_map;
     int m_line, m_col;
     TrigMap m_trig_map;
     // For de-duplicating nodes.

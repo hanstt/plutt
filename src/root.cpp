@@ -28,6 +28,8 @@
 #include <TTreeReaderArray.h>
 #include <TTreeReaderValue.h>
 
+#include <fstream>
+
 #include <config.hpp>
 #include <filewatcher.hpp>
 #include <util.hpp>
