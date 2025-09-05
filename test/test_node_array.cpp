@@ -36,23 +36,27 @@ class MyTest: public Test {
 };
 MyTest g_test_node_array_;
 
-void ProcessExtra(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-  s.u64 = 2;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 3;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 4;
-  a_nv.m_value[0].Push(3, s);
-  s.u64 = 5;
-  a_nv.m_value[0].Push(3, s);
-}
+class MockNode: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNode)
+    void ProcessUser()
+    {
+      Input::Scalar s;
+      s.u64 = 2;
+      m_value[0].Push(1, s);
+      s.u64 = 3;
+      m_value[0].Push(1, s);
+      s.u64 = 4;
+      m_value[0].Push(3, s);
+      s.u64 = 5;
+      m_value[0].Push(3, s);
+    }
+};
 
 void MyTest::Run()
 {
   {
-    MockNodeValue nv(Input::kUint64, 1, ProcessExtra);
+    MockNode nv(Input::kUint64, 1);
     NodeArray n("", &nv, 0, 0);
 
     auto const &v = n.GetValue(0);
@@ -66,7 +70,7 @@ void MyTest::Run()
     TEST_CMP(v.GetV(0, true), ==, 2);
   }
   {
-    MockNodeValue nv(Input::kUint64, 1, ProcessExtra);
+    MockNode nv(Input::kUint64, 1);
     NodeArray n("", &nv, 1, 1);
 
     auto const &v = n.GetValue(0);

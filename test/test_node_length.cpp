@@ -36,20 +36,24 @@ class MyTest: public Test {
 };
 MyTest g_test_node_length_;
 
-void ProcessExtra(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-  s.u64 = 2;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 3;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 4;
-  a_nv.m_value[0].Push(1, s);
-}
+class MockNode: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNode)
+    void ProcessUser()
+    {
+      Input::Scalar s;
+      s.u64 = 2;
+      m_value[0].Push(1, s);
+      s.u64 = 3;
+      m_value[0].Push(1, s);
+      s.u64 = 4;
+      m_value[0].Push(1, s);
+    }
+};
 
 void MyTest::Run()
 {
-  MockNodeValue nv(Input::kUint64, 1, ProcessExtra);
+  MockNode nv(Input::kUint64, 1);
   NodeLength n("", &nv);
 
   auto const &v = n.GetValue(0);

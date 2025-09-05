@@ -36,25 +36,32 @@ class MyTest: public Test {
 };
 MyTest g_test_node_bitfield_;
 
-void ProcessExtra0(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-  s.u64 = 1;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 2;
-  a_nv.m_value[0].Push(2, s);
-}
-
-void ProcessExtra1(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-  s.u64 = 3;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 4;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 5;
-  a_nv.m_value[0].Push(3, s);
-}
+class MockNode0: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNode0)
+    void ProcessUser()
+    {
+      Input::Scalar s;
+      s.u64 = 1;
+      m_value[0].Push(1, s);
+      s.u64 = 2;
+      m_value[0].Push(2, s);
+    }
+};
+class MockNode1: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNode1)
+    void ProcessUser()
+    {
+      Input::Scalar s;
+      s.u64 = 3;
+      m_value[0].Push(1, s);
+      s.u64 = 4;
+      m_value[0].Push(1, s);
+      s.u64 = 5;
+      m_value[0].Push(3, s);
+    }
+};
 
 void MyTest::Run()
 {
@@ -63,9 +70,9 @@ void MyTest::Run()
     TestNodeBase(n, "a");
   }
   {
-    MockNodeValue nv0(Input::kUint64, 1, ProcessExtra0);
+    MockNode0 nv0(Input::kUint64, 1);
     auto a0 = new BitfieldArg("a0", &nv0, 8);
-    MockNodeValue nv1(Input::kUint64, 1, ProcessExtra1);
+    MockNode1 nv1(Input::kUint64, 1);
     auto a1 = new BitfieldArg("a1", &nv1, 8);
     // Parser builds arg-list in reverse order!
     a1->next = a0;

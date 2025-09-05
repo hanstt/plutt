@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,11 +30,9 @@
 #include <test/test.hpp>
 
 MockNodeCuttable::MockNodeCuttable(std::string const &a_title, Input::Type
-    a_type, unsigned a_val_num, void (*a_process_extra)(MockNodeCuttable &,
-    CutProducerList &)):
+    a_type, unsigned a_val_num):
   NodeCuttable("", a_title),
   m_value(a_val_num),
-  m_process_extra(a_process_extra),
   m_parent()
 {
   for (auto it = m_value.begin(); m_value.end() != it; ++it) {
@@ -62,16 +61,16 @@ void MockNodeCuttable::Process(uint64_t a_evid)
   if (!m_cut_consumer.IsOk()) {
     return;
   }
-  if (m_process_extra) {
-    m_process_extra(*this, m_cut_producer);
-  }
+  ProcessUser( m_cut_producer);
 }
 
-MockNodeValue::MockNodeValue(Input::Type a_type, unsigned a_val_num, void
-    (*a_process_extra)(MockNodeValue &)):
+void MockNodeCuttable::ProcessUser(CutProducerList &)
+{
+}
+
+MockNodeValue::MockNodeValue(Input::Type a_type, unsigned a_val_num):
   NodeValue(""),
   m_value(a_val_num),
-  m_process_extra(a_process_extra),
   m_parent()
 {
   for (auto it = m_value.begin(); m_value.end() != it; ++it) {
@@ -97,9 +96,11 @@ void MockNodeValue::Process(uint64_t a_evid)
   for (auto it = m_value.begin(); m_value.end() != it; ++it) {
     it->Clear();
   }
-  if (m_process_extra) {
-    m_process_extra(*this);
-  }
+  ProcessUser();
+}
+
+void MockNodeValue::ProcessUser()
+{
 }
 
 void TestNodeBase(Node &a_node, std::string const &a_loc)

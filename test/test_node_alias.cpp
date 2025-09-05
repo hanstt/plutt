@@ -36,14 +36,18 @@ class MyTest: public Test {
 };
 MyTest g_test_node_alias_;
 
-void ProcessExtra(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-  s.u64 = 2;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 3;
-  a_nv.m_value[1].Push(1, s);
-}
+class MockNode: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNode)
+    void ProcessUser()
+    {
+      Input::Scalar s;
+      s.u64 = 2;
+      m_value[0].Push(1, s);
+      s.u64 = 3;
+      m_value[1].Push(1, s);
+    }
+};
 
 void MyTest::Run()
 {
@@ -56,14 +60,14 @@ void MyTest::Run()
     TestNodeBase(n, "a");
     TEST_BOOL(!n.GetSource());
 
-    MockNodeValue v(Input::kUint64, 1);
+    MockNode v(Input::kUint64, 1);
     n.SetSource("", &v);
     TEST_CMP(n.GetSource(), ==, &v);
     NodeAlias n2("", &v, 0);
     TEST_CMP(n.GetSource(), ==, &v);
   }
   {
-    MockNodeValue nv(Input::kUint64, 2, ProcessExtra);
+    MockNode nv(Input::kUint64, 2);
     NodeAlias n0("", &nv, 0);
     NodeAlias n1("", &nv, 1);
 

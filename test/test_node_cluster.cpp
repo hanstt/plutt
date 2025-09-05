@@ -36,19 +36,22 @@ class MyTest: public Test {
 };
 MyTest g_test_node_cluster_;
 
-void ProcessExtra(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-
-  s.u64 = 4;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 5;
-  a_nv.m_value[0].Push(2, s);
-  s.u64 = 6;
-  a_nv.m_value[0].Push(3, s);
-  s.u64 = 7;
-  a_nv.m_value[0].Push(5, s);
-}
+class MockNode: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNode)
+    void ProcessUser()
+    {
+      Input::Scalar s;
+      s.u64 = 4;
+      m_value[0].Push(1, s);
+      s.u64 = 5;
+      m_value[0].Push(2, s);
+      s.u64 = 6;
+      m_value[0].Push(3, s);
+      s.u64 = 7;
+      m_value[0].Push(5, s);
+    }
+};
 
 void MyTest::Run()
 {
@@ -57,7 +60,7 @@ void MyTest::Run()
     TestNodeBase(n, "a");
   }
   {
-    MockNodeValue nv(Input::kUint64, 1, ProcessExtra);
+    MockNode nv(Input::kUint64, 1);
 
     NodeCluster n("", &nv);
 

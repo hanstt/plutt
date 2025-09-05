@@ -35,29 +35,36 @@ class MyTest: public Test {
 };
 MyTest g_test_node_cluster_;
 
-void ProcessExtraCond(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
+class MockNodeCond: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNodeCond)
+    void ProcessUser()
+    {
+      Input::Scalar s;
 
-  s.u64 = 1;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 2;
-  a_nv.m_value[0].Push(3, s);
-  s.u64 = 3;
-  a_nv.m_value[0].Push(3, s);
-}
+      s.u64 = 1;
+      m_value[0].Push(1, s);
+      s.u64 = 2;
+      m_value[0].Push(3, s);
+      s.u64 = 3;
+      m_value[0].Push(3, s);
+    }
+};
+class MockNodeArg: public MockNodeValue {
+  public:
+    MOCK_NODE_VALUE(MockNodeArg)
+    void ProcessUser()
+    {
+      Input::Scalar s;
 
-void ProcessExtraArg(MockNodeValue &a_nv)
-{
-  Input::Scalar s;
-
-  s.u64 = 4;
-  a_nv.m_value[0].Push(1, s);
-  s.u64 = 5;
-  a_nv.m_value[0].Push(3, s);
-  s.u64 = 6;
-  a_nv.m_value[0].Push(3, s);
-}
+      s.u64 = 4;
+      m_value[0].Push(1, s);
+      s.u64 = 5;
+      m_value[0].Push(3, s);
+      s.u64 = 6;
+      m_value[0].Push(3, s);
+    }
+};
 
 void MyTest::Run()
 {
@@ -67,8 +74,8 @@ void MyTest::Run()
     TestNodeBase(n, "a");
   }
   {
-    MockNodeValue nv_cond(Input::kUint64, 1, ProcessExtraCond);
-    MockNodeValue nv_arg(Input::kUint64, 1, ProcessExtraArg);
+    MockNodeCond nv_cond(Input::kUint64, 1);
+    MockNodeArg nv_arg(Input::kUint64, 1);
 
     NodeFilterRange::CondVec cv;
     cv.push_back(FilterRangeCond());

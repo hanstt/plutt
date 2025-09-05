@@ -35,16 +35,20 @@ class MyTest: public Test {
 };
 MyTest g_test_node_cut_;
 
-void ProcessExtra(MockNodeCuttable &a_nc, CutProducerList &a_cut_producer)
-{
-  Input::Scalar x, y;
-  y.dbl = x.dbl = 1;
-  a_cut_producer.Test(Input::kDouble, x, Input::kDouble, y);
-  y.dbl = x.dbl = 11;
-  a_cut_producer.Test(Input::kDouble, x, Input::kDouble, y);
-  y.dbl = x.dbl = 21;
-  a_cut_producer.Test(Input::kDouble, x, Input::kDouble, y);
-}
+class MockNode: public MockNodeCuttable {
+  public:
+    MOCK_NODE_CUTTABLE(MockNode)
+    void ProcessUser(CutProducerList &a_cut_producer)
+    {
+      Input::Scalar x, y;
+      y.dbl = x.dbl = 1;
+      a_cut_producer.Test(Input::kDouble, x, Input::kDouble, y);
+      y.dbl = x.dbl = 11;
+      a_cut_producer.Test(Input::kDouble, x, Input::kDouble, y);
+      y.dbl = x.dbl = 21;
+      a_cut_producer.Test(Input::kDouble, x, Input::kDouble, y);
+    }
+};
 
 void MyTest::Run()
 {
@@ -54,7 +58,7 @@ void MyTest::Run()
     TestNodeBase(n, "a");
   }
   {
-    MockNodeCuttable nc("MockCuttable", Input::kUint64, 1, ProcessExtra);
+    MockNode nc("MockCuttable", Input::kUint64, 1);
     TEST_CMP(nc.GetTitle().compare("MockCuttable"), ==, 0);
 
     auto p = new CutPolygon("test/poly.txt", true);
@@ -74,7 +78,7 @@ void MyTest::Run()
     TEST_CMP(std::abs(v1.GetV(0, false) - 11), <, 1e-6);
   }
   {
-    MockNodeCuttable nc("MockCuttable", Input::kUint64, 1, ProcessExtra);
+    MockNode nc("MockCuttable", Input::kUint64, 1);
     TEST_CMP(nc.GetTitle().compare("MockCuttable"), ==, 0);
 
     auto p = new CutPolygon("some_title", false);

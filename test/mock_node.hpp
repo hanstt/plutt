@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,17 +25,23 @@
 
 #include <node.hpp>
 
+#define MOCK_NODE_CUTTABLE(name) \
+    name(std::string const &a_title, Input::Type a_type, unsigned a_val_n): \
+      MockNodeCuttable(a_title, a_type, a_val_n) {}
+#define MOCK_NODE_VALUE(name) \
+    name(Input::Type a_type, unsigned a_val_n): \
+      MockNodeValue(a_type, a_val_n) {}
+
 class MockNodeCuttable: public NodeCuttable {
   public:
-    MockNodeCuttable(std::string const &, Input::Type, unsigned, void
-        (*)(MockNodeCuttable &, CutProducerList &) = nullptr);
+    MockNodeCuttable(std::string const &, Input::Type, unsigned);
     CutPolygon const &GetCutPolygon() const;
     Value const &GetValue(uint32_t);
     void Preprocess(Node *);
     void Process(uint64_t);
+    virtual void ProcessUser(CutProducerList &);
 
     std::vector<Value> m_value;
-    void (*m_process_extra)(MockNodeCuttable &, CutProducerList &);
 
   private:
     MockNodeCuttable(MockNodeCuttable const &);
@@ -45,13 +52,13 @@ class MockNodeCuttable: public NodeCuttable {
 
 class MockNodeValue: public NodeValue {
   public:
-    MockNodeValue(Input::Type, unsigned, void (*)(MockNodeValue &) = nullptr);
+    MockNodeValue(Input::Type, unsigned);
     Value const &GetValue(uint32_t);
     void Preprocess(Node *);
     void Process(uint64_t);
+    virtual void ProcessUser();
 
     std::vector<Value> m_value;
-    void (*m_process_extra)(MockNodeValue &);
 
   private:
     MockNodeValue(MockNodeValue const &);
