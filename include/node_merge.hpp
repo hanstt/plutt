@@ -25,7 +25,7 @@
 #include <node.hpp>
 
 /*
- * Merges integer values of given bit-sizes.
+ * Merges data from the same channels.
  */
 
 class NodeValue;
