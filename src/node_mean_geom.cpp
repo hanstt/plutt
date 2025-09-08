@@ -53,17 +53,20 @@ void NodeMeanGeom::Process(uint64_t a_evid)
   m_value.SetType(Input::kDouble);
 
   auto const &val_l = m_l->GetValue();
+  auto const &iv_l = val_l.GetID();
+  auto const &ev_l = val_l.GetEnd();
 
   if (!m_r) {
-    // Arith-mean over all "I" of n:th entry in "v".
-    for (uint32_t vi = 0;; ++vi) {
-      double sum = 0.0;
+    // Geom-mean over all "I" of n:th entry in "v".
+    for (uint32_t dvi = 0;; ++dvi) {
+      double prod = 1.0;
       uint32_t num = 0;
       uint32_t me_0 = 0;
-      for (uint32_t i = 0; i < val_l.GetID().size(); ++i) {
-        auto me_1 = val_l.GetEnd()[i];
-        if (me_0 + vi < me_1) {
-          sum += val_l.GetV(me_0 + vi, false);
+      for (uint32_t i = 0; i < iv_l.size(); ++i) {
+        auto me_1 = ev_l[i];
+        auto vi = me_0 + dvi;
+        if (vi < me_1) {
+          prod *= val_l.GetV(vi, false);
           ++num;
         }
         me_0 = me_1;
@@ -72,39 +75,62 @@ void NodeMeanGeom::Process(uint64_t a_evid)
         break;
       }
       Input::Scalar mean;
-      mean.dbl = pow(sum, 1.0 / num);
+      mean.dbl = pow(prod, 1.0 / num);
       m_value.Push(0, mean);
     }
   } else {
-    // Arith-mean between two signals for each "I".
+    // Geom-mean between two signals for each "I".
     NODE_PROCESS(m_r, a_evid);
-    auto const &val_r = m_r->GetValue();
-    NODE_ASSERT(val_l.GetID().size(), ==, val_r.GetID().size());
 
+    auto const &val_r = m_r->GetValue();
+    auto const &iv_r = val_r.GetID();
+    auto const &ev_r = val_r.GetEnd();
+
+    uint32_t i_l = 0;
+    uint32_t i_r = 0;
     uint32_t me0_l = 0;
     uint32_t me0_r = 0;
-    for (uint32_t i = 0; i < val_l.GetID().size(); ++i) {
-      auto mi = val_l.GetID()[i];
-      NODE_ASSERT(mi, ==, val_r.GetID()[i]);
-      auto me1_l = val_l.GetEnd()[i];
-      auto me1_r = val_r.GetEnd()[i];
-      while (me0_l < me1_l && me0_r < me1_r) {
+    for (;;) {
+      uint32_t mi_l = UINT32_MAX;
+      uint32_t mi_r = UINT32_MAX;
+      uint32_t me1_l = 0;
+      uint32_t me1_r = 0;
+      if (i_l < iv_l.size()) {
+        mi_l = iv_l[i_l];
+        me1_l = ev_l[i_l];
+      }
+      if (i_r < iv_r.size()) {
+        mi_r = iv_r[i_r];
+        me1_r = ev_r[i_r];
+      }
+      if (UINT32_MAX == mi_l && UINT32_MAX == mi_r) {
+        break;
+      }
+      auto const mi = std::min(mi_l, mi_r);
+      for (;;) {
         Input::Scalar mean;
         double prod = 1.0;
         double num = 0;
-        if (me0_l < me1_l) {
+        if (mi == mi_l && me0_l < me1_l) {
           prod *= val_l.GetV(me0_l++, true);
           ++num;
         }
-        if (me0_r < me1_r) {
+        if (mi == mi_r && me0_r < me1_r) {
           prod *= val_r.GetV(me0_r++, true);
           ++num;
         }
-        mean.dbl = pow(prod, 1 / num);
+        if (0 == num) {
+          break;
+        }
+        mean.dbl = pow(prod, 1.0 / num);
         m_value.Push(mi, mean);
       }
-      me0_l = me1_l;
-      me0_r = me1_r;
+      if (mi == mi_l) {
+        ++i_l;
+      }
+      if (mi == mi_r) {
+        ++i_r;
+      }
     }
   }
 }
