@@ -79,58 +79,66 @@ void NodeMExpr::Process(uint64_t a_evid)
   m_value.Clear();
   m_value.SetType(Input::kDouble);
 
-  uint32_t vi_l = 0;
-  uint32_t vi_r = 0;
-  for (uint32_t i = 0;; ++i) {
+  uint32_t i_l = 0;
+  uint32_t i_r = 0;
+  for (;;) {
     uint32_t mi;
-    uint32_t me_l = 1;
-    uint32_t me_r = 1;
+    uint32_t me_l;
+    uint32_t me_r;
+    uint32_t vi_l;
+    uint32_t vi_r;
     if (0 == m_mix) {
-      auto done_l = i == val_l->GetID().size();
-      auto done_r = i == val_r->GetID().size();
-      if (done_l && done_r) {
+      if (i_l >= val_l->GetID().size() ||
+          i_r >= val_r->GetID().size()) {
         break;
       }
-      if (done_l || done_r) {
-        std::cerr << GetLocStr() << ": Data operands not index-matched!\n";
-        throw std::runtime_error(__func__);
-      }
-      auto mi_l = val_l->GetID().at(i);
-      auto mi_r = val_r->GetID().at(i);
-      if (mi_l != mi_r) {
-        std::cerr << GetLocStr() << ": Data operands not index-matched!\n";
-        throw std::runtime_error(__func__);
+      auto mi_l = val_l->GetID()[i_l];
+      auto mi_r = val_r->GetID()[i_r];
+      if (mi_l < mi_r) {
+        ++i_l;
+        continue;
+      } else if (mi_r < mi_l) {
+        ++i_r;
+        continue;
       }
       mi = mi_l;
-      me_l = val_l->GetEnd().at(i);
-      me_r = val_r->GetEnd().at(i);
+      me_l = val_l->GetEnd()[i_l];
+      me_r = val_r->GetEnd()[i_r];
+      vi_l = 0 == i_l ? 0 : val_l->GetEnd()[i_l - 1];
+      vi_r = 0 == i_r ? 0 : val_r->GetEnd()[i_r - 1];
     } else if (1 == m_mix) {
-      if (i == val_l->GetID().size()) {
+      if (i_l >= val_l->GetID().size()) {
         break;
       }
-      mi = val_l->GetID().at(i);
-      me_l = val_l->GetEnd().at(i);
+      mi = val_l->GetID()[i_l];
+      me_l = val_l->GetEnd()[i_l];
+      vi_l = 0 == i_l ? 0 : val_l->GetEnd()[i_l - 1];
     } else {
-      if (i == val_r->GetID().size()) {
+      if (i_r >= val_r->GetID().size()) {
         break;
       }
-      mi = val_r->GetID().at(i);
-      me_r = val_r->GetEnd().at(i);
+      mi = val_r->GetID()[i_r];
+      me_r = val_r->GetEnd()[i_r];
+      vi_r = 0 == i_r ? 0 : val_r->GetEnd()[i_r - 1];
     }
     for (;;) {
       double v, l = 0.0, r = 0.0;
-      auto done_l = vi_l == me_l;
-      auto done_r = vi_r == me_r;
-      if (done_l || done_r) {
-        break;
-      }
       if (0 == m_mix) {
+        if (vi_l >= me_l || vi_r >= me_r) {
+          break;
+        }
         l = val_l->GetV(vi_l++, true);
         r = val_r->GetV(vi_r++, true);
       } else if (1 == m_mix) {
+        if (vi_l >= me_l) {
+          break;
+        }
         l = val_l->GetV(vi_l++, true);
         r = m_d;
       } else {
+        if (vi_r >= me_r) {
+          break;
+        }
         l = m_d;
         r = val_r->GetV(vi_r++, true);
       }
@@ -158,7 +166,7 @@ void NodeMExpr::Process(uint64_t a_evid)
         m_value.Push(mi, s);
       }
     }
-    vi_l = me_l;
-    vi_r = me_r;
+    ++i_l;
+    ++i_r;
   }
 }

@@ -25,7 +25,7 @@
 #include <node.hpp>
 
 /*
- * Simple mathematical expressions of the form f(node, constant).
+ * Simple mathematical expressions.
  */
 class NodeMExpr: public NodeValue {
   public:
