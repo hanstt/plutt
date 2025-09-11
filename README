@@ -544,10 +544,10 @@ b = tpat(a, bitmask)
 		bitmask = 0x83
 
 f = trig_map(a, b, c, d, e)
-	Parses map in file 'a', considers lines prefixed with 'b', then maps
-	trigger channels 'c' to signal channels 'b' and does cyclical
-	subtraction on them with range 'd':
-		a syntax:
+	Parses file 'a', considers lines prefixed with 'b', then does cyclical
+	subtraction of trigger channels 'd', mapped by 'a', from signal
+	channels 'c' with range 'e':
+		a:
 			Det1:1 = 1
 			Det1:2 = 1
 			Det1:3 = 2
