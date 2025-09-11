@@ -71,7 +71,7 @@ endif
 # ROOT GUI?
 
 ALLOW_ROOT_HTTP=Box
-ifeq ($(shell $(ROOT_CONFIG) --features | grep -o http)Box,http$(ALLOW_ROOT_HTTP))
+ifeq ($(shell $(ROOT_CONFIG) --features 2>/dev/null | grep -o http)Box,http$(ALLOW_ROOT_HTTP))
 CPPFLAGS+=-DPLUTT_ROOT_HTTP=1
 LIBS+=-lRHTTP
 $(info ROOT_HTTP: yes)
