@@ -25,7 +25,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <node_pedestal.hpp>
+#include <node_select_id.hpp>
 #include <test/mock_node.hpp>
 #include <test/test.hpp>
 
@@ -34,48 +34,62 @@ namespace {
 class MyTest: public Test {
   void Run();
 };
-MyTest g_test_node_pedestal_;
+MyTest g_test_node_select_id_;
 
 class MockNode: public MockNodeValue {
   public:
     MOCK_NODE_VALUE(MockNode)
     void ProcessUser()
     {
-      m_value[0].Clear();
       Input::Scalar s;
-      s.u64 = rand() & 7;
+      s.u64 = 2;
+      m_value[0].Push(1, s);
+      s.u64 = 3;
       m_value[0].Push(2, s);
-      s.u64 = rand() & 15;
+      s.u64 = 4;
       m_value[0].Push(3, s);
     }
 };
 
 void MyTest::Run()
 {
-  MockNode nv(Input::kUint64, 1);
-  NodePedestal n("", &nv, 0.1, nullptr);
+  {
+    MockNode nv(Input::kUint64, 1);
+    NodeSelectId n("", &nv, 2, 2);
 
-  auto const &v = n.GetValue(0);
-  TEST_BOOL(v.GetV().empty());
-  auto const &s = n.GetValue(1);
-  TEST_BOOL(s.GetV().empty());
+    auto const &v = n.GetValue(0);
+    TEST_BOOL(v.GetV().empty());
 
-  nv.Preprocess(&n);
-  for (int i = 0; i < 11000; ++i) {
-    TestNodeProcess(n, 1 + i);
+    nv.Preprocess(&n);
+    TestNodeProcess(n, 1);
+
+    TEST_CMP(v.GetID().size(), ==, 1UL);
+    TEST_CMP(v.GetID().at(0), ==, 2UL);
+    TEST_CMP(v.GetEnd().size(), ==, 1UL);
+    TEST_CMP(v.GetEnd().at(0), ==, 1UL);
+    TEST_CMP(v.GetV().size(), ==, 1UL);
+    TEST_CMP(v.GetV(0, true), ==, 3);
   }
+  {
+    MockNode nv(Input::kUint64, 1);
+    NodeSelectId n("", &nv, 2, 3);
 
-  TEST_CMP(s.GetID().size(), ==, 2UL);
-  TEST_CMP(s.GetID().at(0), ==, 2UL);
-  TEST_CMP(s.GetID().at(1), ==, 3UL);
-  TEST_CMP(s.GetEnd().size(), ==, 2UL);
-  TEST_CMP(s.GetEnd().at(0), ==, 1UL);
-  TEST_CMP(s.GetEnd().at(1), ==, 2UL);
-  TEST_CMP(s.GetV().size(), ==, 2UL);
-  TEST_CMP(std::abs(s.GetV().at(0).dbl - 2.3), <, 0.5);
-  TEST_CMP(std::abs(s.GetV().at(1).dbl - 4.6), <, 0.5);
+    auto const &v = n.GetValue(0);
+    TEST_BOOL(v.GetV().empty());
 
-  // TODO: Test tpat.
+    nv.Preprocess(&n);
+    TestNodeProcess(n, 1);
+
+    TEST_CMP(v.GetID().size(), ==, 2UL);
+    TEST_CMP(v.GetID().at(0), ==, 2UL);
+    TEST_CMP(v.GetID().at(1), ==, 3UL);
+    TEST_CMP(v.GetEnd().size(), ==, 2UL);
+    TEST_CMP(v.GetEnd().at(0), ==, 1UL);
+    TEST_CMP(v.GetEnd().at(1), ==, 2UL);
+    TEST_CMP(v.GetV().size(), ==, 2UL);
+    TEST_CMP(v.GetV(0, true), ==, 3);
+    TEST_CMP(v.GetV(1, true), ==, 4);
+  }
 }
 
 }
