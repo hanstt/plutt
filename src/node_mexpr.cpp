@@ -83,10 +83,10 @@ void NodeMExpr::Process(uint64_t a_evid)
   uint32_t i_r = 0;
   for (;;) {
     uint32_t mi;
-    uint32_t me_l;
-    uint32_t me_r;
-    uint32_t vi_l;
-    uint32_t vi_r;
+    uint32_t me_l = 0;
+    uint32_t me_r = 0;
+    uint32_t vi_l = 0;
+    uint32_t vi_r = 0;
     if (0 == m_mix) {
       if (i_l >= val_l->GetID().size() ||
           i_r >= val_r->GetID().size()) {
