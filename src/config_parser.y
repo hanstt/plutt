@@ -225,6 +225,7 @@ static void ResetDrawArgs() {
 %token TK_TRANSFORMX
 %token TK_TRANSFORMY
 %token TK_TRIG_MAP
+%token TK_FLOOR
 %token TK_UI_RATE
 %token TK_VFTX2
 %token TK_ZERO_SUPPRESS
@@ -247,6 +248,7 @@ static void ResetDrawArgs() {
 %type <u32> cmp_less
 %type <value> coarse_fine
 %type <c> const
+%type <value> floor
 %type <range> integer_range
 %type <value> length
 %type <value> max
@@ -544,6 +546,7 @@ value
 	| array         { $$ = $1; }
 	| bitfield      { $$ = $1; }
 	| coarse_fine   { $$ = $1; }
+	| floor         { $$ = $1; }
 	| mexpr         { $$ = $1; }
 	| length        { $$ = $1; }
 	| max           { $$ = $1; }
@@ -777,6 +780,11 @@ coarse_fine
 	: TK_COARSE_FINE '(' value ',' value ',' clock_period ')' {
 		LOC_SAVE(@1);
 		$$ = g_config->AddCoarseFine($3, $5, $7);
+	}
+floor
+	: TK_FLOOR '(' value ')' {
+		LOC_SAVE(@1);
+		$$ = g_config->AddFloor($3);
 	}
 hist
 	: TK_HIST '(' TK_STRING ',' value hist_opts ')' {

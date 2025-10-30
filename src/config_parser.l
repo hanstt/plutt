@@ -77,6 +77,7 @@ exp                    return TK_EXP;
 filled                 return TK_FILLED;
 filter_range           return TK_FILTER_RANGE;
 fit                    return TK_FIT;
+floor                  return TK_FLOOR;
 hist                   return TK_HIST;
 hist2d                 return TK_HIST2D;
 length                 return TK_LENGTH;

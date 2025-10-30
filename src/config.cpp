@@ -49,6 +49,7 @@
 #include <node_coarse_fine.hpp>
 #include <node_cut.hpp>
 #include <node_filter_range.hpp>
+#include <node_floor.hpp>
 #include <node_hist1.hpp>
 #include <node_hist2.hpp>
 #include <node_length.hpp>
@@ -411,6 +412,22 @@ void Config::AddFit(char const *a_name, double a_k, double a_m)
   auto it = ret.first;
   it->second.k = a_k;
   it->second.m = a_m;
+}
+
+NodeValue *Config::AddFloor(NodeValue *a_value)
+{
+  std::ostringstream oss;
+  oss << __LINE__ << ',' << a_value;
+  auto key = oss.str();
+  auto node = NodeValueGet(key);
+  if (!node) {
+    NodeValueAdd(key, node = new NodeFloor(GetLocStr(), a_value));
+  }
+
+  DotAddNode(node, "Floor", {"value"});
+  DotAddLink(node, a_value, 0);
+
+  return node;
 }
 
 void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
