@@ -158,7 +158,7 @@ namespace {
   void main_input(int argc, char **argv)
   {
     std::cout << "Starting input loop.\n";
-    for (;;) {
+    while (g_inp.running) {
       // Fetch event and wait until buffered event is done.
       if (!g_input->Fetch()) {
         sleep(1);
