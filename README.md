@@ -1,191 +1,225 @@
-plutt
-=====
+# plutt
 
 
-What's the idea?
-----------------
+![gauss](assets/plutt_sim_gauss.png "Some quite normal distributions.")
+```
+hist("x", x)
+hist("x, binsx=10", x, binsx=10)
+hist("x, logy", x, logy)
+hist("x, fit", x, fit="gauss")
+hist2d("x vs x", x, x)
+hist2d("y vs x", y, x)
+hist2d("y vs x, bins=10/50", y, x, binsx=10, binsy=50)
+hist2d("y vs x, logz", y, x, logz)
+```
+
+
+## What's the idea?
 
 Say we have an event stream from a detector outfitted with e.g. scintillator
 paddles or silicon segments that are read out on both ends. What's an easy way
 to plot this?
 
 Let's say we have another such detector rotated by 90 degrees. How hard
-can/should it be to draw one vs the other in a Y vs X plot?
+can/should it be to draw one vs the other in a Y-vs-X plot?
 
 The ROOT prompt, as powerful as it is, has its limitations, for example when
 dealing with zero-suppressed or multi-hit arrays.
 
 Here's some human-readable pseudo-code for the first example:
-	- get array for left side -> "left"
-	- get array for right side -> "right"
-	- match channels between "left" and "right" -> "left2" and "right2"
-	- plot "right2" vs "left2" -> graphical plot!
 
-Typical pseudo-C++&ROOT could be:
-	// Init.
-	h1 = new TH1F(name, title, bins_x, min_x, max_x, ...);
-	left_handle = Input.GetHandle("MY_DET_LEFT");
-	right_handle = Input.GetHandle("MY_DET_RIGHT");
+```
+- Get array for left side -> "left"
+- Get array for right side -> "right"
+- Match channels between "left" and "right" -> "left2" and "right2"
+- Plot "right2" vs "left2"
+```
 
-	// For each event.
-	auto left = Input.GetData(left_handle);
-	auto right = Input.GetData(right_handle);
-	int l_i, r_i;
-	for (r_i = l_i = 0; l_i < left->size && r_i < right->size;) {
-		auto l_id = left[l_i]->channel;
-		auto r_id = right[r_i]->channel;
-		if (l_id == r_id) {
-			h1->Fill(l_id);
-		} else if (l < r) ++l_i;
-		} else ++r_i;
-	}
+Typical pseudo-C++ & ROOT could be:
+
+```
+// Init.
+auto h1 = new TH1F(name, title, bins_x, min_x, max_x, ...);
+auto left_handle = Input.GetHandle("MY_DET_LEFT");
+auto right_handle = Input.GetHandle("MY_DET_RIGHT");
+
+// For each event.
+auto left = Input.GetData(left_handle);
+auto right = Input.GetData(right_handle);
+size_t l_i = 0;
+size_t r_i = 0;
+while (l_i < left->size() && r_i < right->size()) {
+	auto l_ch = left[l_i]->channel;
+	auto r_ch = right[r_i]->channel;
+	if (l_ch == r_ch) {
+		h1->Fill(l_ch);
+	} else if (l_ch < r_ch) ++l_i;
+	} else ++r_i;
+}
+```
 
 To solve the 2nd example, we copy and adjust. And we copy-pasta all of that for
 every detector, refactor, add calibration and complicate the logic states,
-build, debug, ignore warnings, fight with git or copy between each other or
+build, debug, ignore warnings, fight with git or copy between accounts or
 forget the code ever existed... This is a huge time-sink while expensive beam
-is vehemently showering our experimental setup.
+is vehemently showering our experimental setups.
+
+Equally bad, new data may not fit expected histogram limits, and a faulty
+detector is caught very late. Monitoring should show everything that is going
+on, even if we don't think we want it.
 
 Plutt tries to implement the human-readable version via scripting:
-	l = MY_DET_LEFT
-	r = MY_DET_RIGHT
-	matched_l, matched_r = match_index(l, r)
-	hist("My detector hit-pattern", matched_l:id)
+
+```
+l = MY_DET_LEFT
+r = MY_DET_RIGHT
+matched_l, matched_r = match_index(l, r)
+hist("My detector hit-pattern", matched_l:id)
+```
 
 Now, don't forget that computers don't have brains! Don't put yours on the
 shelf just yet, there's a couple of things to go through!
 
 
-Running
--------
+## Building
 
 Suggested packages (Debian):
 
-ccache
-libnlopt-dev
-libsdl2-dev
+```
+ccache -- Speed up recompiles.
+libnlopt-dev -- Fitting.
+libsdl2-dev -- Fast graphics.
+```
 
-User-installed for input and the THttpServer:
+Other software:
 
-root
-ucesb
+```
+root -- ROOT files input and THttpServer.
+ucesb -- UCESB input.
+```
 
 To compile:
 
+```
 make -jN
 ./plutt
+```
 
-Make builds a version based on the compiler and build mode, e.g. debug or
-release.
-The latter is a script that chooses the binary the same way the Makefile
-chooses the build directory.
+Make builds a version based on the compiler and build mode, e.g. **debug** or
+**release**. The latter is a script that chooses the binary the same way the
+Makefile chooses the build directory.
 
-Examples:
-
-	./plutt -f myconf.plutt -r mytree myfile1.root myfile2.root
-
-		Loads script 'myconf.plutt', and the input will be two root
-		files, both with a TTree named 'mytree'. A default GUI will be
-		chosen, depending on what's built in.
-
-	./plutt -f myconf.plutt -g sdl \
-	    -u ../upexps/myunp/myunp --stream=localhost
-
-		The input will be structures from the 'myunp' unpacker which
-		reads event-data from a stream server. The GUI will be the
-		sdl2-driven ImPlutt.
-
-	./plutt -f myconf.plutt \
-	    -u ../ucesb/hbook/struct_writer localhost
-
-		The input will be structures from an unpacker running on
-		localhost, e.g.:
-
-		../upexps/myunp/myunp --stream=some-host \
-		    --ntuple=RAW,SERVER,dummy
-
-	./plutt -f myconf.plutt -g sdl -g root -r myfiles...root
-
-		Plots with both ImPlutt and THttpServer.
+The usual environment variables are available to steer the build, e.g.
+**CPPFLAGS**, **CFLAGS**, **LDFLAGS**, and **LIBS**.
 
 
-GUI's
------
+## Running
+
+```
+./plutt -f myconf.plutt -r mytree myfile1.root myfile2.root
+```
+
+Loads script **myconf.plutt**, and the input will be two root files, both with
+a TTree named **mytree**. A default GUI will be chosen depending on what's
+built in.
+
+```
+./plutt -f myconf.plutt -g sdl -u ../upexps/myunp/myunp --stream=localhost
+```
+
+The input will be structures from the **myunp** unpacker which reads event-data
+from a stream server. The GUI will be the SDL2-driven ImPlutt.
+
+```
+./plutt -f myconf.plutt -u ../ucesb/hbook/struct_writer localhost
+```
+```
+../upexps/myunp/myunp --stream=some-host --ntuple=RAW,SERVER,dummy
+```
+
+The input will be structures from the unpacker running on the same host.
+
+```
+./plutt -f myconf.plutt -g sdl -g root:8100 -r myfiles...root
+```
+
+Plots with both ImPlutt and THttpServer, the latter on port 8100.
+
+
+## GUI's
 
 There are currently two GUI's available, depending on built-in support:
 
-1) If SDL2 and FreeType2 are available via pkg-config, the low-latency
+1. If SDL2 and FreeType2 are available via pkg-config, the low-latency
 client-side ImPlutt plotting will be built.
 
-2) If root-config is available, THttpServer support will be built.
+2. If root-config is available, ROOT file and THttpServer support will be
+built, depending on the ROOT build.
 
-The default GUI is chosen from top to bottom in the above list.
+The default GUI is chosen from top to bottom from the above list.
 
 
-ImPlutt GUI
------------
+### ImPlutt GUI
 
-Scroll-wheel in a plot:
-	Zoom around the pointer in X and Y.
+- Scroll-wheel in a plot:
+	- Zoom around the pointer in **X** and **Y**.
 
-Scroll-wheel on an axis:
-	Zoom around the pointer in either X or Y.
+- Scroll-wheel on an axis:
+	- Zoom around the pointer in either **X** or **Y**.
 
-Click-drag-release pointer in a plot:
-	The selected area will be zoomed in, unless it's smaller than 5x5
+- Click-drag-release pointer in a plot:
+	- The selected area will be zoomed in, unless it's smaller than 5x5
 	pixels which is typically a mis-click.
 
-Click-drag-release pointer on an axis:
-	The selected range will be zoomed in, again with a 5 pixel limit.
+- Click-drag-release pointer on an axis:
+	- The selected range will be zoomed in, again with a 5 pixel limit.
 
-Pressing 'c':
+- Pressing **c**:
 	- Starts cut creation mode.
 	- Click in the graph to add a vertex to the cut polygon.
-	- Press 'Enter' to write the cut polygon to file, see the cmd-line
+	- Press **Enter** to write the cut polygon to file, see the cmd-line
 	  for written filename.
-	- Press 'Backspace' to remove the last point.
-	- Press 'Escape' to abort the cut.
+	- Press **Backspace** to remove the last point.
+	- Press **Escape** to abort the cut.
 
-Pressing 'u':
-	- Unzoom X and Y completely.
+- Pressing **u**:
+	- Unzoom **X** and **Y** completely.
 
-Pressing 'x'/'y':
-	- Starts X/Y projection view, at most one per plot.
-	- 'w' in the original plot to increment the projection width.
-	- 's' to decrement.
+- Pressing **x**/**y**:
+	- Starts **X/Y** projection view, at most one per plot.
+	- **w** in the original plot to increment the projection width.
+	- **s** to decrement.
 	- It's possible to zoom the projected plot, but the other features of
 	  the main window plots are disabled.
 
-Pressing shift+'x':
+- Pressing **shift+x**:
 	- Clears the histogram under the pointer, including statistics and data
 	  ranges.
 
 
-ROOT GUI
---------
+### ROOT GUI
 
 Opens a THttpServer on port 8080 by default, direct your web-brower to the
-address "localhost:8080".
-To run on e.g. port 10000, invoke the GUI like "-g root:10000" on the command
-line.
+address **localhost:8080**. To run on e.g. port 10000, invoke the GUI like
+**-g root:10000** on the command line.
 
 
-Let's define the data
----------------------
+## Let's define the data
 
 It is important to understand the internal data structure before operating on
 them.
 
 In principle, plutt tries to bundle ID's (e.g. channel indices) and values into
 signals, which have two important parts:
-	1) A list of ID's which have data.
-	2) A list of values for the ID's.
+1. A list of ID's which have data.
+2. A list of values for the ID's.
 
 To be more detailed, a signal looks pretty much like:
+
 	struct {
 		// List of ID's with data, -1 means "no ID".
 		vector<uint32_t>	id;
-		// Offsets into the 'value' vector for each ID.
+		// Offsets into the **value** vector for each ID.
 		vector<uint32_t>	end;
 		// All values over all ID's.
 		vector<Scalar>	v;
@@ -226,12 +260,11 @@ user input. For example, given "MYDET" and other existing inputs:
 		-> No ID,
 		   MYDET used as value
 
-See below for the "official" definition of the 'signal' syntax.
+See below for the "official" definition of the **signal** syntax.
 
 
-What's the grammar/syntax?
---------------------------
-
+## What's the grammar/syntax?
+```
 signal[i]
 	Creates a new signal from the i:th entry if it exists, and only the
 	first value, e.g.:
@@ -250,7 +283,6 @@ signal[i][j]
 		                                               []
 		                                     [1][2] -> []
 		                                               []
-
 signal:id
 	Creates a new signal with the ID's as values:
 		id = [-1]
@@ -261,7 +293,9 @@ signal:v
 		id = [-1]
 		end = [length(signal.id)]
 		v = signal.v
+```
 
+```
 a = signal(id-name, value-name)
 	Creates a signal where the ID's are given by one source and the values
 	by another. Note that the sources must have the same lengths!
@@ -275,7 +309,9 @@ a = signal(id-name, end-name, value-name)
 		my_id    = [2, 4]       => a:id  = [3, 4]
 		my_end   = [2, 4]          a:end = [2, 4]
 		my_value = [1, 2, 3, 4]    a:v   = [1, 2, 3, 4]
+```
 
+```
 a = merge(b[, ...])
 	Creates a signal where the given signals are merged in id order.
 	Example:
@@ -286,7 +322,9 @@ a = merge(b[, ...])
 		c.id =  [1, 3]      a.v   = [b1, c1, b2, c2]
 		c.end = [1, 2]
 		c.v   = [c1, c2]
+```
 
+```
 y = f(x)
 	Chainable mathematical operations are available with signals and
 	constants, which acts on each value individually in a scalar or array.
@@ -309,7 +347,9 @@ y = f(x)
 		abs(x)
 		pow(x, const)
 		pow(const, x)
+```
 
+```
 cut(path)
 	"path" points to a file which has a histogram title and an x/y pair
 	per line which makes a cutting polygon:
@@ -322,7 +362,9 @@ cut(histogram-name, (x,y)...)
 	This is the inline version of the previous syntax, so the same example
 	would look like:
 		cut("My histo", (0,0), (10,0), (0,10), (10,10))
+```
 
+```
 a = fit(b[, ...])
 	This is a 'static' linear fit y=Ax+B of 2D points. The list of
 	arguments consists of pairs (y, x), and 'a' will refer to this linear
@@ -330,7 +372,9 @@ a = fit(b[, ...])
 		my_calib = fit((1, 1), (2, 2), (4, 3))
 	This will fit a linear function through the three points, which can be
 	used to scale histogram axes.
+```
 
+```
 hist(title, x [, args])
 	Draws a histogram of the values in x:v, with the given title.
 	The optional arguments can be:
@@ -374,7 +418,9 @@ hist(title, x [, args])
 		NOTE: Only one of drop_stats or drop_counts can be active,
 		because reasoning about the combo seems like a waste of time!
 		Also, drop_stats is a lot cheaper.
+```
 
+```
 hist2d(title, y, x [, args])
 	Histograms 'y:v' vs 'x:v', pairing up the n:th entry in both vectors,
 	until either vector is exhausted.
@@ -389,7 +435,9 @@ hist2d(title, y, x [, args])
 			Transforms the 'y' entries.
 		fit
 			Does not exist.
+```
 
+```
 annular(title, r, r_limits, phi, phi_ref)
 	Draw an annular histogram of the values r:v and phi:v, with the given
 	title.
@@ -398,7 +446,9 @@ annular(title, r, r_limits, phi, phi_ref)
 	phi_ref = [+-]angle
 		Maps phi:v to phi angles, where 0 points to the right and
 		positive values are counter clockwise.
+```
 
+```
 b = bitfield(a1, n1, ..., aN, nN)
 	Combines signals of given bit-widths into one value. The (ai,ni) pairs
 	are combined in ascending order, ie the first pair becomes the least
@@ -411,7 +461,9 @@ b = bitfield(a1, n1, ..., aN, nN)
 		a2:end = [2, 3]
 		a2:v   = [3, 4, 5]
 		n2 = 8
+```
 
+```
 b = cluster(a)
 b, c = cluster(a)
 	Makes clusters of 'a', ie large neighbouring entries wrt to a:id are
@@ -423,7 +475,9 @@ b, c = cluster(a)
 		                        c:id  = [2, 5]
 		                        c:end = [1, 2]
 		                        c:v   = [0, 0.45]
+```
 
+```
 d = coarse_fine(a, b, c)
 	Does on-the-fly fine-time calibration. 'a' = coarse times, 'b' = fine
 	times, and 'c' is either a module type identifier or a number for the
@@ -438,13 +492,17 @@ d = coarse_fine(a, b, c)
 		b:end = [1, 2]        d:v   = [5001, 10003]
 		b:v   = [200, 400]
 		c = 'vftx2'
+```
 
+```
 a = cut(cut-args)
 a, b = cut(cut-args)
 	Extracts entries in a hist/hist2d that pass the cut. 'a' will contain
 	the x values and 'b' the y values. For more info about the cut syntax,
 	see above.
+```
 
+```
 filter_range(a <= b < c..., (d = e)...)
 	For each entry where the conditions in the initial list of conditions
 	are met, all the assignments are performed. Note that 'b' and 'e' must
@@ -457,13 +515,17 @@ filter_range(a <= b < c..., (d = e)...)
 		e:id  = [1, 3]
 		e:end = [1, 3]
 		e:v   = [4, 5, 6]
+```
 
+```
 b = length(a)
 	Returns length of 'a:v':
 		a:id  = [1, 2, 3]       b:id  = [0]
 		a:end = [1, 2, 4]    => b:end = [1]
 		a:v   = [1, 2, 3, 4]    b:v   = [4]
+```
 
+```
 c, d = match_index(a, b)
 	Cuts un-matched entries between 'a:id' and 'b:id':
 		a:id  = [1, 2, 3]    c:id  = [2]
@@ -482,13 +544,17 @@ c, d = match_value(a, b, c)
 		b:end = [1, 2]          d:end = [1]
 		b:v   = [21, 32]        d:v   = [21]
 		c = 2
+```
 
+```
 b = max(a)
 	Returns the single largest entry in 'a:v':
 		a:id  = [1, 2, 3]    b:id  = [2]
 		a:end = [1, 2, 3] => b:end = [1]
 		a:v   = [1, 3, 2]    b:v   = [3]
+```
 
+```
 b = mean_arith(a)
 	Calcs arithmetic mean over all 'a:id' for each entry in 'a:v':
 		a:id  = [1, 2, 3]          b:id  = [0]
@@ -503,11 +569,15 @@ c = mean_arith(a, b)
 		b:id  = [2, 3]       c:v   = [1/1, (2+4)/2, 3/1, 5/1]
 		b:end = [1, 2]
 		b:v   = [4, 5]
+```
 
+```
 b = mean_geom(a)
 c = mean_geom(a, b)
 	Same as mean_arith except does (v_1 + ... + v_n)^(1/n).
+```
 
+```
 c, d = pedestal(a, b [, args])
 	Calculates pedestals of 'a' on-the-fly and cuts "a:v < std * b".
 	'args' can be:
@@ -515,14 +585,18 @@ c, d = pedestal(a, b [, args])
 		If 'a:v[0]' is non-zero, the pedestal statistics are updated,
 		otherwise they are only applied.
 	'c' will contain the cut values, and 'd' the standard deviations.
+```
 
+```
 c = select_index(a, b)
 	Selects only 'a:id  == b':
 		a:id  = [1, 2]          c:id  = [0]
 		a:end = [2, 4]       => c:end = [2]
 		a:v   = [1, 2, 3, 4]    c:v   = [3, 4]
 		b = 2
+```
 
+```
 d = sub_mod(a, b, c)
 	Does a zero-centered modulo-subtraction like '(a-b+n*c+c/2)%c-c/2':
 		a:id  = [1, 2]
@@ -535,14 +609,18 @@ d = sub_mod(a, b, c)
 d = tot(a, b, c)
 	Does time-over-threshold, 'a' = leading, 'b' = trailing, does matching
 	of channels and edges.
+```
 
+```
 b = tpat(a, bitmask)
 	Lets values in 'a:v' with any bits marked by the bitmask pass.
 		a:id  = [0]         b:id  = [0]
 		a:end = [1]      => b:end = [1]
 		a:v   = [0x101]     b:v   = [0x1]
 		bitmask = 0x83
+```
 
+```
 f = trig_map(a, b, c, d, e)
 	Parses file 'a', considers lines prefixed with 'b', then does cyclical
 	subtraction of trigger channels 'd', mapped by 'a', from signal
@@ -560,7 +638,9 @@ f = trig_map(a, b, c, d, e)
 		d:end = [1, 2]
 		d:v   = [1, 3]
 		e = 10
+```
 
+```
 d = zero_suppress(a [, b])
 	Zero-suppresses 'a:v'. 'b' is an optional cut-off which defaults to 0,
 	ie all entries in 'a:v' > 'b' are pass this node:
@@ -568,19 +648,25 @@ d = zero_suppress(a [, b])
 		a:end = [1, 3]    => d:end = [1]
 		a:v   = [0, 2, 1]    d:v   = [2]
 		b = 1
+```
 
 Other functions:
 
+```
 appearance("name")
 	Sets GUI style, choose one of: light, dark. The last one in the config
 	will override previous invocations.
+```
 
+```
 clock_match(a, b)
 	Matches the computer running time to the given signal 'a', which
 	should be a monotonically increasing timestamp.
 	'b' is the time in seconds for the unit of 'a', eg if 'a' is in ns,
 	then b=1e-9.
+```
 
+```
 colormap("name")
 	plutt only has "roma" built-in, which can be chosen by leaving out the
 	argument, but you can use Scientific Colourmaps if that resides under
@@ -588,71 +674,94 @@ colormap("name")
 	If 'name' is eg "lajolla", the file:
 		"../ScientificColourMaps7/lajolla/lajolla.lut"
 	is loaded.
+```
 
+```
 page("name")
 	Starts a new named page for plots. If the user did not create one
 	before the first plot, a default named "Default" is made.
+```
 
+```
 ui_rate(a)
 	Throttles the ImPlutt UI update rate to 'a' times per second, default
 	and maximum is 20.
+```
 
 
-Examples
---------
+## Examples
 
 - Plot scalar spectrum:
+```
 	TH1I hist...
 	hist.Fill(SCALAR);
-	-> hist("This be my scalar", SCALAR);
+	-> hist("This be my scalar", SCALAR)
+```
 - Plot channel multiplicity:
+```
 	TH1I hist...
-	hist.Fill(SUPP);
-	-> hist("Sup?", SUPP)
+	hist.Fill(MULT);
+	-> hist("Sup?", MULT)
+```
 - Plot fired channels in log scale:
-	canvas->cd(0)->SetLogy();
+```
+	TH1I hist...
+	canvas->cd(n)->SetLogy();
 	for (i = 0; i < SUPP; ++i)
 		hist.Fill(SUPPI[i]);
 	-> hist("Channel map", SUPP:id, logy)
+```
 - Plot energy against channel with 1000 energy bins:
+```
 	TH2I hist...
 	for (i = 0; i < SUPP; ++i)
 		hist.Fill(SUPPI[i], SUPPv[i]);
 	-> hist2d("Energy vs ch", SUPP:v, SUPP:id, binsy=1000)
+	   hist2d("Energy vs ch", SUPP, binsy=1000)
+```
 - Plot multi-hit energies against channels:
+```
 	i = 0;
 	for (j = 0; j < SUPPM; ++j) {
 		ch = SUPPMI[j];
-		end = SUPPME[j];
-		for (; i < end; ++i)
+		for (; i < SUPPME[j]; ++i)
 			hist->Fill(ch, SUPPv[i]);
 	}
-	-> hist2d("Energy vs ch", MHIT:v, MHIT:id)
+	-> hist2d("Energy vs ch", MHIT)
+```
 - Match two sides of a single-hit detector and draw geom mean energy:
+```
 	// Too much brain-wrangling code...
 	-> e1, e2 = match_index(SUPP_S1E, SUPP_S2E)
-	e = mean_geom(e1, e2)
-	hist2d("Energy vs ch", e:v, e:id)
+	   e = mean_geom(e1, e2)
+	   hist2d("Energy vs ch", e)
+```
 - Same with multi-hit mapping:
+```
 	// Even more unbearable code :o
 	-> e1, e2 = match_index(MHIT_S1E, MHIT_S2E)
-	e = mean_geom(e1, e2)
-	hist2d("Energy vs ch", e:v, e:id)
+	   e = mean_geom(e1, e2)
+	   hist2d("Energy vs ch", e)
+```
 - X-vs-X of two detectors:
+```
 	-> e11, e12 = match_index(DET1_S1E, DET1_S2E)
-	e1 = max(mean_geom(e11, e12))
-	e21, e22 = match_index(DET2_S1E, DET2_S2E)
-	e2 = max(mean_geom(e21, e22))
-	hist2d("x2 vs x1" e2:id, e1:id)
+	   e1 = max(mean_geom(e11, e12))
+	   e21, e22 = match_index(DET2_S1E, DET2_S2E)
+	   e2 = max(mean_geom(e21, e22))
+	   hist2d("x2 vs x1" e2:id, e1:id)
+```
 - ToF between two detectors:
-	-> a1,a2 = match_index(START_S1T, START_S2T)
-	a = mean_arith(a1:v, a2:v)
-	b1,b2 = match_index(STOP_S1T, STOP_S2T)
-	b = mean_arith(b1:v, b2:v)
-	hist("ToF", sub_mod(b, a, 1000), logy)
+```
+	-> a1, a2 = match_index(START_S1T, START_S2T)
+	   a = mean_arith(a1:v, a2:v)
+	   b1, b2 = match_index(STOP_S1T, STOP_S2T)
+	   b = mean_arith(b1:v, b2:v)
+	   hist("ToF", sub_mod(b, a, 1000), logy)
+```
 
-Note that custom mappings can replace the value array 'v' with anything. This
-program allows a few other suffixes to be used instead, eg 'E'.
+Note that custom mappings can replace the value array **v** with anything. This
+program allows a few other suffixes to be used instead, e.g. **E**.
 
 
 Licence

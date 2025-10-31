@@ -61,7 +61,7 @@ void MyTest::Run()
   TEST_BOOL(s.GetV().empty());
 
   nv.Preprocess(&n);
-  for (int i = 0; i < 11000; ++i) {
+  for (unsigned i = 0; i < 11000; ++i) {
     TestNodeProcess(n, 1 + i);
   }
 
