@@ -202,8 +202,9 @@ class VisualHist2: public Visual {
     VisualHistVec m_hist_copy;
     bool m_is_log_z;
     struct {
-      double time_ms;
-      double time_ms_prev;
+      int64_t time_ms;
+      int64_t time_ms_prev;
+      bool do_clear;
     } m_single;
 };
 

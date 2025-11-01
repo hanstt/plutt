@@ -35,10 +35,12 @@
 	TRandom rnd;
 	for (unsigned ev = 0; ev < 1000000; ++ev) {
 		adc = N;
+		double x = N/2;
+		double dx = 0.5 * (rnd.Rndm() - 0.5);
 		for (int i = 0; i < N; ++i) {
-			int j = N/2 + i * 0.5 * (rnd.Rndm() - 0.5);
-			adcI[i] = j + i * N;
+			adcI[i] = (int)(x + 2 * (rnd.Rndm() - 0.5)) + i * N;
 			adcv[i] = 1;
+			x += dx;
 		}
 		tree->Fill();
 	}

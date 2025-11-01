@@ -674,7 +674,8 @@ VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
   m_single()
 {
   m_single.time_ms = 1e3 * a_single;
-  m_single.time_ms_prev = 0.0;
+  m_single.time_ms_prev = 0;
+  m_single.do_clear = false;
 }
 
 void VisualHist2::Draw(Gui *a_gui)
@@ -735,16 +736,15 @@ void VisualHist2::Fit()
 
 bool VisualHist2::IsWritable()
 {
-  if (m_single.time_ms < 0.0) {
+  if (m_single.time_ms < 0) {
     return true;
   }
-  if (m_single.time_ms_prev + m_single.time_ms > Time_get_ms()) {
+  if (Time_get_ms() < m_single.time_ms_prev + m_single.time_ms) {
     // Hold single event.
     return false;
   }
-  auto &h = m_hist.slice_vec.at(0);
-  memset(h.data(), 0, h.size() * sizeof h[0]);
   m_single.time_ms_prev = Time_get_ms();
+  m_single.do_clear = true;
   return true;
 }
 
@@ -799,6 +799,12 @@ void VisualHist2::Prefill(Input::Type a_type_y, Input::Scalar const &a_y,
     Input::Type a_type_x, Input::Scalar const &a_x)
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
+
+  if (m_single.do_clear) {
+    auto &h = m_hist.slice_vec.at(0);
+    memset(h.data(), 0, h.size() * sizeof h[0]);
+    m_single.do_clear = false;
+  }
 
   m_range_x.Add(a_type_x, a_x);
   m_range_y.Add(a_type_y, a_y);
