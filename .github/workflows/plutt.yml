@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ "main" ]
 jobs:
-  build:
+  ubuntu-latest:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,6 +17,22 @@ jobs:
           libfreetype-dev \
           libnlopt-dev \
           libsdl2-dev
+    - name: make -k debug
+      run: make -k
+    - name: make -k release
+      run: make -k BUILD_MODE=release
+    - name: make -k debug no-nlopt
+      run: make -k clean all ALLOW_NLOPT=
+    - name: make -k release no-nlopt
+      run: make -k clean all ALLOW_NLOPT= BUILD_MODE=release
+    - name: make -k debug no-sdl2
+      run: make -k clean all ALLOW_SDL2=
+    - name: make -k release no-sdl2
+      run: make -k clean all ALLOW_SDL2= BUILD_MODE=release
+  macos-latest:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
     - name: make -k debug
       run: make -k
     - name: make -k release

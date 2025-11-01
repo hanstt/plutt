@@ -743,7 +743,7 @@ bool VisualHist2::IsWritable()
     // Hold single event.
     return false;
   }
-  m_single.time_ms_prev = Time_get_ms();
+  m_single.time_ms_prev = (int64_t)Time_get_ms();
   m_single.do_clear = true;
   return true;
 }
