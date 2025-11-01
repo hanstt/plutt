@@ -673,7 +673,7 @@ VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
   m_is_log_z(a_is_log_z),
   m_single()
 {
-  m_single.time_ms = 1e3 * a_single;
+  m_single.time_ms = (int64_t)(1000 * a_single);
   m_single.time_ms_prev = 0;
   m_single.do_clear = false;
 }
@@ -739,7 +739,7 @@ bool VisualHist2::IsWritable()
   if (m_single.time_ms < 0) {
     return true;
   }
-  if (Time_get_ms() < m_single.time_ms_prev + m_single.time_ms) {
+  if (Time_get_ms() < (uint64_t)(m_single.time_ms_prev + m_single.time_ms)) {
     // Hold single event.
     return false;
   }
