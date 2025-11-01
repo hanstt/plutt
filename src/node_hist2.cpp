@@ -35,14 +35,14 @@ NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
     *a_y, NodeValue *a_x, uint32_t a_yb, uint32_t a_xb, LinearTransform const
     &a_transformy, LinearTransform const &a_transformx, char const *a_fit,
     bool a_log_z, double a_drop_counts_s, unsigned a_drop_counts_num, double
-    a_drop_stats_s):
+    a_drop_stats_s, double a_single):
   NodeCuttable(a_loc, a_title),
   m_x(a_x),
   m_y(a_y),
   m_xb(a_xb),
   m_yb(a_yb),
   m_visual_hist2(a_title, m_yb, m_xb, a_transformy, a_transformx, a_fit,
-      a_log_z, a_drop_counts_s, a_drop_counts_num, a_drop_stats_s),
+      a_log_z, a_drop_counts_s, a_drop_counts_num, a_drop_stats_s, a_single),
   m_out_x(),
   m_out_y()
 {
@@ -60,6 +60,10 @@ void NodeHist2::Process(uint64_t a_evid)
     return;
   }
   NODE_PROCESS(m_y, a_evid);
+
+  if (!m_visual_hist2.IsWritable()) {
+    return;
+  }
 
   auto const &val_y = m_y->GetValue();
   auto const &vec_y = val_y.GetV();

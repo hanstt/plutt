@@ -124,6 +124,7 @@ static struct {
 	unsigned slice_num;
 } g_drop_counts = {-1.0, 1};
 static double g_drop_stats = -1.0;
+static double g_single = -1.0;
 
 static void ResetDrawArgs() {
 	g_binsx = 0;
@@ -140,6 +141,7 @@ static void ResetDrawArgs() {
 	g_drop_counts.time = -1.0;
 	g_drop_counts.slice_num = 1;
 	g_drop_stats = -1.0;
+	g_single = -1.0;
 }
 
 #define CTDC_BITS 12
@@ -216,6 +218,7 @@ static void ResetDrawArgs() {
 %token TK_SELECT_INDEX
 %token TK_SIGNAL
 %token TK_SIN
+%token TK_SINGLE
 %token TK_SQRT
 %token TK_SUB_MOD
 %token TK_TAMEX3
@@ -739,6 +742,15 @@ drop_stats
 		LOC_SAVE(@1);
 		g_drop_stats = $3.GetDouble() * $4;
 	}
+single
+	: TK_SINGLE {
+		LOC_SAVE(@1);
+		g_single = 0.0;
+	}
+	| TK_SINGLE '=' const unit_time {
+		LOC_SAVE(@1);
+		g_single = $3.GetDouble() * $4;
+	}
 
 hist_opts
 	:
@@ -775,6 +787,7 @@ hist2d_arg
 	| hist_cut
 	| drop_counts
 	| drop_stats
+	| single
 
 coarse_fine
 	: TK_COARSE_FINE '(' value ',' value ',' clock_period ')' {
@@ -800,7 +813,7 @@ hist
 		g_config->AddHist2($3, $5, nullptr, g_binsy, g_binsx,
 		    g_transformy, g_transformx, g_fit, g_logz,
 		    g_drop_counts.time, g_drop_counts.slice_num,
-		    g_drop_stats);
+		    g_drop_stats, g_single);
 		ResetDrawArgs();
 		free($3);
 	}
@@ -809,7 +822,7 @@ hist
 		g_config->AddHist2($3, $5, $7, g_binsy, g_binsx,
 		    g_transformy, g_transformx, g_fit, g_logz,
 		    g_drop_counts.time, g_drop_counts.slice_num,
-		    g_drop_stats);
+		    g_drop_stats, g_single);
 		ResetDrawArgs();
 		free($3);
 	}

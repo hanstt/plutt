@@ -63,7 +63,7 @@ class Config {
         const *, bool, bool, double, unsigned, double);
     void AddHist2(char const *, NodeValue *, NodeValue *, uint32_t, uint32_t,
         char const *, char const *, char const *, bool, double, unsigned,
-        double);
+        double, double);
     NodeValue *AddLength(NodeValue *);
     NodeValue *AddMatchId(NodeValue *, NodeValue *);
     NodeValue *AddMatchValue(NodeValue *, NodeValue *, double);

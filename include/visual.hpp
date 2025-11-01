@@ -165,12 +165,13 @@ class VisualHist2: public Visual {
   public:
     VisualHist2(std::string const &, uint32_t, uint32_t, LinearTransform const
         &, LinearTransform const &, char const *, bool, double, unsigned,
-        double);
+        double, double);
     void Draw(Gui *);
     void Fill(
         Input::Type, Input::Scalar const &,
         Input::Type, Input::Scalar const &);
     void Fit();
+    bool IsWritable();
     void Latch();
     void Prefill(
         Input::Type, Input::Scalar const &,
@@ -200,6 +201,10 @@ class VisualHist2: public Visual {
     Gui::Axis m_axis_y_copy;
     VisualHistVec m_hist_copy;
     bool m_is_log_z;
+    struct {
+      double time_ms;
+      double time_ms_prev;
+    } m_single;
 };
 
 #endif

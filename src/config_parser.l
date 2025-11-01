@@ -98,6 +98,7 @@ s                      return TK_S;
 select_index           return TK_SELECT_INDEX;
 signal                 return TK_SIGNAL;
 sin                    return TK_SIN;
+single                 return TK_SINGLE;
 sqrt                   return TK_SQRT;
 sub_mod                return TK_SUB_MOD;
 tamex3                 return TK_TAMEX3;

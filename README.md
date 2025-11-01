@@ -435,6 +435,9 @@ hist2d(title, y, x [, args])
 			Transforms the 'y' entries.
 		fit
 			Does not exist.
+		single[=n time-unit]
+			Clear the histogram for every new fill, but keep a fill
+			for the given time, default=0 s.
 ```
 
 ```

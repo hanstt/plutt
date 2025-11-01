@@ -654,7 +654,7 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
 VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
     a_xb, LinearTransform const &a_ty, LinearTransform const &a_tx, char const
     *a_fitter, bool a_is_log_z, double a_drop_counts_s, unsigned
-    a_drop_counts_num, double a_drop_stats_s):
+    a_drop_counts_num, double a_drop_stats_s, double a_single):
   Visual(a_title),
   m_xb(a_xb),
   m_yb(a_yb),
@@ -670,8 +670,11 @@ VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
   m_axis_x_copy(),
   m_axis_y_copy(),
   m_hist_copy(),
-  m_is_log_z(a_is_log_z)
+  m_is_log_z(a_is_log_z),
+  m_single()
 {
+  m_single.time_ms = 1e3 * a_single;
+  m_single.time_ms_prev = 0.0;
 }
 
 void VisualHist2::Draw(Gui *a_gui)
@@ -728,6 +731,21 @@ void VisualHist2::Fit()
       m_axis_y = axis_y;
     }
   }
+}
+
+bool VisualHist2::IsWritable()
+{
+  if (m_single.time_ms < 0.0) {
+    return true;
+  }
+  if (m_single.time_ms_prev + m_single.time_ms > Time_get_ms()) {
+    // Hold single event.
+    return false;
+  }
+  auto &h = m_hist.slice_vec.at(0);
+  memset(h.data(), 0, h.size() * sizeof h[0]);
+  m_single.time_ms_prev = Time_get_ms();
+  return true;
 }
 
 void VisualHist2::Latch()

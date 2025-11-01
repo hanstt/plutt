@@ -467,7 +467,7 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
 void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
     uint32_t a_yb, uint32_t a_xb, char const *a_transformy, char const
     *a_transformx, char const *a_fit, bool a_log_z, double a_drop_counts_s,
-    unsigned a_drop_counts_num, double a_drop_stats_s)
+    unsigned a_drop_counts_num, double a_drop_stats_s, double a_single)
 {
   double kx = 1.0;
   double mx = 0.0;
@@ -495,15 +495,17 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
     my = it->second.m;
   }
 
-  if (a_drop_counts_s > 0.0 && a_drop_stats_s > 0.0) {
+  if ((a_drop_counts_s > 0.0) +
+      (a_drop_stats_s > 0.0) +
+      (a_single >= 0.0) > 1) {
     std::cerr << a_title <<
-        ": Can only drop one of counts and stats!\n";
+        ": Can only drop one of counts, stats, and keeping singles!\n";
     throw std::runtime_error(__func__);
   }
 
   auto node = new NodeHist2(GetLocStr(), a_title, a_y, a_x, a_yb, a_xb,
       LinearTransform(ky, my), LinearTransform(kx, mx), a_fit, a_log_z,
-      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s);
+      a_drop_counts_s, a_drop_counts_num, a_drop_stats_s, a_single);
   NodeCuttableAdd(node);
 
   std::ostringstream oss2;

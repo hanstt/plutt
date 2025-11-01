@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2025
+ * Copyright (C) 2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -20,35 +20,30 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_HIST2_HPP
-#define NODE_HIST2_HPP
+{
+	TFile file("track.root", "RECREATE");
 
-#include <node.hpp>
-#include <output.hpp>
-#include <visual.hpp>
+	auto tree = new TTree("T", "Track mock");
 
-/*
- * Collects a vs b in a 2D histogram, actual histogramming is performed in
- * visual.*.
- */
-class NodeHist2: public NodeCuttable {
-  public:
-    NodeHist2(std::string const &, char const *, NodeValue *, NodeValue *,
-        uint32_t, uint32_t, LinearTransform const &, LinearTransform const &,
-        char const *, bool, double, unsigned, double, double);
-    void Process(uint64_t);
+#define N 50
 
-  private:
-    NodeHist2(NodeHist2 const &);
-    NodeHist2 &operator=(NodeHist2 const &);
+	int adc, adcI[N], adcv[N];
+	tree->Branch("adc", &adc, "adc/I");
+	tree->Branch("adcI", &adcI, "adcI[adc]/I");
+	tree->Branch("adcv", &adcv, "adcv[adc]/I");
 
-    NodeValue *m_x;
-    NodeValue *m_y;
-    uint32_t m_xb;
-    uint32_t m_yb;
-    VisualHist2 m_visual_hist2;
-    Output::Var m_out_x;
-    Output::Var m_out_y;
-};
+	TRandom rnd;
+	for (unsigned ev = 0; ev < 1000000; ++ev) {
+		adc = N;
+		for (int i = 0; i < N; ++i) {
+			int j = N/2 + i * 0.5 * (rnd.Rndm() - 0.5);
+			adcI[i] = j + i * N;
+			adcv[i] = 1;
+		}
+		tree->Fill();
+	}
 
-#endif
+	tree->Print();
+	tree->Write();
+	delete tree;
+}
