@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2024
+ * Copyright (C) 2023-2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -21,24 +21,31 @@
  */
 
 {
-	TFile file("int.root", "RECREATE");
+  TFile file("int.root", "RECREATE");
 
-	auto tree = new TTree("T", "Integer mock");
+  auto tree = new TTree("T", "Integer mock");
 
-	Int_t i, j;
-	tree->Branch("i", &i, "i/I");
-	tree->Branch("j", &j, "j/I");
+  Int_t ij[2];
+  tree->Branch("i", &ij[0], "i/I");
+  tree->Branch("j", &ij[1], "j/I");
 
-	TRandom rnd;
-	for (unsigned ev = 0; ev < 100000; ++ev) {
-		auto x = rnd.Gaus();
-		auto y = rnd.Gaus();
-		j = floor(10 * x);
-		i = floor(10 * y);
-		tree->Fill();
-	}
+  TRandom3 rnd;
+  for (unsigned ev = 0; ev < 100000; ++ev) {
+    for (unsigned i = 0; i < 2; ++i) {
+      for (;;) {
+        auto x = rnd.Uniform(-4, 4);
+        auto y = rnd.Uniform(1.2);
+        auto p = exp(-x*x) + (0 == i ? exp(-0.3*(x+6)) : -0.05*x+0.2);
+        if (y < p) {
+          ij[i] = floor(2 * x);
+          break;
+        }
+      }
+    }
+    tree->Fill();
+  }
 
-	tree->Print();
-	tree->Write();
-	delete tree;
+  tree->Print();
+  tree->Write();
+  delete tree;
 }

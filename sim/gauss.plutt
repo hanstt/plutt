@@ -1,6 +1,7 @@
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+# Copyright (C) 2023, 2025
+# Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,17 +19,16 @@
 # MA  02110-1301  USA
 
 hist("x", x)
+hist("y", y)
 
 hist("x, binsx=10", x, binsx=10)
-
 hist("x, logy", x, logy)
 
 hist("x, fit", x, fit="gauss")
+hist("y, fit", y, fit="gauss")
 
 hist2d("x vs x", x, x)
 
 hist2d("y vs x", y, x)
-
 hist2d("y vs x, bins=10/50", y, x, binsx=10, binsy=50)
-
 hist2d("y vs x, logz", y, x, logz)

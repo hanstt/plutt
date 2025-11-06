@@ -1,7 +1,8 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023  Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Copyright (C) 2023, 2025
+ * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,21 +21,31 @@
  */
 
 {
-	TFile file("gauss.root", "RECREATE");
+  TFile file("gauss.root", "RECREATE");
 
-	auto tree = new TTree("T", "Gaussian mock");
+  auto tree = new TTree("T", "Gaussian mock");
 
-	float x, y;
-	tree->Branch("x", &x, "x/F");
-	tree->Branch("y", &y, "y/F");
+  float xy[2];
+  tree->Branch("x", &xy[0], "x/F");
+  tree->Branch("y", &xy[1], "y/F");
 
-	TRandom rnd;
-	for (unsigned ev = 0; ev < 100000; ++ev) {
-		rnd.Rannor(x, y);
-		tree->Fill();
-	}
+  TRandom3 rnd;
+  for (unsigned ev = 0; ev < 100000; ++ev) {
+    for (unsigned i = 0; i < 2; ++i) {
+      for (;;) {
+        auto x = rnd.Uniform(-4, 4);
+        auto y = rnd.Uniform(1.2);
+        auto p = exp(-x*x) + (0 == i ? exp(-0.3*(x+6)) : -0.05*x+0.2);
+        if (y < p) {
+          xy[i] = x;
+          break;
+        }
+      }
+    }
+    tree->Fill();
+  }
 
-	tree->Print();
-	tree->Write();
-	delete tree;
+  tree->Print();
+  tree->Write();
+  delete tree;
 }

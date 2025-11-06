@@ -20,4 +20,4 @@
 
 y = floor(adc:id / 50)
 x = adc:id - 50 * y
-hist2d("y vs x", y, x, binsx=50, binsy=50, single=0.5s)
+hist2d("y vs x", y, x, binsx=50, binsy=50, single=0.2s)

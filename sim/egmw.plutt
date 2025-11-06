@@ -21,14 +21,13 @@
 caen_a = signal(caen_id, caen_adc_a)
 caen_b = signal(caen_id, caen_adc_b)
 
+hist("caen_n", caen_n)
 hist("caen_id", caen_a:id)
 
 hist("caen_adc_a", caen_a:v)
-
 hist2d("caen_adc_a : caen_id", caen_a)
 
 hist("caen_adc_b", caen_b:v)
-
 hist2d("caen_adc_b : caen_id", caen_b)
 
 hist2d("caen_adc_b : caen_adc_a", caen_b:v, caen_a:v)

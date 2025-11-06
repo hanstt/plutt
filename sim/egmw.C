@@ -26,7 +26,7 @@
   auto tree = new TTree("T", "egmwsort mock");
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define N 100
+#define N 8
   Int_t caen_n;
   Int_t caen_id[N];
   Int_t caen_adc_a[N];
@@ -36,15 +36,29 @@
   tree->Branch("caen_adc_a", caen_adc_a, "caen_adc_a[caen_n]/I");
   tree->Branch("caen_adc_b", caen_adc_b, "caen_adc_b[caen_n]/I");
 
-  TRandom rnd;
+  TRandom3 rnd;
   for (unsigned ev = 0; ev < 100000; ++ev) {
-    caen_n = N * rnd.Rndm();
+    caen_n = 0;
     for (unsigned i = 0; i < N; ++i) {
-      caen_id[i] = 8 + 8 * rnd.Rndm();
-      float x, y;
-      rnd.Rannor(x, y);
-      caen_adc_a[i] = MAX(1000 + 20 * x, 1);
-      caen_adc_b[i] = MAX(1000 + 20 * y, 1);
+      if (rnd.Uniform() < 0.5) {
+        continue;
+      }
+      caen_id[caen_n] = i;
+      float xy[2];
+      for (unsigned j = 0; j < 2; ++j) {
+        for (;;) {
+          auto x = rnd.Uniform(-4, 4);
+          auto y = rnd.Uniform(1.2);
+          auto p = exp(-x*x) + (0 == j ? exp(-0.3*(x+6)) : -0.05*x+0.2);
+          if (y < p) {
+            xy[j] = x;
+            break;
+          }
+        }
+      }
+      caen_adc_a[caen_n] = MAX(1000 + 20 * xy[0], 1);
+      caen_adc_b[caen_n] = MAX(1000 + 20 * xy[1], 1);
+      ++caen_n;
     }
     tree->Fill();
   }
