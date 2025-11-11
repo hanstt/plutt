@@ -107,6 +107,8 @@ struct FitEntry {
 };
 std::vector<FitEntry> g_fit_vec;
 
+PeakFitVec g_peak_fit_vec;
+
 static struct {
 	double r_min;
 	double r_max;
@@ -116,7 +118,6 @@ static uint32_t g_binsx;
 static uint32_t g_binsy;
 static char *g_transformx;
 static char *g_transformy;
-static char *g_fit;
 static int g_logy, g_logz;
 static int g_contour;
 static struct {
@@ -127,14 +128,13 @@ static double g_drop_stats = -1.0;
 static double g_single = -1.0;
 
 static void ResetDrawArgs() {
+	g_peak_fit_vec.clear();
 	g_binsx = 0;
 	g_binsy = 0;
 	free(g_transformx);
 	g_transformx = nullptr;
 	free(g_transformy);
 	g_transformy = nullptr;
-	free(g_fit);
-	g_fit = nullptr;
 	g_logy = 0;
 	g_logz = 0;
 	g_contour = 0;
@@ -764,7 +764,17 @@ hist_arg
 	: TK_BINSX '=' const { g_binsx = $3.GetI64(); }
 	| TK_CONTOURED { g_contour = 1; }
 	| TK_FILLED { g_contour = 0; }
-	| TK_FIT '=' TK_STRING { g_fit = $3; }
+	| TK_FIT '(' TK_STRING ',' const ',' const ')' {
+		auto l = $5.GetDouble();
+		auto r = $7.GetDouble();
+		if (l >= r) {
+			std::cerr << g_config->GetLocStr() <<
+			    ": Fit arguments out of order!\n";
+			throw std::runtime_error(__func__);
+		}
+		g_peak_fit_vec.push_back(PeakFitEntry($3, l, r));
+		free($3);
+	}
 	| TK_LOGY { g_logy = 1; }
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| hist_cut
@@ -802,8 +812,8 @@ floor
 hist
 	: TK_HIST '(' TK_STRING ',' value hist_opts ')' {
 		LOC_SAVE(@1);
-		g_config->AddHist1($3, $5, g_binsx, g_transformx, g_fit,
-		    g_logy, g_contour, g_drop_counts.time,
+		g_config->AddHist1($3, $5, g_binsx, g_transformx,
+		    g_peak_fit_vec, g_logy, g_contour, g_drop_counts.time,
 		    g_drop_counts.slice_num, g_drop_stats);
 		ResetDrawArgs();
 		free($3);
@@ -811,18 +821,16 @@ hist
 	| TK_HIST2D '(' TK_STRING ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
 		g_config->AddHist2($3, $5, nullptr, g_binsy, g_binsx,
-		    g_transformy, g_transformx, g_fit, g_logz,
-		    g_drop_counts.time, g_drop_counts.slice_num,
-		    g_drop_stats, g_single);
+		    g_transformy, g_transformx, g_logz, g_drop_counts.time,
+		    g_drop_counts.slice_num, g_drop_stats, g_single);
 		ResetDrawArgs();
 		free($3);
 	}
 	| TK_HIST2D '(' TK_STRING ',' value ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
 		g_config->AddHist2($3, $5, $7, g_binsy, g_binsx,
-		    g_transformy, g_transformx, g_fit, g_logz,
-		    g_drop_counts.time, g_drop_counts.slice_num,
-		    g_drop_stats, g_single);
+		    g_transformy, g_transformx, g_logz, g_drop_counts.time,
+		    g_drop_counts.slice_num, g_drop_stats, g_single);
 		ResetDrawArgs();
 		free($3);
 	}

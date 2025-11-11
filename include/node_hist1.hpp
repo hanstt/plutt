@@ -23,6 +23,7 @@
 #ifndef NODE_HIST1_HPP
 #define NODE_HIST1_HPP
 
+#include <fit.hpp>
 #include <node.hpp>
 #include <output.hpp>
 #include <visual.hpp>
@@ -33,8 +34,8 @@
 class NodeHist1: public NodeCuttable {
   public:
     NodeHist1(std::string const &, char const *, NodeValue *, uint32_t,
-        LinearTransform const &, char const *, bool, bool, double, unsigned,
-        double);
+        LinearTransform const &, PeakFitVec const &, bool, bool, double,
+        unsigned, double);
     void Process(uint64_t);
 
   private:

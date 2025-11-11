@@ -24,8 +24,8 @@ hist("y", y)
 hist("x, binsx=10", x, binsx=10)
 hist("x, logy", x, logy)
 
-hist("x, fit", x, fit="gauss")
-hist("y, fit", y, fit="gauss")
+hist("x, fit", x, fit("exp+gauss", -3, 3))
+hist("y, fit", y, fit("gauss", -3, 3))
 
 hist2d("x vs x", x, x)
 

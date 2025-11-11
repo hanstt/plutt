@@ -40,20 +40,42 @@ void MyTest::Run()
 {
   {
     std::vector<uint32_t> v(100);
-    double ofs = 1e3;
+    double y = 1e3;
+    double phase = 70.0;
+    double tau = -10.0;
+    double amp = 3e3;
+    double mean = 40;
+    double std = 10;
+    double denom = 1 / (2 * std * std);
+    for (uint32_t i = 0; i < v.size(); ++i) {
+      auto d1 = i - phase;
+      auto d2 = i - mean;
+      v.at(i) = (uint32_t)(y + exp(d1 / tau) + amp * exp(-d2 * d2 * denom));
+    }
+    FitExpGauss f(v, y + amp, 0, (uint32_t)(v.size() - 1));
+    TEST_CMP(std::abs(f.GetY()         -     y), <, std::abs(    y * 1e-2));
+    TEST_CMP(std::abs(f.GetExpPhase()  - phase), <, std::abs(phase * 1e-2));
+    TEST_CMP(std::abs(f.GetExpTau()    -   tau), <, std::abs(  tau * 1e-2));
+    TEST_CMP(std::abs(f.GetGaussAmp()  -   amp), <, std::abs(  amp * 1e-2));
+    TEST_CMP(std::abs(f.GetGaussMean() -  mean), <, std::abs( mean * 1e-2));
+    TEST_CMP(std::abs(f.GetGaussStd()  -   std), <, std::abs(  std * 1e-2));
+  }
+  {
+    std::vector<uint32_t> v(100);
+    double y = 1e3;
     double amp = 3e3;
     double mean = 40;
     double std = 10;
     double denom = 1 / (2 * std * std);
     for (uint32_t i = 0; i < v.size(); ++i) {
       auto d = i - mean;
-      v.at(i) = (uint32_t)(ofs + amp * exp(-d * d * denom));
+      v.at(i) = (uint32_t)(y + amp * exp(-d * d * denom));
     }
-    FitGauss f(v, ofs + amp, 0, (uint32_t)(v.size() - 1));
-    TEST_CMP(std::abs(f.GetOfs()  -  ofs), <,    1);
-    TEST_CMP(std::abs(f.GetAmp()  -  amp), <,    1);
-    TEST_CMP(std::abs(f.GetMean() - mean), <, 1e-2);
-    TEST_CMP(std::abs(f.GetStd()  -  std), <, 1e-2);
+    FitGauss f(v, y + amp, 0, (uint32_t)(v.size() - 1));
+    TEST_CMP(std::abs(f.GetY()    -    y), <, std::abs(   y * 1e-2));
+    TEST_CMP(std::abs(f.GetAmp()  -  amp), <, std::abs(amp  * 1e-2));
+    TEST_CMP(std::abs(f.GetMean() - mean), <, std::abs(mean * 1e-2));
+    TEST_CMP(std::abs(f.GetStd()  -  std), <, std::abs( std * 1e-2));
   }
 }
 

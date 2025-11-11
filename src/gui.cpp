@@ -34,12 +34,18 @@ void Gui::Axis::Clear()
   max = 0.0;
 }
 
-Gui::Peak::Peak(double a_peak_x, double a_ofs_y, double a_amp_y, double
-    a_std_x):
-  peak_x(a_peak_x),
-  ofs_y(a_ofs_y),
-  amp_y(a_amp_y),
-  std_x(a_std_x)
+Gui::Peak::Peak(double a_y,
+    bool a_has_exp, double a_exp_phase, double a_exp_tau,
+    bool a_has_gauss, double a_gauss_amp, double a_gauss_x, double
+    a_gauss_std):
+  y(a_y),
+  has_exp(a_has_exp),
+  exp_phase(a_exp_phase),
+  exp_tau(a_exp_tau),
+  has_gauss(a_has_gauss),
+  gauss_amp(a_gauss_amp),
+  gauss_x(a_gauss_x),
+  gauss_std(a_gauss_std)
 {
 }
 

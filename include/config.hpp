@@ -23,6 +23,7 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include <fit.hpp>
 #include <node_mexpr.hpp>
 #include <node_signal.hpp>
 #include <trig_map.hpp>
@@ -59,11 +60,10 @@ class Config {
         std::vector<NodeValue *> const &);
     void AddFit(char const *, double, double);
     NodeValue *AddFloor(NodeValue *);
-    void AddHist1(char const *, NodeValue *, uint32_t, char const *, char
-        const *, bool, bool, double, unsigned, double);
+    void AddHist1(char const *, NodeValue *, uint32_t, char const *,
+        PeakFitVec const &, bool, bool, double, unsigned, double);
     void AddHist2(char const *, NodeValue *, NodeValue *, uint32_t, uint32_t,
-        char const *, char const *, char const *, bool, double, unsigned,
-        double, double);
+        char const *, char const *, bool, double, unsigned, double, double);
     NodeValue *AddLength(NodeValue *);
     NodeValue *AddMatchId(NodeValue *, NodeValue *);
     NodeValue *AddMatchValue(NodeValue *, NodeValue *, double);

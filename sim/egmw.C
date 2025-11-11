@@ -49,7 +49,7 @@
         for (;;) {
           auto x = rnd.Uniform(-4, 4);
           auto y = rnd.Uniform(1.2);
-          auto p = exp(-x*x) + (0 == j ? exp(-0.3*(x+6)) : -0.05*x+0.2);
+          auto p = exp(-x*x) + (0 == j ? exp(-0.3*(x+6)) : -0.005*x+0.1);
           if (y < p) {
             xy[j] = x;
             break;

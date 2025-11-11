@@ -349,22 +349,28 @@ void RootGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
     gr.SetLineColor(kRed);
     //auto x = a_transform.ApplyAbs(it->peak_x);
     //auto std = a_transform.ApplyRel(it->std_x);
-    auto x0 = it->peak_x;
-    auto std = it->std_x;
+    auto x0 = it->gauss_x;
+    auto std = it->gauss_std;
     auto denom = 1 / (2 * std * std);
     auto left = x0 - 3 * std;
     auto right = x0 + 3 * std;
     auto scale = (right - left) / gr.GetN();
     for (int i = 0; i < gr.GetN(); ++i) {
       auto x = (i + 0.5) * scale + left;
-      auto d = x - x0;
-      auto y = it->ofs_y + it->amp_y * exp(-d*d * denom);
+      auto y = it->y;
+      if (it->has_exp) {
+        y += exp((x - it->exp_tau) / it->exp_tau);
+      }
+      if (it->has_gauss) {
+        auto d = x - x0;
+        y += it->gauss_amp * exp(-d*d * denom);
+      }
       gr.SetPoint(i, x, y);
     }
     gr.Draw("L");
     char buf[256];
     snprintf(buf, sizeof buf, "%.3f/%.3f", x0, std);
-    auto text_y = it->ofs_y + it->amp_y;
+    auto text_y = it->y + it->gauss_amp;
     tx.SetTextFont(40);
     tx.SetTextSize(0.02f);
     tx.SetText(x0, text_y, buf);

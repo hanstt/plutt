@@ -32,13 +32,13 @@
 extern Output *g_output;
 
 NodeHist1::NodeHist1(std::string const &a_loc, char const *a_title, NodeValue
-    *a_x, uint32_t a_xb, LinearTransform const &a_transform, char const
-    *a_fit, bool a_log_y, bool a_contour, double a_drop_counts_s, unsigned
+    *a_x, uint32_t a_xb, LinearTransform const &a_transform, PeakFitVec const
+    &a_fit_vec, bool a_log_y, bool a_contour, double a_drop_counts_s, unsigned
     a_drop_counts_num, double a_drop_stats_s):
   NodeCuttable(a_loc, a_title),
   m_x(a_x),
   m_xb(a_xb),
-  m_visual_hist(a_title, m_xb, a_transform, a_fit, a_log_y, a_contour,
+  m_visual_hist(a_title, m_xb, a_transform, a_fit_vec, a_log_y, a_contour,
       a_drop_counts_s, a_drop_counts_num, a_drop_stats_s),
   m_out()
 {

@@ -38,11 +38,17 @@ class Gui {
       double max;
     };
     struct Peak {
-      Peak(double, double, double, double);
-      double peak_x;
-      double ofs_y;
-      double amp_y;
-      double std_x;
+      Peak(double,
+          bool, double, double,
+          bool, double, double, double);
+      double y;
+      bool has_exp;
+      double exp_phase;
+      double exp_tau;
+      bool has_gauss;
+      double gauss_amp;
+      double gauss_x;
+      double gauss_std;
     };
     class Plot {
       public:

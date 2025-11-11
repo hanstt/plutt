@@ -23,6 +23,7 @@
 #ifndef VISUAL_HPP
 #define VISUAL_HPP
 
+#include <fit.hpp>
 #include <gui.hpp>
 #include <input.hpp>
 
@@ -122,13 +123,8 @@ class VisualAnnular: public Visual {
 
 class VisualHist: public Visual {
   public:
-    enum Fitter {
-      FITTER_NONE,
-      FITTER_GAUSS
-    };
-
-    VisualHist(std::string const &, uint32_t, LinearTransform const &, char
-        const *, bool, bool, double, unsigned, double);
+    VisualHist(std::string const &, uint32_t, LinearTransform const &,
+        PeakFitVec const &, bool, bool, double, unsigned, double);
     void Draw(Gui *);
     void Fill(Input::Type, Input::Scalar const &);
     void Fit();
@@ -136,11 +132,12 @@ class VisualHist: public Visual {
     void Prefill(Input::Type, Input::Scalar const &);
 
   private:
-    void FitGauss(std::vector<uint32_t> const &, Gui::Axis const &);
+    void FitGauss(std::vector<uint32_t> const &, Gui::Axis const &, PeakFitVec
+        const &);
 
     uint32_t m_xb;
     LinearTransform m_transform;
-    Fitter m_fitter;
+    PeakFitVec m_fit_vec;
     Range m_range;
     Gui::Axis m_axis;
     std::mutex m_hist_mutex;
@@ -164,8 +161,7 @@ class VisualHist: public Visual {
 class VisualHist2: public Visual {
   public:
     VisualHist2(std::string const &, uint32_t, uint32_t, LinearTransform const
-        &, LinearTransform const &, char const *, bool, double, unsigned,
-        double, double);
+        &, LinearTransform const &, bool, double, unsigned, double, double);
     void Draw(Gui *);
     void Fill(
         Input::Type, Input::Scalar const &,

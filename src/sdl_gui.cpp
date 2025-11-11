@@ -260,21 +260,29 @@ void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
   // Draw fits.
   for (auto it = a_peak_vec.begin(); a_peak_vec.end() != it; ++it) {
     std::vector<ImPlutt::Point> l(20);
-    auto x0 = a_transform.ApplyAbs(it->peak_x);
-    auto std = a_transform.ApplyRel(it->std_x);
+    auto phase = a_transform.ApplyRel(it->exp_phase);
+    auto tau = a_transform.ApplyRel(it->exp_tau);
+    auto x0 = a_transform.ApplyAbs(it->gauss_x);
+    auto std = a_transform.ApplyRel(it->gauss_std);
     auto denom = 1 / (2 * std * std);
     auto left = x0 - 3 * std;
     auto right = x0 + 3 * std;
     auto scale = (right - left) / (uint32_t)l.size();
     for (uint32_t i = 0; i < l.size(); ++i) {
       l[i].x = (i + 0.5) * scale + left;
-      auto d = l[i].x - x0;
-      l[i].y = it->ofs_y + it->amp_y * exp(-d*d * denom);
+      l[i].y = it->y;
+      if (it->has_exp) {
+        l[i].y += exp((l[i].x - phase) / tau);
+      }
+      if (it->has_gauss) {
+        auto d = l[i].x - x0;
+        l[i].y += it->gauss_amp * exp(-d*d * denom);
+      }
     }
     m_window->PlotLines(&plot, l);
     char buf[256];
     snprintf(buf, sizeof buf, "%.3f/%.3f", x0, std);
-    auto text_y = it->ofs_y + it->amp_y;
+    auto text_y = it->y + it->gauss_amp;
     m_window->PlotText(&plot, buf, ImPlutt::Point(x0, text_y),
         ImPlutt::TEXT_RIGHT, false, true);
   }

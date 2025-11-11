@@ -426,13 +426,13 @@ void VisualAnnular::Prefill(Input::Type a_type_r, Input::Scalar const &a_r,
 }
 
 VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
-    LinearTransform const &a_transform, char const *a_fitter, bool a_is_log_y,
-    bool a_is_contour, double a_drop_counts_s, unsigned a_drop_counts_num,
-    double a_drop_stats_s):
+    LinearTransform const &a_transform, PeakFitVec const &a_fit_vec, bool
+    a_is_log_y, bool a_is_contour, double a_drop_counts_s, unsigned
+    a_drop_counts_num, double a_drop_stats_s):
   Visual(a_title),
   m_xb(a_xb),
   m_transform(a_transform),
-  m_fitter(),
+  m_fit_vec(a_fit_vec),
   m_range(a_drop_stats_s),
   m_axis(),
   m_hist_mutex(),
@@ -444,14 +444,6 @@ VisualHist::VisualHist(std::string const &a_title, uint32_t a_xb,
   m_is_contour(a_is_contour),
   m_peak_vec()
 {
-  if (!a_fitter) {
-    m_fitter = FITTER_NONE;
-  } else if (0 == strcmp(a_fitter, "gauss")) {
-    m_fitter = FITTER_GAUSS;
-  } else {
-    std::cerr << a_fitter << ": Fitter not implemented.\n";
-    throw std::runtime_error(__func__);
-  }
 }
 
 void VisualHist::Draw(Gui *a_gui)
@@ -461,14 +453,8 @@ void VisualHist::Draw(Gui *a_gui)
   }
 
   // Fitting at 1 Hz should be fine?
-  switch (m_fitter) {
-    case FITTER_NONE:
-      break;
-    case FITTER_GAUSS:
-      FitGauss(m_hist_copy, m_axis_copy);
-      break;
-    default:
-      throw std::runtime_error(__func__);
+  if (!m_fit_vec.empty()) {
+    FitGauss(m_hist_copy, m_axis_copy, m_fit_vec);
   }
 
   g_gui.DrawHist1(a_gui, m_gui_id, m_axis_copy, m_transform, m_is_log_y,
@@ -564,97 +550,67 @@ void VisualHist::Prefill(Input::Type a_type, Input::Scalar const &a_x)
 
 // Fitters must work on given copy and not look at the ever-changing m_hist!
 void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
-    &a_axis)
+    &a_axis, PeakFitVec const &a_fit_vec)
 {
   m_peak_vec.clear();
-  auto b = Snip(a_hist, 4);
-  for (size_t i = 0; i < a_hist.size(); ++i) {
-    b.at(i) = ((float)a_hist.at(i) - b.at(i)) / (float)sqrt(b.at(i) + 1);
-  }
-  // 2nd diffs make peaks look like:
-  // ___/\  /\___
-  //      \/
-  std::vector<float> d_hist(a_hist.size());
-  for (size_t i = 2; i < a_hist.size(); ++i) {
-    auto f0 = (float)a_hist.at(i - 2);
-    auto f1 = (float)a_hist.at(i - 1);
-    auto f2 = (float)a_hist.at(i - 0);
-    d_hist.at(i - 1) = (f2 - f1) - (f1 - f0);
-  }
-  // Mask for found peaks.
-  std::vector<uint32_t> mask((a_hist.size() + 31) / 32);
   auto scale = (a_axis.max - a_axis.min) / (double)a_hist.size();
-  for (unsigned n = 0; n < 30 && m_peak_vec.size() < 30; ++n) {
-    // Find min 2nd diff.
-    double max_y = 0;
-    uint32_t max_i = 0;
-    for (uint32_t i = 0; i < a_hist.size(); ++i) {
-      auto u32_i = i / 32;
-      auto bit_i = 1U << (i & 31);
-      if (!(mask.at(u32_i) & bit_i)) {
-        auto v = b.at(i);
-        if (v > max_y) {
-          max_y = v;
-          max_i = i;
+  for (auto it = a_fit_vec.begin(); a_fit_vec.end() != it; ++it) {
+    // Fit left..right in histo.
+    int l_i = (int)((it->l - a_axis.min) / scale);
+    int r_i = (int)((it->r - a_axis.min) / scale);
+    if (l_i > (int)a_hist.size() || r_i < 0) {
+      continue;
+    }
+    l_i = std::max(l_i, 0);
+    r_i = std::min(r_i, (int)a_hist.size() - 1);
+    uint32_t max_y = 0;
+    for (int i = l_i; i <= r_i; ++i) {
+      max_y = std::max(max_y, a_hist.at(i));
+    }
+    bool has_exp = it->name.npos != it->name.find("exp");
+    bool has_gauss = it->name.npos != it->name.find("gauss");
+    try {
+      double y = 0.0;
+      double exp_phase = 0.0;
+      double exp_tau = 0.0;
+      double gau_amp = 0.0;
+      double gau_mean = 0.0;
+      double gau_std = 0.0;
+      if (has_exp && has_gauss) {
+        ::FitExpGauss fit(a_hist, max_y, l_i, r_i);
+        if (fit.GetGaussAmp() > 0) {
+          // Reasonable fit, save peak.
+          y = fit.GetY();
+          // Shift by 0.5 because fit was done on left edges of bins.
+          exp_phase = a_axis.min + (fit.GetExpPhase() + 0.5) * scale;
+          exp_tau = fit.GetExpTau() * scale;
+          gau_amp = fit.GetGaussAmp();
+          gau_mean = a_axis.min + (fit.GetGaussMean() + 0.5) * scale;
+          gau_std = fit.GetGaussStd() * scale;
+        }
+      } else if (has_gauss) {
+        ::FitGauss fit(a_hist, max_y, l_i, r_i);
+        if (fit.GetAmp() > 0) {
+          y = fit.GetY();
+          gau_amp = fit.GetAmp();
+          auto mean = fit.GetMean() + 0.5;
+          gau_mean = a_axis.min + mean * scale;
+          gau_std = fit.GetStd() * scale;
         }
       }
-    }
-    max_y = a_hist.at(max_i);
-    // Step sideways in 2nd-diffs to find shoulders, ie the dots below:
-    //    .    .
-    // ___/\  /\___
-    //      \/
-    auto min_y = -1e9f;
-    auto left_i = max_i;
-    auto prev = min_y;
-    for (;;) {
-      if (left_i < 1) break;
-      --left_i;
-      auto d = d_hist.at(left_i);
-      if (d < prev) break;
-      prev = d;
-    }
-    auto right_i = max_i;
-    prev = min_y;
-    for (;;) {
-      if (right_i + 1 >= d_hist.size()) break;
-      ++right_i;
-      auto d = d_hist.at(right_i);
-      if (d < prev) break;
-      prev = d;
-    }
-    try {
-      // Fit left..right in histo.
-      ::FitGauss fit(a_hist, max_y, left_i, right_i);
-      // Shift by 0.5 because fit was done on left edges of bins.
-      auto mean = fit.GetMean() + 0.5;
-      // Mask range.
-      auto width = std::max(fit.GetStd(), 1.0);
-      auto left = floor(mean - 3 * width);
-      left_i = (uint32_t)std::max(left, 0.0);
-      auto right = ceil(mean + 3 * width);
-      right_i = (uint32_t)std::min(right, (double)a_hist.size() - 1);
-      if (fit.GetAmp() > 0) {
-        // Reasonable fit, save peak.
-        auto mean_x = a_axis.min + mean * scale;
-        auto std_x = fit.GetStd() * scale;
-        auto ofs = fit.GetOfs();
-        m_peak_vec.push_back(Gui::Peak(mean_x, ofs, fit.GetAmp(), std_x));
-      }
+      m_peak_vec.push_back(Gui::Peak(
+          y,
+          has_exp, exp_phase, exp_tau,
+          has_gauss, gau_amp, gau_mean, gau_std));
     } catch (...) {
-    }
-    for (uint32_t i = left_i; i <= right_i; ++i) {
-      auto u32_i = i / 32;
-      auto bit_i = 1U << (i & 31);
-      mask.at(u32_i) |= bit_i;
     }
   }
 }
 
 VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
-    a_xb, LinearTransform const &a_ty, LinearTransform const &a_tx, char const
-    *a_fitter, bool a_is_log_z, double a_drop_counts_s, unsigned
-    a_drop_counts_num, double a_drop_stats_s, double a_single):
+    a_xb, LinearTransform const &a_ty, LinearTransform const &a_tx, bool
+    a_is_log_z, double a_drop_counts_s, unsigned a_drop_counts_num, double
+    a_drop_stats_s, double a_single):
   Visual(a_title),
   m_xb(a_xb),
   m_yb(a_yb),

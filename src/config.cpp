@@ -431,8 +431,9 @@ NodeValue *Config::AddFloor(NodeValue *a_value)
 }
 
 void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
-    const *a_transform, char const *a_fit, bool a_log_y, bool a_contour,
-    double a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s)
+    const *a_transform, PeakFitVec const &a_fit_vec, bool a_log_y, bool
+    a_contour, double a_drop_counts_s, unsigned a_drop_counts_num, double
+    a_drop_stats_s)
 {
   double k = 1.0;
   double m = 0.0;
@@ -454,7 +455,7 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
   }
 
   auto node = new NodeHist1(GetLocStr(), a_title, a_x, a_xb,
-      LinearTransform(k, m), a_fit, a_log_y, a_contour, a_drop_counts_s,
+      LinearTransform(k, m), a_fit_vec, a_log_y, a_contour, a_drop_counts_s,
       a_drop_counts_num, a_drop_stats_s);
   NodeCuttableAdd(node);
 
@@ -466,8 +467,8 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
 
 void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
     uint32_t a_yb, uint32_t a_xb, char const *a_transformy, char const
-    *a_transformx, char const *a_fit, bool a_log_z, double a_drop_counts_s,
-    unsigned a_drop_counts_num, double a_drop_stats_s, double a_single)
+    *a_transformx, bool a_log_z, double a_drop_counts_s, unsigned
+    a_drop_counts_num, double a_drop_stats_s, double a_single)
 {
   double kx = 1.0;
   double mx = 0.0;
@@ -504,7 +505,7 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
   }
 
   auto node = new NodeHist2(GetLocStr(), a_title, a_y, a_x, a_yb, a_xb,
-      LinearTransform(ky, my), LinearTransform(kx, mx), a_fit, a_log_z,
+      LinearTransform(ky, my), LinearTransform(kx, mx), a_log_z,
       a_drop_counts_s, a_drop_counts_num, a_drop_stats_s, a_single);
   NodeCuttableAdd(node);
 
