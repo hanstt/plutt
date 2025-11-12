@@ -1,7 +1,7 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2023-2025
+ * Copyright (C) 2025
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
@@ -20,36 +20,33 @@
  * MA  02110-1301  USA
  */
 
-#ifndef NODE_HIST2_HPP
-#define NODE_HIST2_HPP
+{
+  TFile file("mhit.root", "RECREATE");
 
-#include <node.hpp>
-#include <output.hpp>
-#include <visual.hpp>
+  auto tree = new TTree("T", "Multi-hit mock");
 
-/*
- * Collects a vs b in a 2D histogram, actual histogramming is performed in
- * visual.*.
- */
-class NodeHist2: public NodeCuttable {
-  public:
-    NodeHist2(std::string const &, char const *, NodeValue *, NodeValue *,
-        uint32_t, uint32_t, LinearTransform const &, LinearTransform const &,
-        bool, double, unsigned, double, double, bool);
-    void Process(uint64_t);
+  unsigned n;
+  unsigned x[10];
+  unsigned y[10];
+  tree->Branch("n", &n, "n/i");
+  tree->Branch("x", x, "x[n]/i");
+  tree->Branch("y", y, "y[n]/i");
 
-  private:
-    NodeHist2(NodeHist2 const &);
-    NodeHist2 &operator=(NodeHist2 const &);
+  TRandom3 rnd;
+  for (unsigned ev = 0; ev < 100000; ++ev) {
+    n = 0;
+    for (unsigned i = 0; i < 10; ++i) {
+      if (rnd.Uniform() < 0.5) {
+        continue;
+      }
+      x[n] = i;
+      y[n] = 9 - i;
+      ++n;
+    }
+    tree->Fill();
+  }
 
-    NodeValue *m_x;
-    NodeValue *m_y;
-    uint32_t m_xb;
-    uint32_t m_yb;
-    VisualHist2 m_visual_hist2;
-    Output::Var m_out_x;
-    Output::Var m_out_y;
-    bool m_permutate;
-};
-
-#endif
+  tree->Print();
+  tree->Write();
+  delete tree;
+}

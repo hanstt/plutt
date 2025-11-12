@@ -93,6 +93,7 @@ merge                  return TK_MERGE;
 min                    return TK_MIN;
 page                   return TK_PAGE;
 pedestal               return TK_PEDESTAL;
+permutate              return TK_PERMUTATE;
 pow                    return TK_POW;
 s                      return TK_S;
 select_index           return TK_SELECT_INDEX;

@@ -35,7 +35,7 @@ NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
     *a_y, NodeValue *a_x, uint32_t a_yb, uint32_t a_xb, LinearTransform const
     &a_transformy, LinearTransform const &a_transformx, bool a_log_z, double
     a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s, double
-    a_single):
+    a_single, bool a_permutate):
   NodeCuttable(a_loc, a_title),
   m_x(a_x),
   m_y(a_y),
@@ -44,7 +44,8 @@ NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
   m_visual_hist2(a_title, m_yb, m_xb, a_transformy, a_transformx, a_log_z,
       a_drop_counts_s, a_drop_counts_num, a_drop_stats_s, a_single),
   m_out_x(),
-  m_out_y()
+  m_out_y(),
+  m_permutate(a_permutate)
 {
   if (g_output) {
     g_output->Add(&m_out_x, std::string(a_title) + "_x");
@@ -97,30 +98,58 @@ void NodeHist2::Process(uint64_t a_evid)
       }
     }
   } else {
-    // Plot y.v vs x.v until either is exhausted.
+    // Plot y.v vs x.v until either is exhausted, or plot plot all
+    // combinations if m_permutate is set.
     NODE_PROCESS(m_x, a_evid);
     auto const &val_x = m_x->GetValue();
     auto const &vec_x = val_x.GetV();
 
-    auto size = std::min(vec_x.size(), vec_y.size());
+    auto size_min = std::min(vec_x.size(), vec_y.size());
 
     // Pre-fill.
-    for (uint32_t i = 0; i < size; ++i) {
-      auto const &x = vec_x.at(i);
-      auto const &y = vec_y.at(i);
-      m_cut_producer.Test(val_x.GetType(), x, val_y.GetType(), y);
-      m_visual_hist2.Prefill(val_y.GetType(), y, val_x.GetType(), x);
-    }
-    m_visual_hist2.Fit();
-    // Fill.
-    for (uint32_t i = 0; i < size; ++i) {
-      auto const &x = vec_x.at(i);
-      auto const &y = vec_y.at(i);
-      if (g_output) {
-        g_output->Fill(m_out_x, val_x.GetV(i, true));
-        g_output->Fill(m_out_y, val_y.GetV(i, true));
+    if (m_permutate) {
+      for (auto ity = vec_y.begin(); vec_y.end() != ity; ++ity) {
+        auto const &y = *ity;
+        for (auto itx = vec_x.begin(); vec_x.end() != itx; ++itx) {
+          auto const &x = *itx;
+          m_cut_producer.Test(val_x.GetType(), x, val_y.GetType(), y);
+          m_visual_hist2.Prefill(val_y.GetType(), y, val_x.GetType(), x);
+        }
       }
-      m_visual_hist2.Fill(val_y.GetType(), y, val_x.GetType(), x);
+    } else {
+      for (uint32_t i = 0; i < size_min; ++i) {
+        auto const &x = vec_x.at(i);
+        auto const &y = vec_y.at(i);
+        m_cut_producer.Test(val_x.GetType(), x, val_y.GetType(), y);
+        m_visual_hist2.Prefill(val_y.GetType(), y, val_x.GetType(), x);
+      }
+    }
+
+    m_visual_hist2.Fit();
+
+    // Fill.
+    if (m_permutate) {
+      for (uint32_t i = 0; i < vec_y.size(); ++i) {
+        auto const &y = vec_y.at(i);
+        for (uint32_t j = 0; j < vec_x.size(); ++j) {
+          auto const &x = vec_x.at(j);
+          if (g_output) {
+            g_output->Fill(m_out_x, val_x.GetV(i, true));
+            g_output->Fill(m_out_y, val_y.GetV(i, true));
+          }
+          m_visual_hist2.Fill(val_y.GetType(), y, val_x.GetType(), x);
+        }
+      }
+    } else {
+      for (uint32_t i = 0; i < size_min; ++i) {
+        auto const &x = vec_x.at(i);
+        auto const &y = vec_y.at(i);
+        if (g_output) {
+          g_output->Fill(m_out_x, val_x.GetV(i, true));
+          g_output->Fill(m_out_y, val_y.GetV(i, true));
+        }
+        m_visual_hist2.Fill(val_y.GetType(), y, val_x.GetType(), x);
+      }
     }
   }
 }

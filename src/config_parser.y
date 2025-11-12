@@ -125,6 +125,7 @@ static struct {
 	unsigned slice_num;
 } g_drop_counts = {-1.0, 1};
 static double g_drop_stats = -1.0;
+static bool g_permutate;
 static double g_single = -1.0;
 
 static void ResetDrawArgs() {
@@ -141,6 +142,7 @@ static void ResetDrawArgs() {
 	g_drop_counts.time = -1.0;
 	g_drop_counts.slice_num = 1;
 	g_drop_stats = -1.0;
+	g_permutate = false;
 	g_single = -1.0;
 }
 
@@ -213,6 +215,7 @@ static void ResetDrawArgs() {
 %token TK_MIN
 %token TK_PAGE
 %token TK_PEDESTAL
+%token TK_PERMUTATE
 %token TK_POW
 %token TK_S
 %token TK_SELECT_INDEX
@@ -742,6 +745,11 @@ drop_stats
 		LOC_SAVE(@1);
 		g_drop_stats = $3.GetDouble() * $4;
 	}
+permutate
+	: TK_PERMUTATE {
+		LOC_SAVE(@1);
+		g_permutate = true;
+	}
 single
 	: TK_SINGLE {
 		LOC_SAVE(@1);
@@ -797,6 +805,7 @@ hist2d_arg
 	| hist_cut
 	| drop_counts
 	| drop_stats
+	| permutate
 	| single
 
 coarse_fine
@@ -822,7 +831,8 @@ hist
 		LOC_SAVE(@1);
 		g_config->AddHist2($3, $5, nullptr, g_binsy, g_binsx,
 		    g_transformy, g_transformx, g_logz, g_drop_counts.time,
-		    g_drop_counts.slice_num, g_drop_stats, g_single);
+		    g_drop_counts.slice_num, g_drop_stats, g_single,
+		    g_permutate);
 		ResetDrawArgs();
 		free($3);
 	}
@@ -830,7 +840,8 @@ hist
 		LOC_SAVE(@1);
 		g_config->AddHist2($3, $5, $7, g_binsy, g_binsx,
 		    g_transformy, g_transformx, g_logz, g_drop_counts.time,
-		    g_drop_counts.slice_num, g_drop_stats, g_single);
+		    g_drop_counts.slice_num, g_drop_stats, g_single,
+		    g_permutate);
 		ResetDrawArgs();
 		free($3);
 	}

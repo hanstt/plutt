@@ -63,7 +63,8 @@ class Config {
     void AddHist1(char const *, NodeValue *, uint32_t, char const *,
         PeakFitVec const &, bool, bool, double, unsigned, double);
     void AddHist2(char const *, NodeValue *, NodeValue *, uint32_t, uint32_t,
-        char const *, char const *, bool, double, unsigned, double, double);
+        char const *, char const *, bool, double, unsigned, double, double,
+        bool);
     NodeValue *AddLength(NodeValue *);
     NodeValue *AddMatchId(NodeValue *, NodeValue *);
     NodeValue *AddMatchValue(NodeValue *, NodeValue *, double);
