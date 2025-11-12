@@ -607,8 +607,8 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
   }
 }
 
-VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
-    a_xb, LinearTransform const &a_ty, LinearTransform const &a_tx, bool
+VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_xb, uint32_t
+    a_yb, LinearTransform const &a_tx, LinearTransform const &a_ty, bool
     a_is_log_z, double a_drop_counts_s, unsigned a_drop_counts_num, double
     a_drop_stats_s, double a_single):
   Visual(a_title),
@@ -645,8 +645,8 @@ void VisualHist2::Draw(Gui *a_gui)
       m_transform_x, m_transform_y, m_is_log_z, m_hist_copy);
 }
 
-void VisualHist2::Fill(Input::Type a_type_y, Input::Scalar const &a_y,
-    Input::Type a_type_x, Input::Scalar const &a_x)
+void VisualHist2::Fill(Input::Type a_type_x, Input::Scalar const &a_x,
+    Input::Type a_type_y, Input::Scalar const &a_y)
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 
@@ -753,8 +753,8 @@ void VisualHist2::Latch()
   }
 }
 
-void VisualHist2::Prefill(Input::Type a_type_y, Input::Scalar const &a_y,
-    Input::Type a_type_x, Input::Scalar const &a_x)
+void VisualHist2::Prefill(Input::Type a_type_x, Input::Scalar const &a_x,
+    Input::Type a_type_y, Input::Scalar const &a_y)
 {
   const std::lock_guard<std::mutex> lock(m_hist_mutex);
 

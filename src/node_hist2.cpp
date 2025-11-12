@@ -32,8 +32,8 @@
 extern Output *g_output;
 
 NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
-    *a_y, NodeValue *a_x, uint32_t a_yb, uint32_t a_xb, LinearTransform const
-    &a_transformy, LinearTransform const &a_transformx, bool a_log_z, double
+    *a_x, NodeValue *a_y, uint32_t a_xb, uint32_t a_yb, LinearTransform const
+    &a_transformx, LinearTransform const &a_transformy, bool a_log_z, double
     a_drop_counts_s, unsigned a_drop_counts_num, double a_drop_stats_s, double
     a_single, bool a_permutate):
   NodeCuttable(a_loc, a_title),
@@ -41,7 +41,7 @@ NodeHist2::NodeHist2(std::string const &a_loc, char const *a_title, NodeValue
   m_y(a_y),
   m_xb(a_xb),
   m_yb(a_yb),
-  m_visual_hist2(a_title, m_yb, m_xb, a_transformy, a_transformx, a_log_z,
+  m_visual_hist2(a_title, m_xb, m_yb, a_transformx, a_transformy, a_log_z,
       a_drop_counts_s, a_drop_counts_num, a_drop_stats_s, a_single),
   m_out_x(),
   m_out_y(),
@@ -60,19 +60,19 @@ void NodeHist2::Process(uint64_t a_evid)
   if (!m_cut_consumer.IsOk()) {
     return;
   }
-  NODE_PROCESS(m_y, a_evid);
+  NODE_PROCESS(m_x, a_evid);
 
   if (!m_visual_hist2.IsWritable()) {
     return;
   }
 
-  auto const &val_y = m_y->GetValue();
-  auto const &vec_y = val_y.GetV();
+  auto const &val_x = m_x->GetValue();
+  auto const &vec_x = val_x.GetV();
 
-  if (!m_x) {
-    // Plot y.v vs y.I.
-    auto const &vmi = val_y.GetID();
-    auto const &vme = val_y.GetEnd();
+  if (!m_y) {
+    // Plot x.v vs x.I.
+    auto const &vmi = val_x.GetID();
+    auto const &vme = val_x.GetEnd();
     // Pre-fill.
     uint32_t vi = 0;
     for (uint32_t i = 0; i < vmi.size(); ++i) {
@@ -80,9 +80,9 @@ void NodeHist2::Process(uint64_t a_evid)
       x.u64 = vmi[i];
       auto me = vme[i];
       for (; vi < me; ++vi) {
-        Input::Scalar const &y = vec_y.at(vi);
-        m_cut_producer.Test(Input::kUint64, x, val_y.GetType(), y);
-        m_visual_hist2.Prefill(val_y.GetType(), y, Input::kUint64, x);
+        Input::Scalar const &y = vec_x.at(vi);
+        m_cut_producer.Test(Input::kUint64, x, val_x.GetType(), y);
+        m_visual_hist2.Prefill(Input::kUint64, x, val_x.GetType(), y);
       }
     }
     m_visual_hist2.Fit();
@@ -93,16 +93,16 @@ void NodeHist2::Process(uint64_t a_evid)
       x.u64 = vmi[i];
       auto me = vme[i];
       for (; vi < me; ++vi) {
-        Input::Scalar const &y = vec_y.at(vi);
-        m_visual_hist2.Fill(val_y.GetType(), y, Input::kUint64, x);
+        Input::Scalar const &y = vec_x.at(vi);
+        m_visual_hist2.Fill(Input::kUint64, x, val_x.GetType(), y);
       }
     }
   } else {
     // Plot y.v vs x.v until either is exhausted, or plot plot all
     // combinations if m_permutate is set.
-    NODE_PROCESS(m_x, a_evid);
-    auto const &val_x = m_x->GetValue();
-    auto const &vec_x = val_x.GetV();
+    NODE_PROCESS(m_y, a_evid);
+    auto const &val_y = m_y->GetValue();
+    auto const &vec_y = val_y.GetV();
 
     auto size_min = std::min(vec_x.size(), vec_y.size());
 
@@ -113,7 +113,7 @@ void NodeHist2::Process(uint64_t a_evid)
         for (auto itx = vec_x.begin(); vec_x.end() != itx; ++itx) {
           auto const &x = *itx;
           m_cut_producer.Test(val_x.GetType(), x, val_y.GetType(), y);
-          m_visual_hist2.Prefill(val_y.GetType(), y, val_x.GetType(), x);
+          m_visual_hist2.Prefill(val_x.GetType(), x, val_y.GetType(), y);
         }
       }
     } else {
@@ -121,7 +121,7 @@ void NodeHist2::Process(uint64_t a_evid)
         auto const &x = vec_x.at(i);
         auto const &y = vec_y.at(i);
         m_cut_producer.Test(val_x.GetType(), x, val_y.GetType(), y);
-        m_visual_hist2.Prefill(val_y.GetType(), y, val_x.GetType(), x);
+        m_visual_hist2.Prefill(val_x.GetType(), x, val_y.GetType(), y);
       }
     }
 
@@ -137,7 +137,7 @@ void NodeHist2::Process(uint64_t a_evid)
             g_output->Fill(m_out_x, val_x.GetV(i, true));
             g_output->Fill(m_out_y, val_y.GetV(i, true));
           }
-          m_visual_hist2.Fill(val_y.GetType(), y, val_x.GetType(), x);
+          m_visual_hist2.Fill(val_x.GetType(), x, val_y.GetType(), y);
         }
       }
     } else {
@@ -148,7 +148,7 @@ void NodeHist2::Process(uint64_t a_evid)
           g_output->Fill(m_out_x, val_x.GetV(i, true));
           g_output->Fill(m_out_y, val_y.GetV(i, true));
         }
-        m_visual_hist2.Fill(val_y.GetType(), y, val_x.GetType(), x);
+        m_visual_hist2.Fill(val_x.GetType(), x, val_y.GetType(), y);
       }
     }
   }

@@ -465,9 +465,9 @@ void Config::AddHist1(char const *a_title, NodeValue *a_x, uint32_t a_xb, char
   DotAddLink(node, a_x);
 }
 
-void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
-    uint32_t a_yb, uint32_t a_xb, char const *a_transformy, char const
-    *a_transformx, bool a_log_z, double a_drop_counts_s, unsigned
+void Config::AddHist2(char const *a_title, NodeValue *a_x, NodeValue *a_y,
+    uint32_t a_xb, uint32_t a_yb, char const *a_transformx, char const
+    *a_transformy, bool a_log_z, double a_drop_counts_s, unsigned
     a_drop_counts_num, double a_drop_stats_s, double a_single, bool
     a_permutate)
 {
@@ -505,17 +505,17 @@ void Config::AddHist2(char const *a_title, NodeValue *a_y, NodeValue *a_x,
     throw std::runtime_error(__func__);
   }
 
-  auto node = new NodeHist2(GetLocStr(), a_title, a_y, a_x, a_yb, a_xb,
-      LinearTransform(ky, my), LinearTransform(kx, mx), a_log_z,
+  auto node = new NodeHist2(GetLocStr(), a_title, a_x, a_y, a_xb, a_yb,
+      LinearTransform(kx, mx), LinearTransform(ky, my), a_log_z,
       a_drop_counts_s, a_drop_counts_num, a_drop_stats_s, a_single,
       a_permutate);
   NodeCuttableAdd(node);
 
   std::ostringstream oss2;
   oss2 << "Hist2=\\\"" << a_title << "\\\"";
-  if (!a_x) {
+  if (!a_y) {
     DotAddNode(node, oss2.str(), {"xy"});
-    DotAddLink(node, a_y, 0);
+    DotAddLink(node, a_x, 0);
   } else {
     DotAddNode(node, oss2.str(), {"x", "y"});
     DotAddLink(node, a_x, 0);

@@ -118,8 +118,8 @@ static uint32_t g_binsx;
 static uint32_t g_binsy;
 static char *g_transformx;
 static char *g_transformy;
-static int g_logy, g_logz;
-static int g_contour;
+static bool g_logy, g_logz;
+static bool g_contour;
 static struct {
 	double time;
 	unsigned slice_num;
@@ -136,9 +136,9 @@ static void ResetDrawArgs() {
 	g_transformx = nullptr;
 	free(g_transformy);
 	g_transformy = nullptr;
-	g_logy = 0;
-	g_logz = 0;
-	g_contour = 0;
+	g_logy = false;
+	g_logz = false;
+	g_contour = false;
 	g_drop_counts.time = -1.0;
 	g_drop_counts.slice_num = 1;
 	g_drop_stats = -1.0;
@@ -770,8 +770,8 @@ hist_opt
 	: ',' hist_arg
 hist_arg
 	: TK_BINSX '=' const { g_binsx = $3.GetI64(); }
-	| TK_CONTOURED { g_contour = 1; }
-	| TK_FILLED { g_contour = 0; }
+	| TK_CONTOURED { g_contour = false; }
+	| TK_FILLED { g_contour = true; }
 	| TK_FIT '(' TK_STRING ',' const ',' const ')' {
 		auto l = $5.GetDouble();
 		auto r = $7.GetDouble();
@@ -783,7 +783,7 @@ hist_arg
 		g_peak_fit_vec.push_back(PeakFitEntry($3, l, r));
 		free($3);
 	}
-	| TK_LOGY { g_logy = 1; }
+	| TK_LOGY { g_logy = true; }
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| hist_cut
 	| drop_counts
@@ -799,7 +799,7 @@ hist2d_opt
 hist2d_arg
 	: TK_BINSX '=' const { g_binsx = $3.GetI64(); }
 	| TK_BINSY '=' const { g_binsy = $3.GetI64(); }
-	| TK_LOGZ { g_logz = 1; }
+	| TK_LOGZ { g_logz = true; }
 	| TK_TRANSFORMX '=' TK_IDENT { g_transformx = $3; }
 	| TK_TRANSFORMY '=' TK_IDENT { g_transformy = $3; }
 	| hist_cut
@@ -829,8 +829,8 @@ hist
 	}
 	| TK_HIST2D '(' TK_STRING ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
-		g_config->AddHist2($3, $5, nullptr, g_binsy, g_binsx,
-		    g_transformy, g_transformx, g_logz, g_drop_counts.time,
+		g_config->AddHist2($3, $5, nullptr, g_binsx, g_binsy,
+		    g_transformx, g_transformy, g_logz, g_drop_counts.time,
 		    g_drop_counts.slice_num, g_drop_stats, g_single,
 		    g_permutate);
 		ResetDrawArgs();
@@ -838,8 +838,8 @@ hist
 	}
 	| TK_HIST2D '(' TK_STRING ',' value ',' value hist2d_opts ')' {
 		LOC_SAVE(@1);
-		g_config->AddHist2($3, $5, $7, g_binsy, g_binsx,
-		    g_transformy, g_transformx, g_logz, g_drop_counts.time,
+		g_config->AddHist2($3, $7, $5, g_binsx, g_binsy,
+		    g_transformx, g_transformy, g_logz, g_drop_counts.time,
 		    g_drop_counts.slice_num, g_drop_stats, g_single,
 		    g_permutate);
 		ResetDrawArgs();
