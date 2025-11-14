@@ -561,11 +561,11 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
     if (l_i > (int)a_hist.size() || r_i < 0) {
       continue;
     }
-    l_i = std::max(l_i, 0);
-    r_i = std::min(r_i, (int)a_hist.size() - 1);
+    auto l_u = (uint32_t)std::max(l_i, 0);
+    auto r_u = (uint32_t)std::min(r_i, (int)a_hist.size() - 1);
     uint32_t max_y = 0;
-    for (int i = l_i; i <= r_i; ++i) {
-      max_y = std::max(max_y, a_hist.at(i));
+    for (uint32_t i = l_u; i <= r_u; ++i) {
+      max_y = std::max(max_y, (uint32_t)a_hist.at(i));
     }
     bool has_exp = it->name.npos != it->name.find("exp");
     bool has_gauss = it->name.npos != it->name.find("gauss");
@@ -577,7 +577,7 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
       double gau_mean = 0.0;
       double gau_std = 0.0;
       if (has_exp && has_gauss) {
-        ::FitExpGauss fit(a_hist, max_y, l_i, r_i);
+        ::FitExpGauss fit(a_hist, max_y, l_u, r_u);
         if (fit.GetGaussAmp() > 0) {
           // Reasonable fit, save peak.
           y = fit.GetY();
@@ -589,7 +589,7 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
           gau_std = fit.GetGaussStd() * scale;
         }
       } else if (has_gauss) {
-        ::FitGauss fit(a_hist, max_y, l_i, r_i);
+        ::FitGauss fit(a_hist, max_y, l_u, r_u);
         if (fit.GetAmp() > 0) {
           y = fit.GetY();
           gau_amp = fit.GetAmp();
@@ -629,7 +629,9 @@ VisualHist2::VisualHist2(std::string const &a_title, uint32_t a_yb, uint32_t
   m_is_log_z(a_is_log_z),
   m_single()
 {
-  m_single.time_ms = (int64_t)(1000 * a_single);
+  m_single.time_ms = a_single < 0.0
+      ? UINT64_MAX
+      : (uint64_t)(1000 * a_single);
   m_single.time_ms_prev = 0;
   m_single.do_clear = false;
 }
@@ -692,10 +694,10 @@ void VisualHist2::Fit()
 
 bool VisualHist2::IsWritable()
 {
-  if (m_single.time_ms < 0) {
+  if (UINT64_MAX == m_single.time_ms) {
     return true;
   }
-  if (Time_get_ms() < (uint64_t)(m_single.time_ms_prev + m_single.time_ms)) {
+  if (Time_get_ms() < m_single.time_ms_prev + m_single.time_ms) {
     // Hold single event.
     return false;
   }
