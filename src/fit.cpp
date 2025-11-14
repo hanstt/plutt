@@ -190,11 +190,12 @@ FitExpGauss::FitExpGauss(std::vector<uint32_t> const &a_hist, double a_max_y,
   NLOPT_CALL(nlopt_set_min_objective, (opt, ExpGauss, &r));
   NLOPT_CALL(nlopt_set_ftol_rel, (opt, 1e-5));
   double x[6];
+  auto x2 = 0.5 * (a_left + a_right);
   x[OFS            ] = 0.0;
-  x[EXP_GAUSS_PHASE] = 0.0;
-  x[EXP_GAUSS_TAU  ] = -1.0;
+  x[EXP_GAUSS_PHASE] = x2;
+  x[EXP_GAUSS_TAU  ] = -x2;
   x[EXP_GAUSS_AMP  ] = a_max_y / 2;
-  x[EXP_GAUSS_MEAN ] = 0.5 * (a_left + a_right);
+  x[EXP_GAUSS_MEAN ] = x2;
   x[EXP_GAUSS_WIDTH] = 0.5 * (a_right - a_left);
   double y;
 #if BENCHMARK
