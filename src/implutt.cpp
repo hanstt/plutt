@@ -1550,12 +1550,6 @@ namespace ImPlutt {
     m_is_log(a_is_log),
     m_is_2d(a_is_2d)
   {
-#if 0
-    m_is_log.x = a_is_log_x;
-    m_is_log.y = a_is_log_y;
-    m_is_log.z = a_is_log_z;
-#endif
-
     // Render title and log option.
     auto title_size = m_window->RenderTextMeasure(a_title, Window::TEXT_BOLD);
     auto dx = (a_size.x - title_size.x) / 2;
