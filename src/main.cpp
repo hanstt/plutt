@@ -161,7 +161,7 @@ namespace {
     while (g_inp.running) {
       // Fetch event and wait until buffered event is done.
       if (!g_input->Fetch()) {
-        sleep(1);
+        Time_wait_ms(100);
         continue;
       }
       std::unique_lock<std::mutex> lock(g_inp.mutex);
