@@ -25,6 +25,7 @@
 #include <iostream>
 #include <list>
 #include <sstream>
+#include <cmath>
 
 #include <TCanvas.h>
 #include <TGraph.h>
