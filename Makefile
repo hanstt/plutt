@@ -34,7 +34,7 @@ QUIET=@
 # ccache?
 
 ifeq ($(shell (ccache --version 2>/dev/null && echo YesBox) | grep YesBox),YesBox)
-CXX:=ccache g++
+CCACHE:=ccache
 $(info ccache: yes)
 else
 $(info ccache: no)
@@ -175,16 +175,16 @@ $(TEST): $(TEST_OBJ) $(filter-out %main.o,$(OBJ)) $(ROOT_DICT_PCM)
 $(BUILD_DIR)/%.o: %.cpp Makefile
 	@echo O $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS)
 
 $(BUILD_DIR)/%.o: %.c Makefile
 	@echo O $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS)
 
 $(BUILD_DIR)/%.yy.o: $(BUILD_DIR)/%.yy.c
 	@echo LEXO $@
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
 $(BUILD_DIR)/%.yy.c: %.l
 	@echo LEXC $@
 	$(QUIET)$(MKDIR)
@@ -192,7 +192,7 @@ $(BUILD_DIR)/%.yy.c: %.l
 
 $(BUILD_DIR)/%.tab.o: $(BUILD_DIR)/%.tab.c
 	@echo TABO $@
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
 $(BUILD_DIR)/src/config_parser.tab.c: src/config_parser.y Makefile
 	@echo TABC $@
 	$(QUIET)$(MKDIR)
@@ -218,17 +218,17 @@ $(BUILD_DIR)/src/root.o \
     $(BUILD_DIR)/src/root_output.o:
 	@echo ROOTO $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS) $(ROOT_CFLAGS)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS) $(ROOT_CFLAGS)
 
 $(BUILD_DIR)/test/test_root.o: test/test_root.cpp Makefile
 	@echo ROOTO $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS) $(ROOT_CFLAGS)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS) $(ROOT_CFLAGS)
 
 $(BUILD_DIR)/test/test_root_dict.o: $(BUILD_DIR)/test/test_root_dict.cpp
 	@echo ROOTO $@
 	$(QUIET)$(MKDIR)
-	$(QUIET)$(CXX) -c -o $@ $< $(CPPFLAGS) $(ROOT_CFLAGS)
+	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(ROOT_CFLAGS)
 
 $(BUILD_DIR)/test/test_root_dict.cpp: test/test_root.hpp test/test_root_linkdef.hpp
 	@echo CLING $@
