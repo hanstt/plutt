@@ -26,5 +26,9 @@
 
 scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-build_dir=$(make -s -C $scriptdir -f gmake/build_dir_echo.mk)
+# If 'make' is not GNU make we hope for gmake.
+make_cmd=$(make -f /dev/null --version 2>&1 | grep -q "GNU Make" \
+	    && echo "make" || echo "gmake")
+
+build_dir=$($make_cmd -s -C $scriptdir -f gmake/build_dir_echo.mk)
 $DB $scriptdir/$build_dir/plutt $*
