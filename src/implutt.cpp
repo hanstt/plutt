@@ -682,7 +682,11 @@ namespace ImPlutt {
         {"/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
           12},
 	{"/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf", 12},
+        {"/usr/local/share/fonts/Liberation/LiberationSans-Regular.ttf",
+          12},
         {"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+          12},
+        {"/usr/local/share/fonts/dejavu/DejaVuSans.ttf",
           12},
         // Traditional OSX font, nicer than Helvetica Neue in cramped GUI:s.
         {"/System/Library/Fonts/LucidaGrande.ttc",
