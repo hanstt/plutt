@@ -190,7 +190,7 @@ $(BUILD_DIR)/%.o: %.c Makefile
 
 $(BUILD_DIR)/%.yy.o: $(BUILD_DIR)/%.yy.c
 	@echo LEXO $@
-	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
+	$(QUIET)$(CCACHE) $(CXX) -x c++ -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
 $(BUILD_DIR)/%.yy.c: %.l
 	@echo LEXC $@
 	$(QUIET)$(MKDIR)
@@ -198,7 +198,7 @@ $(BUILD_DIR)/%.yy.c: %.l
 
 $(BUILD_DIR)/%.tab.o: $(BUILD_DIR)/%.tab.c
 	@echo TABO $@
-	$(QUIET)$(CCACHE) $(CXX) -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
+	$(QUIET)$(CCACHE) $(CXX) -x c++ -c -o $@ $< $(CPPFLAGS) $(CXXFLAGS_UNSAFE)
 $(BUILD_DIR)/src/config_parser.tab.c: src/config_parser.y Makefile
 	@echo TABC $@
 	$(QUIET)$(MKDIR)
