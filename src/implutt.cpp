@@ -1643,6 +1643,14 @@ namespace ImPlutt {
                     }
                   }
                   break;
+                case SDLK_l:
+                  if (m_window->ContainsLocal(m_rect_graph, it->pointer) ||
+                      m_window->ContainsLocal(r_x, it->pointer) ||
+                      m_window->ContainsLocal(r_y, it->pointer)) {
+                    // Toggle log state.
+                    m_state->is_log.is_on ^= true;
+                  }
+                  break;
                 case SDLK_u:
                   if (m_window->ContainsLocal(m_rect_graph, it->pointer) ||
                       m_window->ContainsLocal(r_x, it->pointer) ||
