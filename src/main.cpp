@@ -113,7 +113,7 @@ namespace {
       std::cerr << a_msg << '\n';
       std::cout << "\n";
     }
-    std::cout << "Usage: " << g_arg0 <<
+    std::cout << "Usage: " "plutt" // << g_arg0 <<
         " -f config [-d path] [-g gui] [-j jobs] input...\n";
     std::cout << "\n";
     std::cout << " -h   print usage statement.\n";
