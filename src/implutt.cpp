@@ -2331,6 +2331,16 @@ namespace ImPlutt {
             (a_max - a_min));
         assert(i0 < i1);
 
+	if (i0 < 0 || i0 > a_vec.size())
+	  {
+	    fprintf (stderr,
+		     "%zd %zd %zd : "
+		     "%zd %g %g %g\n", i0, i1, a_vec.size(),
+		     a_bins, a_plot->PointFromPosX(0), a_min, a_max);
+	  }
+	if (i0 < 0 || i0 > a_vec.size())
+	  i0 = 0;
+
         double sum = a_vec.at(i0);
         double min = sum;
         double max = sum;
