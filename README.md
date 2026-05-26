@@ -413,9 +413,11 @@ hist(title, x [, args])
 			scale the X axis, i.e. 'x' will be transformed by the
 			linear fit y=Ax+B and the histogram is filled with the
 			'y' values.
-		fit="method"
+		fit("method"[,l,r])
 			'method' can be any of:
 				gauss
+				exp+gauss
+			l and r give the range to fit (omit: entire histogram).
 		cut(cut-args)
 			This histogram processes the current event only if the
 			given cut has seen a hit. For more info about the cut
