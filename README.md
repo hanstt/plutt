@@ -598,6 +598,9 @@ d = select_index(a, b--c)
 		a:end = [2, 4]       => d:end = [2]
 		a:v   = [1, 2, 3, 4]    d:v   = [3, 4]
 		b = 2
+
+	Hint: use select_index():v to obtain an array without indices,
+	useful for e.g. later comparing two different channels.
 ```
 
 ```
