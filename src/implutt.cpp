@@ -679,6 +679,7 @@ namespace ImPlutt {
         int size;
       };
       FontPair font_array[] = {
+        {"/usr/share/fonts/liberation/LiberationSans-Regular.ttf", 12},
         {"/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
           12},
 	{"/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf", 12},
