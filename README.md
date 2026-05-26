@@ -594,11 +594,12 @@ c, d = pedestal(a, b [, args])
 ```
 
 ```
-c = select_index(a, b)
-	Selects only 'a:id  == b':
-		a:id  = [1, 2]          c:id  = [0]
-		a:end = [2, 4]       => c:end = [2]
-		a:v   = [1, 2, 3, 4]    c:v   = [3, 4]
+d = select_index(a, b)
+d = select_index(a, b--c)
+	Selects only 'a:id == b', or 'a:id' in the range [b,c]:
+		a:id  = [1, 2]          d:id  = [0]
+		a:end = [2, 4]       => d:end = [2]
+		a:v   = [1, 2, 3, 4]    d:v   = [3, 4]
 		b = 2
 ```
 
