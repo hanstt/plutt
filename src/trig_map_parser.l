@@ -67,7 +67,7 @@ yytmlloc_update()
 
 [:=] return *yytmtext;
 
-[ \t\n] ;
+[ \t\n\r] ;
 
 . yytmerror("Unexpected symbol.");
 

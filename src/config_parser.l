@@ -158,7 +158,7 @@ zero_suppress          return TK_ZERO_SUPPRESS;
 
 [\+\-*\/(),\.:=\[\]] return *yycptext;
 
-[ \t\n] ;
+[ \t\n\r] ;
 
 . yycperror("Unexpected symbol.");
 
