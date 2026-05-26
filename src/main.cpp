@@ -110,7 +110,13 @@ namespace {
   {
     std::cout << "\n";
     if (a_msg) {
+      std::cout << "--- Error: -------------------"
+	"------------------------------\n";
+      std::cout << "\n";
       std::cerr << a_msg << '\n';
+      std::cout << "\n";
+      std::cout << "------------------------------"
+	"------------------------------\n";
       std::cout << "\n";
     }
     std::cout << "Usage: " "plutt" // << g_arg0 <<
