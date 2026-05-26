@@ -266,6 +266,7 @@ See below for the "official" definition of the **signal** syntax.
 ## What's the grammar/syntax?
 ```
 signal[i]
+
 	Creates a new signal from the i:th entry if it exists, and only the
 	first value, e.g.:
 		signal.id  = [1, 2]             [2]
@@ -275,6 +276,7 @@ signal[i]
 		                         [2] -> []
 		                                []
 signal[i][j]
+
 	Creates a new signal from the i:th entry and the j:th value if it
 	exists, e.g.:
 		signal.id  = [1, 2]                            [2]
@@ -284,11 +286,13 @@ signal[i][j]
 		                                     [1][2] -> []
 		                                               []
 signal:id
+
 	Creates a new signal with the ID's as values:
 		id = [-1]
 		end = [length(signal.id)]
 		v = signal.id
 signal:v
+
 	Creates a new signal without any ID's:
 		id = [-1]
 		end = [length(signal.id)]
@@ -297,15 +301,20 @@ signal:v
 
 ```
 a = signal(id-name, value-name)
+
 	Creates a signal where the ID's are given by one source and the values
 	by another. Note that the sources must have the same lengths!
+
 	Example:
 		my_id    = [3, 5]        a:id  = [3, 5]
 		my_value = [100, 123] => a:end = [1, 2]
 		                         a:v   = [100, 123]
 a = signal(id-name, end-name, value-name)
+
 	Creates a signal like above, but also with end offsets into the value
-	array. Example:
+	array.
+
+	Example:
 		my_id    = [2, 4]       => a:id  = [3, 4]
 		my_end   = [2, 4]          a:end = [2, 4]
 		my_value = [1, 2, 3, 4]    a:v   = [1, 2, 3, 4]
@@ -313,7 +322,9 @@ a = signal(id-name, end-name, value-name)
 
 ```
 a = merge(b[, ...])
+
 	Creates a signal where the given signals are merged in id order.
+
 	Example:
 		a = merge(b, c)
 		b.id =  [1, 2]
@@ -326,6 +337,7 @@ a = merge(b[, ...])
 
 ```
 y = f(x)
+
 	Chainable mathematical operations are available with signals and
 	constants, which acts on each value individually in a scalar or array.
 	Currently supported operations:
@@ -351,14 +363,18 @@ y = f(x)
 
 ```
 cut(path)
+
 	"path" points to a file which has a histogram title and an x/y pair
 	per line which makes a cutting polygon:
+
 		My histo
 		0, 0
 		10, 0
 		0, 10
 		10, 10
+
 cut(histogram-name, (x,y)...)
+
 	This is the inline version of the previous syntax, so the same example
 	would look like:
 		cut("My histo", (0,0), (10,0), (0,10), (10,10))
@@ -366,16 +382,21 @@ cut(histogram-name, (x,y)...)
 
 ```
 a = fit(b[, ...])
+
 	This is a 'static' linear fit y=Ax+B of 2D points. The list of
 	arguments consists of pairs (y, x), and 'a' will refer to this linear
-	fit. Example:
+	fit.
+
+	Example:
 		my_calib = fit((1, 1), (2, 2), (4, 3))
+
 	This will fit a linear function through the three points, which can be
 	used to scale histogram axes.
 ```
 
 ```
 hist(title, x [, args])
+
 	Draws a histogram of the values in x:v, with the given title.
 	The optional arguments can be:
 		logy
@@ -415,6 +436,7 @@ hist(title, x [, args])
 			Only one slice is active for filling, and after the
 			given time the slices are rotated and the oldest one
 			is emptied.
+
 		NOTE: Only one of drop_stats or drop_counts can be active,
 		because reasoning about the combo seems like a waste of time!
 		Also, drop_stats is a lot cheaper.
@@ -422,6 +444,7 @@ hist(title, x [, args])
 
 ```
 hist2d(title, y, x [, args])
+
 	Histograms 'y:v' vs 'x:v', pairing up the n:th entry in both vectors,
 	until either vector is exhausted.
 	The arguments are similar to "hist", except:
@@ -442,6 +465,7 @@ hist2d(title, y, x [, args])
 
 ```
 annular(title, r, r_limits, phi, phi_ref)
+
 	Draw an annular histogram of the values r:v and phi:v, with the given
 	title.
 	r_limits = (r_min, r_max)
@@ -453,9 +477,11 @@ annular(title, r, r_limits, phi, phi_ref)
 
 ```
 b = bitfield(a1, n1, ..., aN, nN)
+
 	Combines signals of given bit-widths into one value. The (ai,ni) pairs
 	are combined in ascending order, ie the first pair becomes the least
 	significant bits. Non-existant values are treated as 0.
+
 		a1:id  = [1, 2]
 		a1:end = [1, 2]
 		a1:v   = [1, 2]     b:id  = [1, 2, 3]
@@ -469,9 +495,11 @@ b = bitfield(a1, n1, ..., aN, nN)
 ```
 b = cluster(a)
 b, c = cluster(a)
+
 	Makes clusters of 'a', ie large neighbouring entries wrt to a:id are
 	grouped. 'b:id' = a:id's weighted and floored, 'b:v' = sum, and the
 	optional 'c:v' is the eta function, ie the centroid within the cluster.
+
 		a:id  = [1, 2, 3, 5]    b:id  = [2, 5]
 		a:end = [1, 2, 3, 4] => b:end = [1, 2]
 		a:v   = [4, 5, 6, 7]    b:v   = [15, 7]
@@ -482,12 +510,14 @@ b, c = cluster(a)
 
 ```
 d = coarse_fine(a, b, c)
+
 	Does on-the-fly fine-time calibration. 'a' = coarse times, 'b' = fine
 	times, and 'c' is either a module type identifier or a number for the
 	clock period. Identifiers could be 'vftx2', 'tamex3' etc, and c=1e-8
 	would be interpreted as each clock cycle taking 10 ns.
 	This example relies on previous data for the calibration, let's assume
 	a uniform fine-time distribution between 100 and 600 ch:
+
 		a:id  = [1, 2]
 		a:end = [1, 2]
 		a:v   = [10, 20]      d:id  = [1, 2]
@@ -500,6 +530,7 @@ d = coarse_fine(a, b, c)
 ```
 a = cut(cut-args)
 a, b = cut(cut-args)
+
 	Extracts entries in a hist/hist2d that pass the cut. 'a' will contain
 	the x values and 'b' the y values. For more info about the cut syntax,
 	see above.
@@ -507,9 +538,11 @@ a, b = cut(cut-args)
 
 ```
 filter_range(a <= b < c..., (d = e)...)
+
 	For each entry where the conditions in the initial list of conditions
 	are met, all the assignments are performed. Note that 'b' and 'e' must
 	have the exact same layout, ie b:id  === e:id and b:end === e:end!
+
 		a = 1
 		b:id  = [1, 3]
 		b:end = [1, 3]       d:id  = [1, 3]
@@ -522,7 +555,9 @@ filter_range(a <= b < c..., (d = e)...)
 
 ```
 b = length(a)
+
 	Returns length of 'a:v':
+
 		a:id  = [1, 2, 3]       b:id  = [0]
 		a:end = [1, 2, 4]    => b:end = [1]
 		a:v   = [1, 2, 3, 4]    b:v   = [4]
@@ -530,7 +565,9 @@ b = length(a)
 
 ```
 c, d = match_index(a, b)
+
 	Cuts un-matched entries between 'a:id' and 'b:id':
+
 		a:id  = [1, 2, 3]    c:id  = [2]
 		a:end = [1, 2, 3]    c:end = [1]
 		a:v   = [1, 2, 3] => c:v   = [2]
@@ -538,8 +575,10 @@ c, d = match_index(a, b)
 		b:end = [1, 2]       d:end = [1]
 		b:v   = [4, 5]       d:v   = [4]
 c, d = match_value(a, b, c)
+
 	Cuts un-matched entries between 'a:v' and 'b:v' for each matched
 	channel. A match means a:id[mi]==b:id[mj] && fabs(a:v[vi]-b:v[vj])<c.
+
 		a:id  = [1, 2, 3]       c:id  = [2]
 		a:end = [1, 2, 3]       c:end = [1]
 		a:v   = [10, 20, 30] => c:v   = [20]
@@ -551,7 +590,9 @@ c, d = match_value(a, b, c)
 
 ```
 b = max(a)
+
 	Returns the single largest entry in 'a:v':
+
 		a:id  = [1, 2, 3]    b:id  = [2]
 		a:end = [1, 2, 3] => b:end = [1]
 		a:v   = [1, 3, 2]    b:v   = [3]
@@ -559,13 +600,18 @@ b = max(a)
 
 ```
 b = mean_arith(a)
+
 	Calcs arithmetic mean over all 'a:id' for each entry in 'a:v':
+
 		a:id  = [1, 2, 3]          b:id  = [0]
 		a:end = [2, 4, 5]       => b:end = [2]
 		a:v   = [1, 2, 3, 4, 5]    b:v   = [(1+3+5)/3, (2+4)/2]
+
 c = mean_arith(a, b)
+
 	Calcs aritmetic mean between the two signals for every '*:id' and
 	'*:v':
+
 		a:id  = [1, 2]
 		a:end = [1, 3]       c:id  = [1, 2, 3]
 		a:v   = [1, 2, 3] => c:end = [1, 2, 4]
@@ -577,11 +623,13 @@ c = mean_arith(a, b)
 ```
 b = mean_geom(a)
 c = mean_geom(a, b)
+
 	Same as mean_arith except does (v_1 + ... + v_n)^(1/n).
 ```
 
 ```
 c, d = pedestal(a, b [, args])
+
 	Calculates pedestals of 'a' on-the-fly and cuts "a:v < std * b".
 	'args' can be:
 		tpat=a
@@ -592,6 +640,7 @@ c, d = pedestal(a, b [, args])
 
 ```
 c = select_index(a, b)
+
 	Selects only 'a:id  == b':
 		a:id  = [1, 2]          c:id  = [0]
 		a:end = [2, 4]       => c:end = [2]
@@ -601,6 +650,7 @@ c = select_index(a, b)
 
 ```
 d = sub_mod(a, b, c)
+
 	Does a zero-centered modulo-subtraction like '(a-b+n*c+c/2)%c-c/2':
 		a:id  = [1, 2]
 		a:end = [1, 2]
@@ -609,14 +659,18 @@ d = sub_mod(a, b, c)
 		b:end = [1, 2]    d:v   = [1/1, (2+3)/2, 4/1]
 		b:v   = [3, 4]
 		c = 10
+
 d = tot(a, b, c)
+
 	Does time-over-threshold, 'a' = leading, 'b' = trailing, does matching
 	of channels and edges.
 ```
 
 ```
 b = tpat(a, bitmask)
+
 	Lets values in 'a:v' with any bits marked by the bitmask pass.
+
 		a:id  = [0]         b:id  = [0]
 		a:end = [1]      => b:end = [1]
 		a:v   = [0x101]     b:v   = [0x1]
@@ -625,9 +679,11 @@ b = tpat(a, bitmask)
 
 ```
 f = trig_map(a, b, c, d, e)
+
 	Parses file 'a', considers lines prefixed with 'b', then does cyclical
 	subtraction of trigger channels 'd', mapped by 'a', from signal
 	channels 'c' with range 'e':
+
 		a:
 			Det1:1 = 1
 			Det1:2 = 1
@@ -645,8 +701,10 @@ f = trig_map(a, b, c, d, e)
 
 ```
 d = zero_suppress(a [, b])
+
 	Zero-suppresses 'a:v'. 'b' is an optional cut-off which defaults to 0,
 	ie all entries in 'a:v' > 'b' are pass this node:
+
 		a:id  = [1, 2]       d:id  = [2]
 		a:end = [1, 3]    => d:end = [1]
 		a:v   = [0, 2, 1]    d:v   = [2]
@@ -657,12 +715,14 @@ Other functions:
 
 ```
 appearance("name")
+
 	Sets GUI style, choose one of: light, dark. The last one in the config
 	will override previous invocations.
 ```
 
 ```
 clock_match(a, b)
+
 	Matches the computer running time to the given signal 'a', which
 	should be a monotonically increasing timestamp.
 	'b' is the time in seconds for the unit of 'a', eg if 'a' is in ns,
@@ -671,9 +731,11 @@ clock_match(a, b)
 
 ```
 colormap("name")
+
 	plutt only has "roma" built-in, which can be chosen by leaving out the
 	argument, but you can use Scientific Colourmaps if that resides under
 	your current working dir.
+
 	If 'name' is eg "lajolla", the file:
 		"../ScientificColourMaps7/lajolla/lajolla.lut"
 	is loaded.
@@ -681,12 +743,14 @@ colormap("name")
 
 ```
 page("name")
+
 	Starts a new named page for plots. If the user did not create one
 	before the first plot, a default named "Default" is made.
 ```
 
 ```
 ui_rate(a)
+
 	Throttles the ImPlutt UI update rate to 'a' times per second, default
 	and maximum is 20.
 ```
@@ -698,12 +762,14 @@ ui_rate(a)
 ```
 	TH1I hist...
 	hist.Fill(SCALAR);
+
 	-> hist("This be my scalar", SCALAR)
 ```
 - Plot channel multiplicity:
 ```
 	TH1I hist...
 	hist.Fill(MULT);
+
 	-> hist("Sup?", MULT)
 ```
 - Plot fired channels in log scale:
@@ -712,6 +778,7 @@ ui_rate(a)
 	canvas->cd(n)->SetLogy();
 	for (i = 0; i < SUPP; ++i)
 		hist.Fill(SUPPI[i]);
+
 	-> hist("Channel map", SUPP:id, logy)
 ```
 - Plot energy against channel with 1000 energy bins:
@@ -719,6 +786,7 @@ ui_rate(a)
 	TH2I hist...
 	for (i = 0; i < SUPP; ++i)
 		hist.Fill(SUPPI[i], SUPPv[i]);
+
 	-> hist2d("Energy vs ch", SUPP:v, SUPP:id, binsy=1000)
 	   hist2d("Energy vs ch", SUPP, binsy=1000)
 ```
@@ -730,11 +798,13 @@ ui_rate(a)
 		for (; i < SUPPME[j]; ++i)
 			hist->Fill(ch, SUPPv[i]);
 	}
+
 	-> hist2d("Energy vs ch", MHIT)
 ```
 - Match two sides of a single-hit detector and draw geom mean energy:
 ```
 	// Too much brain-wrangling code...
+
 	-> e1, e2 = match_index(SUPP_S1E, SUPP_S2E)
 	   e = mean_geom(e1, e2)
 	   hist2d("Energy vs ch", e)
@@ -742,6 +812,7 @@ ui_rate(a)
 - Same with multi-hit mapping:
 ```
 	// Even more unbearable code :o
+
 	-> e1, e2 = match_index(MHIT_S1E, MHIT_S2E)
 	   e = mean_geom(e1, e2)
 	   hist2d("Energy vs ch", e)
