@@ -112,19 +112,19 @@ namespace {
     if (a_msg) {
       std::cout << "--- Error: -------------------"
 	"------------------------------\n";
-      std::cout << "\n";
       std::cerr << a_msg << '\n';
-      std::cout << "\n";
       std::cout << "------------------------------"
 	"------------------------------\n";
       std::cout << "\n";
     }
     std::cout << "Usage: " "plutt" // << g_arg0 <<
-        " -f config [-d path] [-g gui] [-j jobs] input...\n";
+        " -f config [-h] [-d output-file] [-g gui] " //"[-j jobs] "
+        "input...\n";
     std::cout << "\n";
+    std::cout << " -f   plutt config file.\n";
     std::cout << " -h   print usage statement.\n";
     std::cout << " -d   generate dot file from nodes.\n";
-    std::cout << " -g   values (this arg can be repeated):";
+    std::cout << " -g   activate GUI's (comma-separated if several):";
 #if PLUTT_SDL2
     std::cout << " sdl";
 #endif
