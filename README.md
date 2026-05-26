@@ -182,6 +182,9 @@ The default GUI is chosen from top to bottom from the above list.
 	- Press **Backspace** to remove the last point.
 	- Press **Escape** to abort the cut.
 
+- Pressing **l**:
+	- Toggle logarithic counts state.
+
 - Pressing **u**:
 	- Unzoom **X** and **Y** completely.
 
