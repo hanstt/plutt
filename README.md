@@ -417,7 +417,7 @@ hist(title, x [, args])
 			'method' can be any of:
 				gauss
 				exp+gauss
-			l and r give the range to fit.
+			l and r give the range to fit (omit: entire histogram).
 		cut(cut-args)
 			This histogram processes the current event only if the
 			given cut has seen a hit. For more info about the cut
