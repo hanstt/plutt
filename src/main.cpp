@@ -116,6 +116,7 @@ namespace {
     std::cout << "Usage: " << g_arg0 <<
         " -f config [-d path] [-g gui] [-j jobs] input...\n";
     std::cout << "\n";
+    std::cout << " -h   print usage statement.\n";
     std::cout << " -d   generate dot file from nodes.\n";
     std::cout << " -g   values (this arg can be repeated):";
 #if PLUTT_SDL2
