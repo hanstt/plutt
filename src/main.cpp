@@ -115,6 +115,7 @@ namespace {
     }
     std::cout << "Usage: " << g_arg0 <<
         " -f config [-d path] [-g gui] [-j jobs] input...\n";
+    std::cout << "\n";
     std::cout << " -d   generate dot file from nodes.\n";
     std::cout << " -g   values (this arg can be repeated):";
 #if PLUTT_SDL2
@@ -124,7 +125,9 @@ namespace {
     std::cout << " root(:port)";
 #endif
     std::cout << "\n";
+    std::cout << "\n";
     std::cout << "Input options:\n";
+    std::cout << "\n";
 #if PLUTT_ROOT
     std::cout << " -r   tree-name root-files...\n";
     std::cout << " -R   tree-name directories...\n";
@@ -132,10 +135,13 @@ namespace {
 #if PLUTT_UCESB
     std::cout << " -u   unpacker args...\n";
 #endif
+    std::cout << "\n";
     std::cout << "Output options:\n";
+    std::cout << "\n";
 #if PLUTT_ROOT
     std::cout << " -o   path:tree-name\n";
 #endif
+    std::cout << "\n";
     exit(a_msg ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
