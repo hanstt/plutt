@@ -558,6 +558,13 @@ void VisualHist::FitGauss(std::vector<uint32_t> const &a_hist, Gui::Axis const
     // Fit left..right in histo.
     int l_i = (int)((it->l - a_axis.min) / scale);
     int r_i = (int)((it->r - a_axis.min) / scale);
+    // Special handling of infinite limits to become entire histogram.
+    if (std::isinf(it->l) && it->l < 0) {
+      l_i = 0;
+    }
+    if (std::isinf(it->r) && it->r > 0) {
+      r_i = (int)a_hist.size() - 1;
+    }
     if (l_i > (int)a_hist.size() || r_i < 0) {
       continue;
     }

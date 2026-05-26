@@ -21,6 +21,7 @@
  */
 
 %{
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -781,6 +782,10 @@ hist_arg
 			throw std::runtime_error(__func__);
 		}
 		g_peak_fit_vec.push_back(PeakFitEntry($3, l, r));
+		free($3);
+	}
+	| TK_FIT '(' TK_STRING ')' {
+		g_peak_fit_vec.push_back(PeakFitEntry($3, -INFINITY, INFINITY));
 		free($3);
 	}
 	| TK_LOGY { g_logy = true; }
