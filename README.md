@@ -360,8 +360,7 @@ y = f(x)
 		exp(x)
 		log(x)
 		abs(x)
-		pow(x, const)
-		pow(const, x)
+		pow(x, y)
 ```
 
 ```
