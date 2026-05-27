@@ -21,6 +21,7 @@
  */
 
 #include <cmath>
+#include <cfloat>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -245,10 +246,37 @@ FitGauss::FitGauss(std::vector<uint32_t> const &a_hist, double a_max_y,
   NLOPT_CALL(nlopt_set_min_objective, (opt, Gauss, &r));
   NLOPT_CALL(nlopt_set_ftol_rel, (opt, 1e-5));
   double x[4];
+  // Default initial parameter estimation.
   x[OFS] = 0.0;
   x[GAUSS_AMP] = a_max_y;
   x[GAUSS_MEAN] = 0.5 * (a_left + a_right);
   x[GAUSS_WIDTH] = 0.5 * (a_right - a_left);
+  // Estimate constant background as minimum bin value.
+  double v_min = DBL_MAX;
+  for (uint32_t i = r.left; i <= r.right; ++i) {
+    auto v_i = r.vec->at(i);
+    if (v_i < v_min)
+      v_min = v_i;
+  }
+  x[OFS] = v_min;
+  // Base Gaussian paramater estimate on #counts, mean and RMS above
+  // constant background.
+  double sum = 0, sum_x = 0, sum_x2 = 0;
+  for (uint32_t i = r.left; i <= r.right; ++i) {
+    auto v_i = r.vec->at(i) - v_min;
+    sum    += v_i;
+    sum_x  += v_i * i;
+    sum_x2 += v_i * i * i;
+  }
+  if (sum >= 2) {
+    x[GAUSS_MEAN] = sum_x / sum;
+    x[GAUSS_WIDTH] = 2.0 * (sum_x2 - sum_x * sum_x / sum) / (sum - 1);
+    x[GAUSS_AMP] = sum / sqrt(x[GAUSS_WIDTH] * 0.5) / sqrt(2 * M_PI);
+  }
+  // Variance 0 give fit problems...
+  if (x[GAUSS_WIDTH] <= 0) {
+    x[GAUSS_WIDTH] = 0.5 * (a_right - a_left);
+  }
   double y;
 #if BENCHMARK
   double t0;
