@@ -77,11 +77,11 @@ void GuiCollection::AddGui(Gui *a_gui)
 #define FOR_GUI \
   for (auto it = m_gui_map.begin(); m_gui_map.end() != it; ++it)
 
-void GuiCollection::AddPage(std::string const &a_name)
+void GuiCollection::AddPage(std::string const &a_name,int a_cols)
 {
   FOR_GUI {
     auto gui = it->first;
-    gui->AddPage(a_name);
+    gui->AddPage(a_name, a_cols);
   }
 }
 

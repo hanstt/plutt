@@ -147,11 +147,12 @@ RootGui::~RootGui()
   delete m_server;
 }
 
-void RootGui::AddPage(std::string const &a_name)
+void RootGui::AddPage(std::string const &a_name,int a_cols)
 {
   m_page_vec.push_back(new Page);
   auto page = m_page_vec.back();
   page->name = a_name;
+  page->cols = a_cols;
   {
     std::string clean_name = CleanName(page->name);
     std::string bind_name = "plutt_BindClearPage_" + clean_name;
@@ -215,8 +216,14 @@ bool RootGui::Draw(double a_event_rate)
     auto page = *it;
     auto &vec = page->plot_wrap_vec;
     if (!page->canvas) {
-      auto rows = (int)sqrt((double)vec.size());
-      auto cols = ((int)vec.size() + rows - 1) / rows;
+      int rows, cols;
+      if (page->cols) {
+	cols = page->cols;
+	rows = ((int)vec.size() + cols - 1) / cols;
+      } else {
+	rows = (int)sqrt((double)vec.size());
+	cols = ((int)vec.size() + rows - 1) / rows;
+      }
       page->canvas = new TCanvas(page->name.c_str(), page->name.c_str());
       page->canvas->Divide(cols, rows, 0.01f, 0.01f);
       m_server->Register("/", page->canvas);

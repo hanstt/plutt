@@ -40,7 +40,7 @@ class RootGui: public Gui {
     RootGui(uint16_t);
     ~RootGui();
 
-    void AddPage(std::string const &);
+    void AddPage(std::string const &,int = 0);
     uint32_t AddPlot(std::string const &, Plot *);
 
     bool DoClear(uint32_t);
@@ -86,6 +86,7 @@ class RootGui: public Gui {
     struct Page {
       Page();
       std::string name;
+      int cols;
       TCanvas *canvas;
       std::vector<PlotWrap *> plot_wrap_vec;
       std::list<Bind *> m_bind_list;

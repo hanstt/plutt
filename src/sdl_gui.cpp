@@ -69,11 +69,12 @@ SdlGui::~SdlGui()
   delete m_window;
 }
 
-void SdlGui::AddPage(std::string const &a_name)
+void SdlGui::AddPage(std::string const &a_name, int a_cols)
 {
   m_page_vec.push_back(new Page);
   auto page = m_page_vec.back();
   page->name = a_name;
+  page->cols = a_cols;
 }
 
 uint32_t SdlGui::AddPlot(std::string const &a_name, Plot *a_plot)
@@ -150,8 +151,14 @@ bool SdlGui::Draw(double a_event_rate)
   size.y = std::max(0, size.y - h);
   {
     auto &vec = m_page_sel->plot_wrap_vec;
-    int rows = (int)sqrt((double)vec.size());
-    int cols = ((int)vec.size() + rows - 1) / rows;
+    int rows, cols;
+    if (m_page_sel->cols) {
+      cols = m_page_sel->cols;
+      rows = ((int)vec.size() + cols - 1) / cols;
+    } else {
+      rows = (int)sqrt((double)vec.size());
+      cols = ((int)vec.size() + rows - 1) / rows;
+    }
     ImPlutt::Pos elem_size(size.x / cols, size.y / rows);
     ImPlutt::Rect elem_rect;
     elem_rect.x = 0;
