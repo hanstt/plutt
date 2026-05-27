@@ -60,7 +60,7 @@ class Gui {
     virtual ~Gui();
 
   protected:
-    virtual void AddPage(std::string const &) = 0;
+    virtual void AddPage(std::string const &, int = 0) = 0;
     virtual uint32_t AddPlot(std::string const &, Plot *) = 0;
 
     virtual bool DoClear(uint32_t) = 0;
@@ -83,7 +83,7 @@ class GuiCollection {
   public:
     void AddGui(Gui *);
 
-    void AddPage(std::string const &);
+    void AddPage(std::string const &, int = 0);
     uint32_t AddPlot(std::string const &, Gui::Plot *);
 
     bool DoClear(uint32_t);

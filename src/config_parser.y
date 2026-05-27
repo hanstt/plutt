@@ -380,6 +380,10 @@ page
 		g_gui.AddPage($3);
 		free($3);
 	}
+	| TK_PAGE '(' TK_STRING ',' TK_INTEGER ')' {
+		g_gui.AddPage($3, $5.i64);
+		free($3);
+	}
 
 const
 	: TK_DOUBLE { $$ = $1; }

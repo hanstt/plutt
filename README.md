@@ -749,10 +749,11 @@ colormap("name")
 ```
 
 ```
-page("name")
+page("name" [, cols})
 
 	Starts a new named page for plots. If the user did not create one
 	before the first plot, a default named "Default" is made.
+	The number of columns to use can optionally be specified.
 ```
 
 ```
