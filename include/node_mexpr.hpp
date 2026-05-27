@@ -40,6 +40,7 @@ class NodeMExpr: public NodeValue {
       ACOS,
       ASIN,
       ATAN,
+      ATAN2,
       SQRT,
       EXP,
       LOG,

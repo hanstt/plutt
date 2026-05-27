@@ -59,6 +59,7 @@ acos                   return TK_ACOS;
 annular                return TK_ANNULAR;
 asin                   return TK_ASIN;
 atan                   return TK_ATAN;
+atan2                  return TK_ATAN2;
 appearance             return TK_APPEARANCE;
 binsx                  return TK_BINSX;
 binsy                  return TK_BINSY;
