@@ -676,6 +676,9 @@ mexpr
 	| TK_POW  '(' const ',' value ')' {
 		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(), POW);
 	}
+	| TK_POW  '(' value ',' value ')' {
+		MEXPR(@1, $$, $3,      $5, 0.0,            POW);
+	}
 
 bitfield_args
 	: bitfield_arg                   { $$ = $1; }
