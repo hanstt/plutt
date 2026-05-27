@@ -32,7 +32,7 @@ class SdlGui: public Gui {
     SdlGui(char const *, unsigned, unsigned);
     ~SdlGui();
 
-    void AddPage(std::string const &);
+    void AddPage(std::string const &,int = 0);
     uint32_t AddPlot(std::string const &, Plot *);
 
     bool DoClear(uint32_t);
@@ -66,6 +66,7 @@ class SdlGui: public Gui {
     struct Page {
       Page();
       std::string name;
+      int cols;
       std::vector<PlotWrap *> plot_wrap_vec;
     };
     ImPlutt::Window *m_window;
