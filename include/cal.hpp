@@ -35,7 +35,7 @@ class CalFineTime {
 
   private:
     void Calib();
-    uint32_t m_counter;
+    uint32_t m_recal_at;
 
     struct Span {
       Span();
