@@ -1045,7 +1045,7 @@ NodeValue *Config::NodeValueGet(std::string const &a_key)
   if (m_node_value_map.end() == it) {
     return nullptr;
   }
-  // std::cout << "Re-using node _" << a_key << "_\n";
+  // std::cout << "Reusing node _" << a_key << "_\n";
   return it->second;
 }
 

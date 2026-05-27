@@ -483,7 +483,7 @@ b = bitfield(a1, n1, ..., aN, nN)
 
 	Combines signals of given bit-widths into one value. The (ai,ni) pairs
 	are combined in ascending order, ie the first pair becomes the least
-	significant bits. Non-existant values are treated as 0.
+	significant bits. Non-existent values are treated as 0.
 
 		a1:id  = [1, 2]
 		a1:end = [1, 2]
@@ -612,7 +612,7 @@ b = mean_arith(a)
 
 c = mean_arith(a, b)
 
-	Calcs aritmetic mean between the two signals for every '*:id' and
+	Calcs arithmetic mean between the two signals for every '*:id' and
 	'*:v':
 
 		a:id  = [1, 2]
