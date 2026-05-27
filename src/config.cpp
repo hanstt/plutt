@@ -732,6 +732,7 @@ NodeValue *Config::AddMExpr(NodeValue *a_l, NodeValue *a_r, double a_d,
     case NodeMExpr::ACOS: op = "acos"; break;
     case NodeMExpr::ASIN: op = "asin"; break;
     case NodeMExpr::ATAN: op = "atan"; break;
+    case NodeMExpr::ATAN2:op = "atan2"; break;
     case NodeMExpr::SQRT: op = "sqrt"; break;
     case NodeMExpr::EXP:  op = "exp"; break;
     case NodeMExpr::LOG:  op = "log"; break;

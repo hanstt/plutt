@@ -436,6 +436,24 @@ void MyTest::Run()
     TEST_CMP(v.GetV(0, true), ==, pow(4.0, 6.0));
     TEST_CMP(v.GetV(1, true), ==, pow(5.0, 8.0));
   }
+
+  /* ATAN2. */
+  {
+    MockNode0 nv0(Input::kUint64, 1);
+    MockNode1 nv1(Input::kUint64, 1);
+    NodeMExpr n("", &nv0, &nv1, 3.0, NodeMExpr::ATAN2);
+
+    auto const &v = n.GetValue(0);
+    TEST_BOOL(v.GetV().empty());
+
+    nv0.Preprocess(&n);
+    nv1.Preprocess(&n);
+    TestNodeProcess(n, 1);
+
+    CHECK_SIZES1;
+    TEST_CMP(v.GetV(0, true), ==, atan2(4.0, 6.0));
+    TEST_CMP(v.GetV(1, true), ==, atan2(5.0, 8.0));
+  }
 }
 
 }

@@ -153,6 +153,7 @@ void NodeMExpr::Process(uint64_t a_evid)
         case ACOS: v = acos(l); break;
         case ASIN: v = asin(l); break;
         case ATAN: v = atan(l); break;
+        case ATAN2:v = atan2(l,r); break;
         case SQRT: v = sqrt(l); break;
         case EXP:  v = exp(l); break;
         case LOG:  v = (1 == m_mix) ? log(l) : log(r) / log(m_d); break;
