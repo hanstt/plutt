@@ -33,7 +33,7 @@ CalFineTime::Span::Span():
 }
 
 CalFineTime::CalFineTime():
-  m_counter(),
+  m_recal_at(10),
   m_span_vec(2),
   m_span_i(),
   m_acc_max(),
@@ -63,18 +63,41 @@ double CalFineTime::Get(uint32_t a_i)
     return 0.0;
   }
 
-  // Pick span, swap if we've reached ~10%.
+  // Pick span
   Span *span = &m_span_vec[m_span_i];
-  if (span->sum > 1000 &&
-      span->sum > 100 * span->max) {
+  if (span->sum >= m_recal_at) {
+    // Initially calibration happens after accumulating 10, 20, 40,
+    // 80, ... counts.  After that, calibration happens based on
+    // actual span width.
     Calib();
-    m_span_i ^= 1;
-    span = &m_span_vec[m_span_i];
-    span->sum = 0;
-    span->min = 1;
-    span->max = 0;
-    // Keep vector buffer, just zero it.
-    std::fill(span->hist.begin(), span->hist.end(), 0);
+    // Estimate required statistics from span width.  Considering the
+    // calibration as a counting problem from the fixed edges to the
+    // adjustable middle, uncertainty is proportional to sqrt(counts).
+    // Here ignoring reducing factors of two that come from only
+    // having to count half the way, and counting both ways.
+    uint32_t span_width = span->max - span->min + 1;
+    uint32_t want_stats = span_width * span_width;
+    // Swap (i.e. restart collection) if when at least 7/8 of the
+    // wanted statistics has been reached.  7/8 in condition such that
+    // we most likely swap span, since we end up here when full
+    // requirement (m_recal_at) based on last estimate is fulfilled
+    // (which may have seen a slightly smaller total span).
+    // First swap will happen at 7/8 of estimated need.
+    if (span->sum > 1000 &&
+	span->sum > (7 * want_stats) / 8) {
+      // Next recalibration estimated from current span width.
+      m_recal_at = want_stats;
+      // Swap collection.
+      m_span_i ^= 1;
+      span = &m_span_vec[m_span_i];
+      span->sum = 0;
+      span->min = 1;
+      span->max = 0;
+      // Keep vector buffer, just zero it.
+      std::fill(span->hist.begin(), span->hist.end(), 0);
+    } else {
+      m_recal_at *= 2;
+    }
   }
 
   // Add value to hist.
@@ -89,18 +112,6 @@ double CalFineTime::Get(uint32_t a_i)
   }
   ++span->hist[a_i];
   ++span->sum;
-  ++m_counter;
-  if (m_counter >= 100000) {
-    // Revert to a calib state.
-    m_counter = 10000;
-  }
-
-  if (10 == m_counter ||
-      100 == m_counter ||
-      1000 == m_counter ||
-      10000 == m_counter) {
-    Calib();
-  }
 
   // Convert.
   if (m_acc.empty()) {
