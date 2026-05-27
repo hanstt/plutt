@@ -356,12 +356,12 @@ y = f(x)
 		acos(x)
 		asin(x)
 		atan(x)
+		atan2(x, y)
 		sqrt(x)
 		exp(x)
 		log(x)
 		abs(x)
-		pow(x, const)
-		pow(const, x)
+		pow(x, y)
 ```
 
 ```

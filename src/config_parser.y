@@ -183,6 +183,7 @@ static void ResetDrawArgs() {
 %token TK_APPEARANCE
 %token TK_ASIN
 %token TK_ATAN
+%token TK_ATAN2
 %token TK_BINSX
 %token TK_BINSY
 %token TK_BITFIELD
@@ -675,6 +676,18 @@ mexpr
 	}
 	| TK_POW  '(' const ',' value ')' {
 		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(), POW);
+	}
+	| TK_POW  '(' value ',' value ')' {
+		MEXPR(@1, $$, $3,      $5, 0.0,            POW);
+	}
+	| TK_ATAN2 '(' value ',' const ')' {
+		MEXPR(@1, $$, $3, nullptr, $5.GetDouble(), ATAN2);
+	}
+	| TK_ATAN2 '(' const ',' value ')' {
+		MEXPR(@1, $$, nullptr, $5, $3.GetDouble(), ATAN2);
+	}
+	| TK_ATAN2 '(' value ',' value ')' {
+		MEXPR(@1, $$, $3,      $5, 0.0,            ATAN2);
 	}
 
 bitfield_args
