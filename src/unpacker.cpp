@@ -338,7 +338,7 @@ void Unpacker::BindSignal(Config *a_config, std::vector<char> const
   size_t arr_n; // Max size.
   std::string ctrl; // ctrl-variable, holds runtime array size.
   size_t len_ofs; // Offset in output buffer to runtime array size.
-  int max;
+  int max = 0;
   p += a_name.length();
   if (' ' == *p) {
     arr_n = 1;
