@@ -284,7 +284,7 @@ void SdlGui::DrawHist1(uint32_t a_id, Axis const &a_axis, LinearTransform
     snprintf(buf, sizeof buf, "%.3f/%.3f", x0, std);
     auto text_y = it->y + it->gauss_amp;
     m_window->PlotText(&plot, buf, ImPlutt::Point(x0, text_y),
-        ImPlutt::TEXT_RIGHT, false, true);
+        ImPlutt::TEXT_RIGHT, true, true);
   }
 }
 
