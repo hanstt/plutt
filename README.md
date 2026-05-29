@@ -540,11 +540,14 @@ a, b = cut(cut-args)
 ```
 
 ```
-filter_range(a <= b < c..., (d = e)...)
+filter_range([a <= b < c|a == b|b == c] [, ...], (d = e)...)
 
-	For each entry where the conditions in the initial list of conditions
-	are met, all the assignments are performed. Note that 'b' and 'e' must
-	have the exact same layout, ie b:id  === e:id and b:end === e:end!
+	For each entry where the conditions in the initial list of
+	conditions are met, all the assignments are performed.
+	A condition can be for a range or equality.
+
+	Note that 'b' and 'e' must have the exact same layout, ie
+	b:id === e:id and b:end === e:end!
 
 		a = 1
 		b:id  = [1, 3]
