@@ -1,32 +1,35 @@
 # plutt
 
 
+A scriptable plotting utility tailored for nuclear physics experiments.
+
 ![gauss](assets/plutt_sim_gauss.png "Some quite normal distributions.")
-```
-hist("x", x)
-hist("x, binsx=10", x, binsx=10)
-hist("x, logy", x, logy)
-hist("x, fit", x, fit="gauss")
-hist2d("x vs x", x, x)
-hist2d("y vs x", y, x)
-hist2d("y vs x, bins=10/50", y, x, binsx=10, binsy=50)
-hist2d("y vs x, logz", y, x, logz)
-```
+The above picture was configured with the following script:
+<pre>
+<span style="color:green">hist</span>(<span style="color:crimson">"x"</span>, x)
+<span style="color:green">hist</span>(<span style="color:crimson">"x, binsx=10"</span>, x, <span style="color:green">binsx</span>=<span style="color:crimson">10</span>)
+<span style="color:green">hist</span>(<span style="color:crimson">"x, logy"</span>, x, <span style="color:green">logy</span>)
+<span style="color:green">hist</span>(<span style="color:crimson">"x, fit"</span>, x, <span style="color:green">fit</span>="gauss")
+<span style="color:green">hist2d</span>(<span style="color:crimson">"x vs x"</span>, x, x)
+<span style="color:green">hist2d</span>(<span style="color:crimson">"y vs x"</span>, y, x)
+<span style="color:green">hist2d</span>(<span style="color:crimson">"y vs x, bins=10/50"</span>, y, x, <span style="color:green">binsx</span>=<span style="color:crimson">10</span>, <span style="color:green">binsy</span>=<span style="color:crimson">50</span>)
+<span style="color:green">hist2d</span>(<span style="color:crimson">"y vs x, logz"</span>, y, x, <span style="color:green">logz</span>)
+</pre>
 
 
-## What's the idea?
+# What's the idea?
 
-Say we have an event stream from a detector outfitted with e.g. scintillator
+Example 1: An event stream from a detector outfitted with e.g. scintillator
 paddles or silicon segments that are read out on both ends. What's an easy way
 to plot this?
 
-Let's say we have another such detector rotated by 90 degrees. How hard
-can/should it be to draw one vs the other in a Y-vs-X plot?
+Example 2: Another such detector rotated by 90 degrees. How hard can/should it
+be to draw one vs the other in a Y-vs-X plot?
 
 The ROOT prompt, as powerful as it is, has its limitations, for example when
 dealing with zero-suppressed or multi-hit arrays.
 
-Here's some human-readable pseudo-code for the first example:
+Here's some human-readable pseudo-code for Example 1:
 
 ```
 - Get array for left side -> "left"
@@ -37,7 +40,7 @@ Here's some human-readable pseudo-code for the first example:
 
 Typical pseudo-C++ & ROOT could be:
 
-```
+```c
 // Init.
 auto h1 = new TH1F(name, title, bins_x, min_x, max_x, ...);
 auto left_handle = Input.GetHandle("MY_DET_LEFT");
@@ -58,19 +61,19 @@ while (l_i < left->size() && r_i < right->size()) {
 }
 ```
 
-To solve the 2nd example, we copy and adjust. And we copy-pasta all of that for
-every detector, refactor, add calibration and complicate the logic states,
-build, debug, ignore warnings, fight with git or copy between accounts or
-forget the code ever existed... This is a huge time-sink while expensive beam
-is vehemently showering our experimental setups.
+To solve Example 2, we copy and adjust. And we copy-pasta all of that for every
+detector, refactor, add calibration and complicate the logic states, build,
+debug, ignore warnings, fight with git or copy between accounts or forget the
+code ever existed... At least that is how it looks during hectic preparation
+and beam-time debugging.
 
 Equally bad, new data may not fit expected histogram limits, and a faulty
-detector is caught very late. Monitoring should show everything that is going
-on, even if we don't think we want it.
+detector or mismatched accelerator setting is caught very late. Monitoring
+should show everything that is going on, even if we don't think we want it.
 
 Plutt tries to implement the human-readable version via scripting:
 
-```
+```c
 l = MY_DET_LEFT
 r = MY_DET_RIGHT
 matched_l, matched_r = match_index(l, r)
@@ -81,7 +84,7 @@ Now, don't forget that computers don't have brains! Don't put yours on the
 shelf just yet, there's a couple of things to go through!
 
 
-## Building
+# Building
 
 Suggested packages (Debian):
 
@@ -97,56 +100,61 @@ Other software:
 root -- ROOT files input and THttpServer.
 ucesb -- UCESB input.
 ```
+Note that ROOT must be built with the HTTP server support to use the web-page
+renderer.
 
 To compile:
 
-```
+```bash
 make -jN
 ./plutt
 ```
 
-Make builds a version based on the compiler and build mode, e.g. **debug** or
-**release**. The latter is a script that chooses the binary the same way the
-Makefile chooses the build directory.
+**make** builds a version based on the compiler and build mode, e.g. **debug** or
+**release**.
 
-The usual environment variables are available to steer the build, e.g.
-**CPPFLAGS**, **CFLAGS**, **LDFLAGS**, and **LIBS**.
+**plutt** is a script that chooses the binary the same way the Makefile chooses
+the build directory.
+
+The usual environment variables are available to steer the build as needed,
+e.g. **CPPFLAGS**, **CFLAGS**, **LDFLAGS**, and **LIBS**.
 
 
-## Running
+# Running
 
-```
+```bash
 ./plutt -f myconf.plutt -r mytree myfile1.root myfile2.root
 ```
 
-Loads script **myconf.plutt**, and the input will be two root files, both with
-a TTree named **mytree**. A default GUI will be chosen depending on what's
-built in.
+Loads script **myconf.plutt**, and read the tree named **mytree** from the two
+ROOT files. A default GUI will be chosen depending on what's built in.
 
-```
+```bash
 ./plutt -f myconf.plutt -g sdl -u ../upexps/myunp/myunp --stream=localhost
 ```
 
-The input will be structures from the **myunp** unpacker which reads event-data
-from a stream server. The GUI will be the SDL2-driven ImPlutt.
+The **myunp** unpacker will read event-data from a stream server on the
+localhost, and provide UCESB structures to plutt. The GUI will always be the
+SDL2-driven ImPlutt and must be built in.
 
-```
-./plutt -f myconf.plutt -u ../ucesb/hbook/struct_writer localhost
-```
-```
-../upexps/myunp/myunp --stream=some-host --ntuple=RAW,SERVER,dummy
+```bash
+# On host 192.168.1.1:
+./plutt -f myconf.plutt -u ../ucesb/hbook/struct_writer 192.168.1.2
+# On host 192.168.1.2:
+../upexps/myunp/myunp --stream=event-builder-host --ntuple=RAW,SERVER,dummy
 ```
 
-The input will be structures from the unpacker running on the same host.
+The unpacker will send UCESB structures to plutt over local network.
 
-```
+```bash
 ./plutt -f myconf.plutt -g sdl -g root:8100 -r myfiles...root
 ```
 
-Plots with both ImPlutt and THttpServer, the latter on port 8100.
+Both the ImPlutt and THttpServer GUI's will start, the latter will be available
+on port 8100.
 
 
-## GUI's
+# GUI's
 
 There are currently two GUI's available, depending on built-in support:
 
@@ -159,7 +167,12 @@ built, depending on the ROOT build.
 The default GUI is chosen from top to bottom from the above list.
 
 
-### ImPlutt GUI
+## ImPlutt GUI
+
+The ImPlutt GUI was started a long time ago when the ROOT GUI was rather
+archaic for modern users. ROOT has gained a lot of QoL features since, but the
+ImPlutt GUI offers very fast and specially made navigation, and large
+modifications to the UI are much easier.
 
 - Scroll-wheel in a plot:
 	- Zoom around the pointer in **X** and **Y**.
@@ -200,73 +213,84 @@ The default GUI is chosen from top to bottom from the above list.
 	  ranges.
 
 
-### ROOT GUI
+## ROOT GUI
 
 Opens a THttpServer on port 8080 by default, direct your web-brower to the
 address **localhost:8080**. To run on e.g. port 10000, invoke the GUI like
 **-g root:10000** on the command line.
 
 
-## Let's define the data
+# Let's define the data
 
-It is important to understand the internal data structure before operating on
-them.
+It is important to understand the internal event data structure before
+operating on them.
 
-In principle, plutt tries to bundle ID's (e.g. channel indices) and values into
-signals, which have two important parts:
+In principle, plutt bundles ID's (e.g. channel indices) and values into
+**signals**, which have two important parts:
 1. A list of ID's which have data.
 2. A list of values for the ID's.
 
 To be more detailed, a signal looks pretty much like:
 
-	struct {
-		// List of ID's with data, -1 means "no ID".
-		vector<uint32_t>	id;
-		// Offsets into the **value** vector for each ID.
-		vector<uint32_t>	end;
-		// All values over all ID's.
-		vector<Scalar>	v;
-	};
+```c
+struct {
+    vector<uint32_t> id;  // List of ID's with data, -1 means "no ID".
+    vector<uint32_t> end; // End-offsets into the "value" vector for each ID.
+    vector<Scalar>   v;   // All values over all ID's.
+};
+```
 
-Plutt creates signals based on typical suffixes from ucesb style unpackers, or
-user input. For example, given "MYDET" and other existing inputs:
+For example, 1 hit (v1) in id=2 and 2 hits (v2, v3) in id=5 looks like:
 
-	Multi-hit zero-suppressed ucesb style:
-		MYDETM
-		MYDETMI
-		MYDETME
-		MYDET
-		MYDETv
-		-> MYDETMI used as ID's,
-		   MYDETME used as value offsets,
-		   MYDETv used as values
-	Can be explicitly defined with:
-		MYDET = signal(MYDETMI, MYDETME, MYDETv)
+```c
+id  = [2, 5]
+end = [1, 3]
+v   = [v1, v2, v3]
+```
 
-	Single-hit zero-suppressed ucesb style:
-		MYDET
-		MYDETI
-		MYDETv
-		-> MYDETI used as ID's,
-		   MYDETv used as values
-	Can be explicitly defined with:
-		MYDET = signal(MYDETI, MYDETv)
+With a UCESB unpacker input, plutt creates signals based on typical suffixes,
+unless the user has exactly configured a signal. Other input types, such as
+EGMW and ROOT, are very flexible and is expected to be always be defined by the
+user.
 
-	egmw-style:
-		MYDET = signal(MYDET_id, MYDET_adc_a)
+For example, given "MYDET":
 
-	Typical ROOT-style:
-		MYDET = signal(MYDET.my_ch, MYDET.my_value)
+```
+Multi-hit zero-suppressed ucesb style:
+	MYDETM
+	MYDETMI
+	MYDETME
+	MYDET
+	MYDETv
+	-> MYDETMI used as ID's,
+	   MYDETME used as value offsets,
+	   MYDETv used as values
+Can be explicitly defined with:
+	MYDET = signal(MYDETMI, MYDETME, MYDETv)
 
-	Scalar ucesb style:
-		MYDET
-		-> No ID,
-		   MYDET used as value
+Single-hit zero-suppressed ucesb style:
+	MYDET
+	MYDETI
+	MYDETv
+	-> MYDETI used as ID's,
+	   MYDETv used as values
+Can be explicitly defined with:
+	MYDET = signal(MYDETI, MYDETv)
 
-See below for the "official" definition of the **signal** syntax.
+egmw-style:
+	MYDET = signal(MYDET_id, MYDET_adc_a)
+
+Typical ROOT-style:
+	MYDET = signal(MYDET.my_ch, MYDET.my_value)
+
+Scalar ucesb style:
+	MYDET
+	-> No ID,
+	   MYDET used as value
+```
 
 
-## What's the grammar/syntax?
+# Grammar and syntax
 ```
 signal[i]
 
@@ -769,7 +793,7 @@ ui_rate(a)
 ```
 
 
-## Examples
+# Examples
 
 - Plot scalar spectrum:
 ```
@@ -850,9 +874,11 @@ ui_rate(a)
 Note that custom mappings can replace the value array **v** with anything. This
 program allows a few other suffixes to be used instead, e.g. **E**.
 
+Also have a look at the **sim** directory which generates some simple data and
+plots them in both sensical and non-sensical ways.
 
-Licence
-=======
+
+# Licence
 
 This program has been licenced under the LGPL 2.1, which is included in the
 file COPYING.
