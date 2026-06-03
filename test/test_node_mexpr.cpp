@@ -1,8 +1,9 @@
 /*
  * plutt, a scriptable monitor for experimental data.
  *
- * Copyright (C) 2025
+ * Copyright (C) 2025-2026
  * Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
+ * Håkan T Johansson <f96hajo@chalmers.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -1,6 +1,6 @@
 # plutt, a scriptable monitor for experimental data.
 #
-# Copyright (C) 2023-2025
+# Copyright (C) 2023-2026
 # Hans Toshihide Toernqvist <hans.tornqvist@chalmers.se>
 # Håkan T Johansson <f96hajo@chalmers.se>
 #
