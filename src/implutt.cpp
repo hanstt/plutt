@@ -1571,20 +1571,28 @@ namespace ImPlutt {
     m_window->Newline();
 
     auto const &l = m_window->LevelGet();
+    bool x_ovr = false;
+    bool y_ovr = false;
 
     // Override incoming limits when user is/has been interacting.
     if (Time_get_ms() < m_state->cut.t + TENSION_TIMEOUT_MS ||
         Time_get_ms() < m_state->proj.t + TENSION_TIMEOUT_MS) {
-      m_min = m_state->min_lin;
-      m_max = m_state->max_lin;
+      x_ovr = true;
+      y_ovr = true;
     }
     if (Time_get_ms() < m_state->zooming.x.t + TENSION_TIMEOUT_MS) {
-      m_min.x = m_state->min_lin.x;
-      m_max.x = m_state->max_lin.x;
+      x_ovr = true;
     }
     if (Time_get_ms() < m_state->zooming.y.t + TENSION_TIMEOUT_MS) {
-      m_min.y = m_state->min_lin.y;
-      m_max.y = m_state->max_lin.y;
+      y_ovr = true;
+    }
+    if (x_ovr) {
+      m_min.x = TRUNC(m_state->min_lin.x, a_min_lin.x, a_max_lin.x);
+      m_max.x = TRUNC(m_state->max_lin.x, a_min_lin.x, a_max_lin.x);
+    }
+    if (y_ovr) {
+      m_min.y = TRUNC(m_state->min_lin.y, a_min_lin.y, a_max_lin.y);
+      m_max.y = TRUNC(m_state->max_lin.y, a_min_lin.y, a_max_lin.y);
     }
     if (Time_get_ms() >= m_state->cut.t + TENSION_TIMEOUT_MS) {
       m_state->CutClear();
