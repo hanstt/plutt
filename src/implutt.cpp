@@ -2337,7 +2337,11 @@ namespace ImPlutt {
         size_t i1 = (size_t)(
             (double)a_bins * (a_plot->PointFromPosX(pi + 1) - a_min) /
             (a_max - a_min));
-        assert(i0 < i1);
+        assert(0 <= i0);
+        assert(i0 <= a_bins);
+        assert(0 <= i1);
+        assert(i1 <= a_bins);
+        assert(i0 <= i1);
 
         // double sum = 0.;
         double min = 0.;
