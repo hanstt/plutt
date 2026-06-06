@@ -2339,10 +2339,10 @@ namespace ImPlutt {
             (a_max - a_min));
         assert(i0 < i1);
 
-        double sum = a_vec.at(i0);
-        double min = sum;
-        double max = sum;
-        for (auto i = i0 + 1; i < i1; ++i) {
+        double sum = 0.;
+        double min = 0.;
+        double max = 0.;
+        for (auto i = i0; i < i1; ++i) {
           auto v = (double)a_vec.at(i);
           sum += v;
           min = std::min(min, v);
