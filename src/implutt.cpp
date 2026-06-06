@@ -1563,12 +1563,13 @@ namespace ImPlutt {
 
     m_window->Checkbox("Log", &a_state->is_log);
 
+    m_window->LevelAdvance(Pos(0, PAD_EXT + title_size.y + PAD_INT));
+    auto title_max_h = m_window->Newline();
+
     m_rect_tot.x = 0;
-    m_rect_tot.y = PAD_EXT + title_size.y + PAD_INT;
+    m_rect_tot.y = title_max_h;
     m_rect_tot.w = a_size.x;
     m_rect_tot.h = a_size.y - m_rect_tot.y;
-    m_window->LevelAdvance(Pos(0, PAD_EXT + title_size.y + PAD_INT));
-    m_window->Newline();
 
     auto const &l = m_window->LevelGet();
 
