@@ -1571,20 +1571,28 @@ namespace ImPlutt {
     m_window->Newline();
 
     auto const &l = m_window->LevelGet();
+    bool x_ovr = false;
+    bool y_ovr = false;
 
     // Override incoming limits when user is/has been interacting.
     if (Time_get_ms() < m_state->cut.t + TENSION_TIMEOUT_MS ||
         Time_get_ms() < m_state->proj.t + TENSION_TIMEOUT_MS) {
-      m_min = m_state->min_lin;
-      m_max = m_state->max_lin;
+      x_ovr = true;
+      y_ovr = true;
     }
     if (Time_get_ms() < m_state->zooming.x.t + TENSION_TIMEOUT_MS) {
-      m_min.x = m_state->min_lin.x;
-      m_max.x = m_state->max_lin.x;
+      x_ovr = true;
     }
     if (Time_get_ms() < m_state->zooming.y.t + TENSION_TIMEOUT_MS) {
-      m_min.y = m_state->min_lin.y;
-      m_max.y = m_state->max_lin.y;
+      y_ovr = true;
+    }
+    if (x_ovr) {
+      m_min.x = TRUNC(m_state->min_lin.x, a_min_lin.x, a_max_lin.x);
+      m_max.x = TRUNC(m_state->max_lin.x, a_min_lin.x, a_max_lin.x);
+    }
+    if (y_ovr) {
+      m_min.y = TRUNC(m_state->min_lin.y, a_min_lin.y, a_max_lin.y);
+      m_max.y = TRUNC(m_state->max_lin.y, a_min_lin.y, a_max_lin.y);
     }
     if (Time_get_ms() >= m_state->cut.t + TENSION_TIMEOUT_MS) {
       m_state->CutClear();
@@ -2329,14 +2337,18 @@ namespace ImPlutt {
         size_t i1 = (size_t)(
             (double)a_bins * (a_plot->PointFromPosX(pi + 1) - a_min) /
             (a_max - a_min));
-        assert(i0 < i1);
+        assert(0 <= i0);
+        assert(i0 <= a_bins);
+        assert(0 <= i1);
+        assert(i1 <= a_bins);
+        assert(i0 <= i1);
 
-        double sum = a_vec.at(i0);
-        double min = sum;
-        double max = sum;
-        for (auto i = i0 + 1; i < i1; ++i) {
+        // double sum = 0.;
+        double min = 0.;
+        double max = 0.;
+        for (auto i = i0; i < i1; ++i) {
           auto v = (double)a_vec.at(i);
-          sum += v;
+          // sum += v;
           min = std::min(min, v);
           max = std::max(max, v);
         }
